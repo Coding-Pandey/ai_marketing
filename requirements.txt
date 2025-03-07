@@ -1,0 +1,16 @@
+langchain
+langchain-google-genai
+google-auth
+google-ads
+google-auth-oauthlib
+python-dotenv
+umap-learn
+pandas
+scikit-learn
+openai
+fastapi
+uvicorn
+matplotlib
+python-multipart
+sentence-transformers
+langchain-openai

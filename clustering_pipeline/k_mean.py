@@ -1,0 +1,245 @@
+import os
+import sys
+import numpy as np
+import pandas as pd
+import json
+import umap
+from typing import Tuple, List
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sentence_transformers import SentenceTransformer
+from dataclasses import dataclass
+import matplotlib.pyplot as plt
+
+@dataclass
+class ClusteringConfig:
+    min_clusters: int = 3  # Changed to 2
+    max_clusters: int = 15
+    random_state: int = 42
+    umap_n_components: int = 2
+    umap_n_neighbors: int = 50
+    umap_min_dist: float = 0.02
+
+class Cluster:
+    def __init__(self, config: ClusteringConfig = ClusteringConfig()):
+        self.config = config
+        self.embedder = SentenceTransformer('all-mpnet-base-v2')
+
+    def kmeans_clustering(self, n_clusters: int, embeddings: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+
+        model = KMeans(
+            n_clusters=n_clusters,
+            init='k-means++',
+            random_state=self.config.random_state,
+            n_init=10
+        )
+        model.fit(embeddings)
+        return model.labels_, model.cluster_centers_
+
+    def embed_texts(self, texts: List[str]) -> np.ndarray:
+        return self.embedder.encode(texts)
+
+    def reduce_dimensions(self, embeddings: np.ndarray) -> np.ndarray:
+
+        reducer = umap.UMAP(
+            n_components=self.config.umap_n_components,
+            n_neighbors=self.config.umap_n_neighbors,
+            min_dist=self.config.umap_min_dist,
+            random_state=self.config.random_state
+        )
+        return reducer.fit_transform(embeddings)
+
+    def find_optimal_clusters(self, embeddings: np.ndarray) -> int:
+
+        n_samples = embeddings.shape[0]
+        
+        # Adjust max_clusters based on sample size
+        max_clusters = min(int(self.config.max_clusters), int(n_samples) - 1)
+        min_clusters = min(int(self.config.min_clusters), int(max_clusters) - 1)
+        
+        if max_clusters <= min_clusters:
+            return min_clusters
+            
+        inertias = []
+        
+        for n_clusters in range(min_clusters, max_clusters + 1):
+            kmeans = KMeans(
+                n_clusters=n_clusters,
+                init='k-means++',
+                random_state=self.config.random_state,
+                n_init=10
+            )
+            kmeans.fit(embeddings)
+            inertias.append(kmeans.inertia_)
+
+        # Find elbow point using the percentage of variance explained
+        inertias = np.array(inertias)
+        diffs = np.diff(inertias)
+        diffs_r = diffs[1:] / diffs[:-1]
+        
+        if len(diffs_r) > 0:
+            elbow_point = np.argmin(diffs_r) + min_clusters + 1
+        else:
+            elbow_point = min_clusters
+
+        return min(elbow_point, max_clusters)
+
+    def find_optimal_clusters_silhouette(self, embeddings: np.ndarray) -> int:
+        try:
+            n_samples = embeddings.shape[0]
+
+            # Adjust max_clusters based on sample size
+            max_clusters = min(self.config.max_clusters, n_samples - 1)
+            min_clusters = min(self.config.min_clusters, max_clusters - 1)
+
+            if max_clusters <= min_clusters:
+                print(f"Sample size too small, using {min_clusters} clusters")
+                return min_clusters
+
+            best_n_clusters = min_clusters
+            best_silhouette = -1
+            silhouette_scores = []
+
+            cluster_range = range(min_clusters, max_clusters + 1)
+
+            for n_clusters in cluster_range:
+                try:
+                    kmeans = KMeans(
+                        n_clusters=n_clusters,
+                        init="k-means++",
+                        random_state=self.config.random_state,
+                        n_init=10
+                    )
+                    cluster_labels = kmeans.fit_predict(embeddings)
+                    
+                    # Silhouette score requires at least 2 clusters
+                    if len(np.unique(cluster_labels)) < 2:
+                        print(f"Only one cluster formed with n_clusters={n_clusters}, skipping")
+                        continue
+                        
+                    silhouette_avg = silhouette_score(embeddings, cluster_labels)
+                    silhouette_scores.append(silhouette_avg)
+
+                    if silhouette_avg > best_silhouette:
+                        best_silhouette = silhouette_avg
+                        best_n_clusters = n_clusters
+                        
+                except Exception as e:
+                    print(f"Error during clustering with {n_clusters} clusters: {str(e)}")
+                    continue
+
+            # If we couldn't calculate any silhouette scores
+            if not silhouette_scores:
+                print("Could not calculate silhouette scores, using minimum clusters")
+                return min_clusters
+                
+            print(f"Silhouette scores: {silhouette_scores}")
+            print(f"Best number of clusters: {best_n_clusters} with silhouette score: {best_silhouette}")
+            return best_n_clusters
+            
+        except Exception as e:
+            print(f"Error in find_optimal_clusters_silhouette: {str(e)}")
+            # Fallback to minimum clusters as default
+            return {f"error": "Failed to find optimal clusters, {e}"}
+
+        # Plot the silhouette scores
+        # plt.figure(figsize=(8, 5))
+        # plt.plot(cluster_range, silhouette_scores, marker='o', linestyle='-')
+        # plt.xlabel("Number of Clusters")
+        # plt.ylabel("Silhouette Score")
+        # plt.title("Silhouette Score vs. Number of Clusters")
+        # plt.grid(True)
+        # plt.show()
+        # print(silhouette_scores)
+        # return best_n_clusters
+    
+    
+    
+
+    def process_clustering(self, data_path: str, metadata_column: str) -> dict:
+
+        try:               
+            if not isinstance(data_path, list):
+                raise ValueError("Input data must be a list of records")
+
+            df = pd.DataFrame(data_path)
+            print(df)
+            # df = pd.read_csv(data_path)
+            if metadata_column not in df.columns:
+                raise ValueError(f"Column '{metadata_column}' not found in data")
+            
+            # Dynamically adjust clustering configuration based on data size
+            n_samples = len(df)
+            print(f"Dataset contains {n_samples} samples")
+        
+            # Adjust cluster settings based on data size
+            if n_samples <= 200:
+                self.config.min_clusters = 3
+                self.config.max_clusters = 20
+                print(f"Small dataset detected: min_clusters={self.config.min_clusters}, max_clusters={self.config.max_clusters}")
+            elif n_samples >= 800:
+                self.config.min_clusters = 5
+                self.config.max_clusters = 30
+                print(f"Large dataset detected: min_clusters={self.config.min_clusters}, max_clusters={self.config.max_clusters}")
+            
+
+            # Process clustering
+            # texts = df["keywords"].values
+            embeddings = self.embed_texts(df[metadata_column].values)
+            print(embeddings)
+            reduced_embeddings = self.reduce_dimensions(embeddings)
+            print(reduced_embeddings)
+            
+            # Validate sample size
+            n_samples = len(df)
+            if n_samples < 10:
+                raise ValueError("Need at least 40 keywords for clustering")
+
+            optimal_clusters = self.find_optimal_clusters_silhouette(reduced_embeddings)
+            print(f"Optimal cluster: {optimal_clusters}")
+            labels, centers = self.kmeans_clustering(optimal_clusters, reduced_embeddings)
+            print(centers)
+            # Create visualization
+            # self.plot_clusters(reduced_embeddings, labels, centers)
+            # self.plot_clusters_with_text(reduced_embeddings, labels, centers, texts)
+
+            # Add cluster labels and coordinates to DataFrame
+            df['cluster'] = labels
+
+            # Prepare results
+            results = {
+                'optimal_clusters': optimal_clusters,
+                'cluster_labels': labels.tolist(),
+                'cluster_centers': centers.tolist(),
+                'reduced_embeddings': reduced_embeddings.tolist()
+            }
+
+            print(results)
+            
+            json_string = df.to_json(orient='records', lines=False)
+            return json_string , optimal_clusters
+
+        except Exception as e:
+            raise Exception(f"Clustering pipeline failed: {str(e)}") from e
+
+# if __name__ == "__main__":
+#     config = ClusteringConfig(
+#         min_clusters=4,  
+#         max_clusters=20,
+#         random_state=42
+#     )
+    
+#     clusterer = Cluster(config)
+#     metadata_column = "Keyword"
+#     data_path = r"C:\Users\nickc\OneDrive\Desktop\SEO\data\input test 2 - input test 2.csv"
+
+#     try:
+#         df = pd.read_csv(data_path)
+#         df = df[["Keyword"]]
+#         data = df.to_dict(orient="records")
+#         results = clusterer.process_clustering(data, metadata_column)
+#         print(results)
+#         # print(f"Optimal number of clusters: {results['optimal_clusters']}")
+#         # print(f"Number of documents processed: {len(results['cluster_labels'])}")
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
