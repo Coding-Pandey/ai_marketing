@@ -14,3 +14,4 @@ matplotlib
 python-multipart
 sentence-transformers
 langchain-openai
+streamlit
