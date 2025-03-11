@@ -1,16 +1,11 @@
 import json
+import pandas as pd
 
-def flatten_seo_data(json_data):
-    """
-    Flattens the nested SEO JSON data into a structured format.
-
-    Args:
-        json_data (list): List of dictionaries containing page titles, keywords, intent, and URLs.
-
-    Returns:
-        list: A list of dictionaries with page title, keyword, intent, and URL.
-    """
+def flatten_seo_data(json_data, search_volume_df):
     flattened_data = []
+
+    # Create a mapping dictionary for fast lookup
+    keyword_search_volume = dict(zip(search_volume_df["Keyword"], search_volume_df["Avg Monthly Searches"]))
 
     for item in json_data:  
         if "Pages" not in item or not item["Pages"]:  
@@ -32,7 +27,8 @@ def flatten_seo_data(json_data):
                     "page_title": page_title,
                     "keyword": keyword,
                     "intent": intent,
-                    "url_structure": url
+                    "url_structure": url,
+                    "avg_monthly_searches": keyword_search_volume.get(keyword, 0)  # Map search volume
                 })
 
     return flattened_data

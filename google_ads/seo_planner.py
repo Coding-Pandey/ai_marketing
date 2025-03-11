@@ -76,7 +76,7 @@ def seo_keywords_main(keywords):
     # Load client from YAML config file
     try:
         client = GoogleAdsClient.load_from_storage(
-            r"google_ads\google-ads.yaml",
+            "/home/ubuntu/ai_marketing/google_ads/google-ads.yaml",
             version="v18"
         )
     except Exception as e:

@@ -71,8 +71,8 @@ def seo_generate_keywords(request: KeywordRequest):
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Error processing request")
+   # except Exception as e:
+    #    raise HTTPException(status_code=500, detail=f"Error processing request str(e)}")
     
 
 @app.post("/seo_keyword_suggestion")
@@ -110,7 +110,7 @@ async def seo_keyword_clustering(file: UploadFile = File(...)):
         data= df1.to_dict(orient="records")
         print("Parsed data:", data)
         cluster_data = await seo_main(df1.to_dict(orient="records"))  
-        result = flatten_seo_data(cluster_data)
+        result = flatten_seo_data(cluster_data,df)
 
         return result
     except Exception as e:

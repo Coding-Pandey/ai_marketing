@@ -7,3 +7,5 @@ coverage/
 clustering_pipeline/cluster_data/
 data/
 demo_agent/
+google_ads/google-ads.yaml
+venv/
