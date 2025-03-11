@@ -75,15 +75,15 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
 def seo_keywords_main(keywords, location_ids, language_id):
     # Load client from YAML config file
     try:
-        # client = GoogleAdsClient.load_from_storage(
-        #     "/home/ubuntu/ai_marketing/google_ads/google-ads.yaml",
-        #     version="v18"
-        # )
-
         client = GoogleAdsClient.load_from_storage(
-            r"C:\Users\nickc\OneDrive\Desktop\AI marketing\google_ads\google-ads.yaml",
+            "/home/ubuntu/ai_marketing/google_ads/google-ads.yaml",
             version="v18"
         )
+
+        # client = GoogleAdsClient.load_from_storage(
+        #     r"C:\Users\nickc\OneDrive\Desktop\AI marketing\google_ads\google-ads.yaml",
+        #     version="v18"
+        # )
     except Exception as e:
         print(f"❌ Error loading client configuration: {e}")
         return
