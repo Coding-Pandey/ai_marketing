@@ -75,18 +75,6 @@ language_options = [
         "Name": "Japanese"
     },
     {
-        "ID": 1006,
-        "Name": "English (US)"
-    },
-    {
-        "ID": 1007,
-        "Name": "English (UK)"
-    },
-    {
-        "ID": 1008,
-        "Name": "Chinese"
-    },
-    {
         "ID": 1009,
         "Name": "Danish"
     },
@@ -113,10 +101,6 @@ language_options = [
     {
         "ID": 1015,
         "Name": "Swedish"
-    },
-    {
-        "ID": 1016,
-        "Name": "Portuguese (Brazil)"
     },
     {
         "ID": 1017,
@@ -231,228 +215,24 @@ language_options = [
         "Name": "Thai"
     },
     {
-        "ID": 1045,
-        "Name": "Afar"
-    },
-    {
-        "ID": 1046,
-        "Name": "Abkhazian"
-    },
-    {
-        "ID": 1047,
-        "Name": "Afrikaans"
-    },
-    {
-        "ID": 1048,
-        "Name": "Amharic"
-    },
-    {
-        "ID": 1049,
-        "Name": "Assamese"
-    },
-    {
-        "ID": 1050,
-        "Name": "Aymara"
-    },
-    {
-        "ID": 1051,
-        "Name": "Azerbaijani"
-    },
-    {
-        "ID": 1052,
-        "Name": "Bashkir"
-    },
-    {
-        "ID": 1053,
-        "Name": "Belarusian"
-    },
-    {
-        "ID": 1054,
-        "Name": "Bihari"
-    },
-    {
-        "ID": 1055,
-        "Name": "Bislama"
-    },
-    {
         "ID": 1056,
         "Name": "Bengali"
-    },
-    {
-        "ID": 1057,
-        "Name": "Tibetan"
-    },
-    {
-        "ID": 1058,
-        "Name": "Breton"
-    },
-    {
-        "ID": 1059,
-        "Name": "Corsican"
-    },
-    {
-        "ID": 1060,
-        "Name": "Welsh"
-    },
-    {
-        "ID": 1061,
-        "Name": "Norwegian Nynorsk"
-    },
-    {
-        "ID": 1062,
-        "Name": "Esperanto"
-    },
-    {
-        "ID": 1063,
-        "Name": "Basque"
     },
     {
         "ID": 1064,
         "Name": "Persian"
     },
     {
-        "ID": 1065,
-        "Name": "Fijian"
-    },
-    {
-        "ID": 1066,
-        "Name": "Faroese"
-    },
-    {
-        "ID": 1067,
-        "Name": "Western Frisian"
-    },
-    {
-        "ID": 1068,
-        "Name": "Irish"
-    },
-    {
-        "ID": 1069,
-        "Name": "Scottish Gaelic"
-    },
-    {
-        "ID": 1070,
-        "Name": "Galician"
-    },
-    {
-        "ID": 1071,
-        "Name": "Guarani"
-    },
-    {
         "ID": 1072,
         "Name": "Gujarati"
-    },
-    {
-        "ID": 1073,
-        "Name": "Manx"
-    },
-    {
-        "ID": 1074,
-        "Name": "Hausa"
-    },
-    {
-        "ID": 1075,
-        "Name": "Bosnian"
-    },
-    {
-        "ID": 1076,
-        "Name": "Armenian"
-    },
-    {
-        "ID": 1077,
-        "Name": "Interlingua"
-    },
-    {
-        "ID": 1078,
-        "Name": "Interlingue"
-    },
-    {
-        "ID": 1079,
-        "Name": "Inupiaq"
-    },
-    {
-        "ID": 1080,
-        "Name": "Inuktitut"
-    },
-    {
-        "ID": 1081,
-        "Name": "Javanese"
-    },
-    {
-        "ID": 1082,
-        "Name": "Georgian"
-    },
-    {
-        "ID": 1083,
-        "Name": "Kazakh"
-    },
-    {
-        "ID": 1084,
-        "Name": "Greenlandic"
-    },
-    {
-        "ID": 1085,
-        "Name": "Khmer"
     },
     {
         "ID": 1086,
         "Name": "Kannada"
     },
     {
-        "ID": 1087,
-        "Name": "Kashmiri"
-    },
-    {
-        "ID": 1088,
-        "Name": "Kurdish"
-    },
-    {
-        "ID": 1089,
-        "Name": "Cornish"
-    },
-    {
-        "ID": 1090,
-        "Name": "Kirghiz"
-    },
-    {
-        "ID": 1091,
-        "Name": "Latin"
-    },
-    {
-        "ID": 1092,
-        "Name": "Luxembourgish"
-    },
-    {
-        "ID": 1093,
-        "Name": "Lingala"
-    },
-    {
-        "ID": 1094,
-        "Name": "Lao"
-    },
-    {
-        "ID": 1095,
-        "Name": "Malagasy"
-    },
-    {
-        "ID": 1096,
-        "Name": "Maori"
-    },
-    {
-        "ID": 1097,
-        "Name": "Macedonian"
-    },
-    {
         "ID": 1098,
         "Name": "Malayalam"
-    },
-    {
-        "ID": 1099,
-        "Name": "Mongolian"
-    },
-    {
-        "ID": 1100,
-        "Name": "Moldavian"
     },
     {
         "ID": 1101,
@@ -463,112 +243,8 @@ language_options = [
         "Name": "Malay"
     },
     {
-        "ID": 1103,
-        "Name": "Maltese"
-    },
-    {
-        "ID": 1104,
-        "Name": "Burmese"
-    },
-    {
-        "ID": 1105,
-        "Name": "Nauru"
-    },
-    {
-        "ID": 1106,
-        "Name": "Nepali"
-    },
-    {
-        "ID": 1107,
-        "Name": "Occitan"
-    },
-    {
-        "ID": 1108,
-        "Name": "(Afan) Oromo"
-    },
-    {
-        "ID": 1109,
-        "Name": "Oriya"
-    },
-    {
         "ID": 1110,
         "Name": "Punjabi"
-    },
-    {
-        "ID": 1111,
-        "Name": "Pushto"
-    },
-    {
-        "ID": 1112,
-        "Name": "Quechua"
-    },
-    {
-        "ID": 1113,
-        "Name": "Raeto-Romance"
-    },
-    {
-        "ID": 1114,
-        "Name": "Rundi"
-    },
-    {
-        "ID": 1115,
-        "Name": "Kinyarwanda"
-    },
-    {
-        "ID": 1116,
-        "Name": "Sanskrit"
-    },
-    {
-        "ID": 1117,
-        "Name": "Sindhi"
-    },
-    {
-        "ID": 1118,
-        "Name": "Northern S�mi"
-    },
-    {
-        "ID": 1119,
-        "Name": "Sango"
-    },
-    {
-        "ID": 1120,
-        "Name": "Zulu"
-    },
-    {
-        "ID": 1121,
-        "Name": "Sinhalese"
-    },
-    {
-        "ID": 1122,
-        "Name": "Samoan"
-    },
-    {
-        "ID": 1123,
-        "Name": "Shona"
-    },
-    {
-        "ID": 1124,
-        "Name": "Somali"
-    },
-    {
-        "ID": 1125,
-        "Name": "Albanian"
-    },
-    {
-        "ID": 1126,
-        "Name": "Swati"
-    },
-    {
-        "ID": 1127,
-        "Name": "Sotho"
-    },
-    {
-        "ID": 1128,
-        "Name": "Sundanese"
-    },
-    {
-        "ID": 1129,
-        "Name": "Swahili"
     },
     {
         "ID": 1130,
@@ -577,82 +253,6 @@ language_options = [
     {
         "ID": 1131,
         "Name": "Telugu"
-    },
-    {
-        "ID": 1132,
-        "Name": "Tajik"
-    },
-    {
-        "ID": 1133,
-        "Name": "Tigrinya"
-    },
-    {
-        "ID": 1134,
-        "Name": "Turkmen"
-    },
-    {
-        "ID": 1135,
-        "Name": "Tswana"
-    },
-    {
-        "ID": 1136,
-        "Name": "Tonga"
-    },
-    {
-        "ID": 1137,
-        "Name": "Tsonga"
-    },
-    {
-        "ID": 1138,
-        "Name": "Tatar"
-    },
-    {
-        "ID": 1139,
-        "Name": "Twi"
-    },
-    {
-        "ID": 1140,
-        "Name": "Uighur"
-    },
-    {
-        "ID": 1141,
-        "Name": "Uzbek"
-    },
-    {
-        "ID": 1142,
-        "Name": "Volap�k"
-    },
-    {
-        "ID": 1143,
-        "Name": "Wolof"
-    },
-    {
-        "ID": 1144,
-        "Name": "Xhosa"
-    },
-    {
-        "ID": 1145,
-        "Name": "Yiddish"
-    },
-    {
-        "ID": 1146,
-        "Name": "Yoruba"
-    },
-    {
-        "ID": 1147,
-        "Name": "Zhuang"
-    },
-    {
-        "ID": 1148,
-        "Name": "English (Australia)"
-    },
-    {
-        "ID": 1149,
-        "Name": "Portuguese (Portugal)"
-    },
-    {
-        "ID": 1150,
-        "Name": "Chinese (Hong Kong SAR)"
     }
 ]
 
