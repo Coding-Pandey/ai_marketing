@@ -1,6 +1,6 @@
 # from chatbot import PROMPT, query_llm, prompt_keyword_suggestion, query_keyword_suggestion
 import pandas as pd
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Query
 from pydantic import BaseModel
 from typing import Optional
 import json
@@ -12,46 +12,25 @@ from collections import defaultdict
 from google_ads.seo_planner import seo_keywords_main
 # from utils import flatten_seo_data , extract_first_json_object
 import asyncio
-from utils import flatten_seo_data
+from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches
 import io
-
+from pydantic import BaseModel, Field
+from typing import Optional, List
 app = FastAPI()
-
-def extract_keywords(json_string):
-    """Validate JSON and extract 'keywords' list if present."""
-    try:
-        if isinstance(json_string, dict):  # If already a dictionary, use it directly
-            parsed_json = json_string
-        else:
-            parsed_json = json.loads(json_string)  # Try parsing JSON string
-
-        if "keywords" in parsed_json and isinstance(parsed_json["keywords"], list):
-            return parsed_json["keywords"]  # Return keywords if valid
-        else:
-            return False, "'keywords' field is missing or not a list."
-    except json.JSONDecodeError as e:
-        return False, f"Invalid JSON: {e}"  # Return JSON parsing error
-
-
-def Seo_keyword_search(keywords: list ) -> str:
-    # Lod CSV file
-    # csv_file = r""  # Replace with your file path
-    # df = pd.read_csv(csv_file)
-    # # Convert DataFrame to JSON
-    # json_data = df.to_json(orient="records", indent=4)
-    print(keywords)
-    json_data = seo_keywords_main(keywords)
-
-    return json_data    
 
 
 class KeywordRequest(BaseModel):
     keywords: Optional[str] = None
     description: Optional[str] = None
+    exclude_values: Optional[List[int]] = []
+    location_ids: Optional[List[int]] = None
+    language_id: Optional[int] = None
 
     def validate(self):
         if not self.keywords and not self.description:
             raise ValueError("At least one of 'keywords' or 'description' must be provided")
+        if self.location_ids is None or self.language_id is None:
+            raise ValueError("Both 'location_ids' and 'language_id' must be provided")
         
 
 
@@ -59,21 +38,43 @@ class KeywordRequest(BaseModel):
 def seo_generate_keywords(request: KeywordRequest):
     try:
         request.validate()
+        # If both location and language are missing, raise an error
+        if request.location_ids is None and request.language_id is None:
+            raise HTTPException(status_code=400, detail="Both 'location_ids' and 'language_id' must be provided.")
+        
         keyword_json = query_keywords_description(prompt_keyword, request.keywords, request.description)
         # print(result)
         keyword = extract_keywords(str(keyword_json))
-       
-        if keyword:
-            result = Seo_keyword_search(keywords=keyword)
-            return result
-        else:
-            return keyword
+        
+        if isinstance(keyword, tuple) and keyword[0] is False:
+            raise HTTPException(status_code=400, detail=keyword[1])
+        
+
+        try:
+            search_result = seo_keywords_main(
+                keywords=keyword, 
+                location_ids=request.location_ids, 
+                language_id=request.language_id
+            )
+        except Exception as e:
+            print(f"❌ Error in seo_keywords_main: {str(e)}")  
+            raise HTTPException(status_code=500, detail="Failed to fetch keyword data from Google Ads API.")
+        
+
+        if not search_result or not isinstance(search_result, list):
+            raise HTTPException(status_code=500, detail="Invalid response from Google Ads API.")
+
+        print(search_result)
+        
+        if request.exclude_values:
+            search_result = filter_keywords_by_searches(search_result, request.exclude_values)
+
+        return search_result
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-   # except Exception as e:
-    #    raise HTTPException(status_code=500, detail=f"Error processing request str(e)}")
     
+
 
 @app.post("/seo_keyword_suggestion")
 def seo_keyword_suggestion(request: KeywordRequest):
@@ -91,7 +92,7 @@ def seo_keyword_suggestion(request: KeywordRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Error processing request")    
+        raise HTTPException(status_code=500, detail=str(e))    
     
 
 @app.post("/seo_keyword_clustering")
@@ -126,6 +127,7 @@ async def seo_keyword_clustering(file: UploadFile = File(...)):
 
 
 
+
 @app.post("/ppc_generate_keywords")
 def ppc_generate_keywords(request: KeywordRequest):
     try:
@@ -133,17 +135,16 @@ def ppc_generate_keywords(request: KeywordRequest):
         keyword_json = query_keywords_description(prompt_keyword, request.keywords, request.description)
         # print(result)
         keyword = extract_keywords(str(keyword_json))
-       
-        if keyword:
-            result = Seo_keyword_search(keywords=keyword)
-            return result
-        else:
-            return keyword
+        
+        if isinstance(keyword, tuple) and keyword[0] is False:
+            raise HTTPException(status_code=400, detail=keyword[1])
+        
+        search_result = Seo_keyword_search(keywords=keyword)
+        
+        return search_result
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Error processing request")
     
 
 @app.post("/ppc_keyword_suggestion")

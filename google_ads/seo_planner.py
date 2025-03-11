@@ -72,21 +72,27 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
             print(f"\tError message: {error.message}")
         return None
 
-def seo_keywords_main(keywords):
+def seo_keywords_main(keywords, location_ids, language_id):
     # Load client from YAML config file
     try:
+        # client = GoogleAdsClient.load_from_storage(
+        #     "/home/ubuntu/ai_marketing/google_ads/google-ads.yaml",
+        #     version="v18"
+        # )
+
         client = GoogleAdsClient.load_from_storage(
-            "/home/ubuntu/ai_marketing/google_ads/google-ads.yaml",
+            r"C:\Users\nickc\OneDrive\Desktop\AI marketing\google_ads\google-ads.yaml",
             version="v18"
         )
     except Exception as e:
         print(f"❌ Error loading client configuration: {e}")
         return
     
-    # Define parameters
-    location_ids = [2840]  # USA and New York
-    language_id = 1000  # English
-    customer_id = "6655930925"  # Your Google Ads Customer ID
+    if location_ids is None:
+        location_ids = [2840] 
+    if language_id is None:     
+        language_id = 1036  
+    customer_id = "6655930925"  
     # keywords = ["AI agent", "Database"]
     
     # Generate keyword ideas
@@ -100,5 +106,6 @@ def seo_keywords_main(keywords):
 
     return result
 
-# if __name__ == "__main__":
-#     seo_keywords_main()
+if __name__ == "__main__":
+    key = ["AI agent", "Database"]
+    seo_keywords_main(keywords=key, location_ids=None, language_id=None)
