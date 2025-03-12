@@ -672,7 +672,7 @@ with tab2:
     
 
     # Show SEO DataFrame if available
-    if st.session_state.seo_df is not None and not st.session_state.ppc_df.empty:
+    if st.session_state.ppc_df is not None and not st.session_state.ppc_df.empty:
         st.subheader("Editable PPC Keywords DataFrame:")
 
         # Add a checkbox column for deletion
