@@ -1,5 +1,9 @@
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
+from google_ads.clinet import get_client
+from dotenv import load_dotenv
+load_dotenv()
+import os
 
 def get_language_resource_name(client, customer_id, language_id):
     """Fetch the resource name of a language constant using Google Ads API."""
@@ -45,6 +49,7 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
         request.customer_id = customer_id
         request.language = language_rn
         request.geo_target_constants.extend(location_rns)
+
         
         # Set up keyword seed using extend to add each keyword from the list
         keyword_seed = client.get_type("KeywordSeed")
@@ -74,25 +79,13 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
 
 def seo_keywords_main(keywords, location_ids, language_id):
     # Load client from YAML config file
-    try:
-        client = GoogleAdsClient.load_from_storage(
-            "/home/ubuntu/ai_marketing/google_ads/google-ads.yaml",
-            version="v18"
-        )
-
-        # client = GoogleAdsClient.load_from_storage(
-        #     r"C:\Users\nickc\OneDrive\Desktop\AI marketing\google_ads\google-ads.yaml",
-        #     version="v18"
-        # )
-    except Exception as e:
-        print(f"❌ Error loading client configuration: {e}")
-        return
+    client = get_client()
     
     if location_ids is None:
         location_ids = [2840] 
     if language_id is None:     
         language_id = 1036  
-    customer_id = "6655930925"  
+    customer_id = os.environ.get("GOOGLE_ADS_CUSTOMER_ID") 
     # keywords = ["AI agent", "Database"]
     
     # Generate keyword ideas

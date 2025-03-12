@@ -80,6 +80,43 @@ def filter_keywords_by_searches(keyword_ideas, exclude_values: List[int]):
     ]
 
 
+def flatten_ppc_data(json_data, df):
+
+    # ✅ Convert DataFrame columns to dictionaries for quick lookup
+    search_volume_map = df.set_index("Keyword")["Avg Monthly Searches"].to_dict()
+    bid_low_map = df.set_index("Keyword")["LowTopOfPageBid"].to_dict()
+    bid_high_map = df.set_index("Keyword")["HighTopOfPageBid"].to_dict()
+    # currency_map = df.set_index("Keyword")["Currency"].to_dict()
+
+    flattened_data = []
+
+    for item in json_data:
+        for page in item.get("Pages", []):
+            ad_group = page.get("Ad Group", "")
+            keywords = page.get("Keywords", [])
+            ad_headlines = page.get("Ad Headline", [])
+            descriptions = page.get("Description", [])
+
+            # ✅ Get max length among lists to ensure complete iteration
+            max_len = max(len(keywords), len(ad_headlines), len(descriptions))
+
+            for i in range(max_len):
+                keyword = keywords[i] if i < len(keywords) else None
+
+                record = {
+                    "Ad Group": ad_group,
+                    "Keywords": keyword,
+                    "Avg. Monthly Searches": search_volume_map.get(keyword, None) if keyword else None,
+                    "Top of Page Bid Low": bid_low_map.get(keyword, None) if keyword else None,
+                    "Top of Page Bid High": bid_high_map.get(keyword, None) if keyword else None,
+                    "Ad Headline": ad_headlines[i] if i < len(ad_headlines) else None,
+                    "Description": descriptions[i] if i < len(descriptions) else None,
+                    # "Currency": currency_map.get(keyword, None) if keyword else None,
+                }
+                flattened_data.append(record)
+
+    return flattened_data
+
 
 def extract_keywords(json_string):
     """Validate JSON and extract 'keywords' list if present.

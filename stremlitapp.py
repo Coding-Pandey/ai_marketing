@@ -16,6 +16,9 @@ GENERATE_API_URL = "http://127.0.0.1:8000/seo_generate_keywords"
 SUGGEST_API_URL = "http://127.0.0.1:8000/seo_keyword_suggestion"
 CLUSTER_API_URL = "http://127.0.0.1:8000/seo_keyword_clustering"
 
+PPC_GENERATE_API_URL = "http://127.0.0.1:8000/ppc_generate_keywords"
+PPC_CLUSTER_API_URL = "http://127.0.0.1:8000/ppc_keyword_clustering"
+
 # Create tabs for SEO and PPC processes
 tab1, tab2, tab3 = st.tabs(["SEO Process", "PPC Process", "Keywords suggestions"])
 
@@ -501,10 +504,218 @@ with tab2:
     # User Input for PPC
     ppc_keywords = st.text_input("Enter PPC Keywords (comma-separated):", key="ppc_keywords", 
                                  placeholder="e.g., Google Ads, PPC Campaign, CPC")
+    
+    # Process input when user submits
+    if ppc_keywords:
+        keywords_list = [kw.strip() for kw in ppc_keywords.split(",") if kw.strip()]     
+        keywords_list = keywords_list[:10]
+
+        st.success(f"✅ Using the first {len(keywords_list)} keywords: {', '.join(keywords_list)}")
+
+
     ppc_description = st.text_area("Enter a Short Description (Optional):", key="ppc_description", 
                                    placeholder="Describe your PPC campaign goals")
 
+    # Location and Language dropdowns
+    st.subheader("Search Parameters")
+    col1, col2 = st.columns(2)
     
+    with col1:
+        # Multi-select for locations
+        selected_locations = st.multiselect(
+            "Select Locations",
+            options=[loc["country"] for loc in location_options],
+            default=[location_options[0]["country"]],
+            key="ppc_locations"
+        )
+        
+        # Get the location IDs based on selected location names
+        location_ids = [
+            loc["id"] for loc in location_options 
+            if loc["country"] in selected_locations
+        ]
+    
+    with col2:
+        # Single select for language
+        selected_language = st.selectbox(
+            "Select Language",
+            options=[lang["Name"] for lang in language_options],
+            index=0,
+            key="ppc_language"
+        )
+        
+        # Get the language ID based on selected language name
+        language_id = next(
+            (lang["ID"] for lang in language_options if lang["Name"] == selected_language),
+            None
+        )
+
+    # Checkbox to enable/disable the exclusion filter
+    use_exclude_filter = st.checkbox("Enable Exclusion Filter ppc")
+    if use_exclude_filter:
+        max_exclude = st.slider(
+            "Exclude Keywords with Monthly Searches Below",
+            min_value=0,
+            max_value=500,
+            value=0,
+            step=10,
+            key="ppc_exclude"
+        )
+    else:
+        max_exclude = None   
+
+
+    # Generate exclusion list
+    if max_exclude is None:
+        exclude_values = []
+    else:
+        exclude_values = list(range(0, max_exclude + 1, 10))  # Include max_exclude in the range
+
+        # Ensure the max_exclude is in the list if it's not already there
+        if max_exclude > 0 and max_exclude not in exclude_values:
+            exclude_values.append(int(max_exclude))
+
+
+
+    st.caption(f"Will exclude keywords with monthly searches in: {exclude_values}")
+    
+    def fetch_ppc_keywords(api_url):
+        if not ppc_keywords and not ppc_description:
+            st.error("Please provide at least one input (keywords or description).")
+            return
+        
+        if not location_ids:
+            st.error("Please select at least one location.")
+            return
+            
+        if language_id is None:
+            st.error("Please select a language.")
+            return
+
+        # Create payload with the new required parameters
+        payload = {
+            "keywords": ppc_keywords, 
+            "description": ppc_description,
+            "exclude_values": exclude_values,  # Convert to list as API expects
+            "location_ids": location_ids,
+            "language_id": language_id
+        }
+        
+        with st.spinner("Generating keywords..."):
+            response = requests.post(api_url, json=payload)
+
+        if response.status_code == 200:
+            data = response.json()
+            st.success("PPC Keywords Generated Successfully!")
+
+            # Display extracted keywords as JSON
+            # st.subheader("Extracted PPC Keywords:")
+            # st.json(data)
+
+            # Convert JSON list to DataFrame
+            try: 
+                keywords_list = json.loads(data) if isinstance(data, str) else data
+                if isinstance(keywords_list, list) and all(isinstance(item, dict) for item in keywords_list):
+                    df = pd.DataFrame(keywords_list)
+                    st.session_state.ppc_df = df
+                else:
+                    st.error("Unexpected JSON format received!")
+            except json.JSONDecodeError:
+                st.error("Failed to parse JSON response!")
+        else:
+            error_msg = "Unknown error"
+            try:
+                error_detail = response.json().get('detail', error_msg)
+                error_msg = error_detail
+            except:
+                pass
+            st.error(f"Error: {error_msg}")
+
+    
+
+    # Function to process SEO keywords using the clustering API
+    def process_ppc_keywords():
+        if st.session_state.ppc_df is None or st.session_state.ppc_df.empty:
+            st.error("No PPC data available to process.")
+            return
+
+        # Convert DataFrame to CSV (in-memory)
+        csv_buffer = BytesIO()
+        st.session_state.ppc_df.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)
+
+        # Send CSV file to FastAPI
+        files = {"file": ("ppc_keywords.csv", csv_buffer, "text/csv")}
+        response = requests.post(PPC_CLUSTER_API_URL, files=files)
+
+        if response.status_code == 200:
+            st.success("ppc Keywords Processed Successfully!")
+            processed_data = response.json()
+
+            # Convert JSON response to DataFrame
+            try:
+                processed_df = pd.DataFrame(processed_data)
+                st.session_state.ppc_processed_df = processed_df
+                # st.subheader("Processed SEO Keywords DataFrame:")
+                # st.dataframe(processed_df)
+            except Exception as e:
+                st.error(f"Error converting processed data to DataFrame: {e}")
+        else:
+            st.error(f"Error: {response.json().get('detail', 'Unknown error')}")
+
+    # Buttons for generating and suggesting SEO keywords
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Generate PPC Keywords", key="gen_ppc"):
+            fetch_ppc_keywords(PPC_GENERATE_API_URL)
+            
+    
+
+    # Show SEO DataFrame if available
+    if st.session_state.seo_df is not None and not st.session_state.ppc_df.empty:
+        st.subheader("Editable PPC Keywords DataFrame:")
+
+        # Add a checkbox column for deletion
+        df = st.session_state.ppc_df.copy()
+        df["Delete"] = False  # Default unchecked
+        edited_df = st.data_editor(df, key="ppc_data_editor", num_rows="dynamic", use_container_width=True)
+
+        col1, col2, col3,col4, col5 = st.columns([1, 1, 1, 1, 1])
+
+        # Handle row deletion
+        with col1:
+            if st.button("Delete Selected Rows", key="delete_ppc_rows"):
+                st.session_state.ppc_df = edited_df[edited_df["Delete"] == False].drop(columns=["Delete"])
+                st.success("Selected rows deleted!")
+
+        # Save updated DataFrame
+        with col2:
+            if st.button("Save PPC Changes", key="save_ppc"):
+                st.session_state.ppc_df = edited_df.drop(columns=["Delete"])
+                st.success("PPC Changes Saved!")
+
+        # Download the modified DataFrame as CSV
+        with col3:
+            if st.session_state.ppc_df is not None and not st.session_state.ppc_df.empty:
+                csv = st.session_state.ppc_df.to_csv(index=False)
+                st.download_button(label="Download PPC CSV", data=csv, file_name="ppc_keywords.csv", mime="text/csv", key="download_ppc")
+
+        # Process SEO keywords (send to clustering API)
+        with col5:
+            if st.button("Process PPC Keywords", key="process_ppc"):
+                process_ppc_keywords()
+
+        # Clear SEO DataFrame button
+        with col4:
+            if st.button("Clear PPC DataFrame", key="clear_ppc"):
+                st.session_state.ppc_df = None
+                st.session_state.ppc_processed_df = None
+                st.success("PPC Data Cleared!")
+            
+    # Show Processed SEO Keywords DataFrame if available
+    if st.session_state.ppc_processed_df is not None:
+        st.subheader("Processed SEO Keywords DataFrame:")
+        st.dataframe(st.session_state.ppc_processed_df)
 
 
 

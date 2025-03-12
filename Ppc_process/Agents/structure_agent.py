@@ -147,8 +147,8 @@ async def agent_recursion(clusters):
 async def ppc_main(input_data):
     results = await agent_recursion(input_data)
     # Save results to file
-    with open("clustering_results_ppc1.json", "w") as f:
-        json.dump(results, f, indent=2)
+    # with open("clustering_results_ppc1.json", "w") as f:
+    #     json.dump(results, f, indent=2)
     print(f"Processed {len(results)} items and saved to clustering_results.json")
     return results
 

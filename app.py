@@ -10,9 +10,10 @@ from Ppc_process.Agents.structure_agent import ppc_main
 from Seo_process.prompts.keywords_prompt import prompt_keyword,prompt_keyword_suggestion
 from collections import defaultdict
 from google_ads.seo_planner import seo_keywords_main
+from google_ads.ppc_process import ppc_keywords_main
 # from utils import flatten_seo_data , extract_first_json_object
 import asyncio
-from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches
+from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data
 import io
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -75,7 +76,6 @@ def seo_generate_keywords(request: KeywordRequest):
         raise HTTPException(status_code=400, detail=str(e))
     
 
-
 @app.post("/seo_keyword_suggestion")
 def seo_keyword_suggestion(request: KeywordRequest):
     try:
@@ -132,6 +132,10 @@ async def seo_keyword_clustering(file: UploadFile = File(...)):
 def ppc_generate_keywords(request: KeywordRequest):
     try:
         request.validate()
+        # If both location and language are missing, raise an error
+        if request.location_ids is None and request.language_id is None:
+            raise HTTPException(status_code=400, detail="Both 'location_ids' and 'language_id' must be provided.")
+        
         keyword_json = query_keywords_description(prompt_keyword, request.keywords, request.description)
         # print(result)
         keyword = extract_keywords(str(keyword_json))
@@ -139,8 +143,26 @@ def ppc_generate_keywords(request: KeywordRequest):
         if isinstance(keyword, tuple) and keyword[0] is False:
             raise HTTPException(status_code=400, detail=keyword[1])
         
-        search_result = Seo_keyword_search(keywords=keyword)
+
+        try:
+            search_result = ppc_keywords_main(
+                keywords=keyword, 
+                location_ids=request.location_ids, 
+                language_id=request.language_id
+            )
+        except Exception as e:
+            print(f"❌ Error in ppc_keywords_main: {str(e)}")  
+            raise HTTPException(status_code=500, detail="Failed to fetch keyword data from Google Ads API.")
         
+
+        if not search_result or not isinstance(search_result, list):
+            raise HTTPException(status_code=500, detail="Invalid response from Google Ads API.")
+
+        print(search_result)
+        
+        if request.exclude_values:
+            search_result = filter_keywords_by_searches(search_result, request.exclude_values)
+
         return search_result
         
     except ValueError as e:
@@ -170,24 +192,24 @@ def ppc_keyword_suggestion(request: KeywordRequest):
 async def ppc_keyword_clustering(file: UploadFile = File(...)):
     try:
 
-        # file_contents = file.file.read()
-        # print("File contents:", file_contents)  
-        file_extension = file.filename.split(".")[-1].lower()
-        
-        if file_extension == "csv":
-            df = pd.read_csv(file.file)
-        elif file_extension in ["xls", "xlsx"]:
-            df = pd.read_excel(file.file)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file format. Please upload a CSV or Excel file.")
-        
-        df1 = df[["Keyword"]]      
-        data = df1.to_dict(orient="records")
+        if not file:
+            return {"error": "No file uploaded"}
+        # Read file contents and convert to DataFrame
+        file_contents = await file.read()
+        df = pd.read_csv(io.StringIO(file_contents.decode("utf-8")))  
+        print({"COLUMNS":df.columns, "len":len(df)})
+
+        df1 = df[["Keyword"]]
+
+        print("Parsed DataFrame:", df1.head())
+        data= df1.to_dict(orient="records")
         print("Parsed data:", data)  
 
-        result = asyncio.run(ppc_main(data))
+        # result = asyncio.run(ppc_main(data))
+        result = await ppc_main(data)
+        ppc_data = flatten_ppc_data(result,df)
   
-        return result
+        return ppc_data
 
 
     except ValueError as e:
