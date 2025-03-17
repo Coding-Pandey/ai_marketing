@@ -342,6 +342,40 @@ with tab1:
 
 
     st.caption(f"Will exclude keywords with monthly searches in: {exclude_values}")
+
+    if 'seo_word_list' not in st.session_state:
+        st.session_state.seo_word_list = []
+
+    seo_new_word = st.text_input("Enter branded Keywords (comma-separated):", key="seo_branded_key", 
+                                    placeholder="e.g., apple, samsung, Automation")
+
+
+    if st.button("Add Keywords"):
+        if seo_new_word:
+            words = [word.strip() for word in seo_new_word.split(',')]
+    
+            for word in words:
+                if word and word not in st.session_state.seo_word_list:
+                    st.session_state.seo_word_list.append(word)
+            
+      
+    show_keywords = st.checkbox("Show Keywords", value=False)
+
+    if show_keywords:
+        st.subheader("Current Word List:")
+        if st.session_state.seo_word_list:
+            # Create columns for each word to add a remove button
+            for i, word in enumerate(st.session_state.seo_word_list):
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.write(f"{i+1}. {word}")
+                with col2:
+                    # Create a unique key for each button
+                    if st.button("Remove", key=f"remove_{i}"):
+                        st.session_state.seo_word_list.pop(i)
+                        st.rerun()  # Rerun the app to update the display
+        else:
+            st.write("No words added yet.")
     
     def fetch_seo_keywords(api_url):
         if not seo_keywords and not seo_description:
@@ -361,6 +395,7 @@ with tab1:
             "keywords": seo_keywords, 
             "description": seo_description,
             "exclude_values": exclude_values,  
+            "branded_keyword":st.session_state.seo_word_list, 
             "location_ids": location_ids,
             "language_id": language_id
         }
@@ -578,6 +613,44 @@ with tab2:
 
 
     st.caption(f"Will exclude keywords with monthly searches in: {exclude_values}")
+
+
+
+    if 'ppc_word_list' not in st.session_state:
+        st.session_state.ppc_word_list = []
+
+    ppc_new_word = st.text_input("Enter branded Keywords (comma-separated):", key="ppc_branded_key", 
+                                    placeholder="e.g., apple, samsung, Automation")
+
+
+    if st.button("Add branded Keywords"):
+        if ppc_new_word:
+            words = [word.strip() for word in ppc_new_word.split(',')]
+    
+            for word in words:
+                if word and word not in st.session_state.ppc_word_list:
+                    st.session_state.ppc_word_list.append(word)
+            
+      
+    show_keywords = st.checkbox("Show branded Keywords", value=False)
+
+    if show_keywords:
+        st.subheader("Current Word List:")
+        if st.session_state.ppc_word_list:
+            # Create columns for each word to add a remove button
+            for i, word in enumerate(st.session_state.ppc_word_list):
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.write(f"{i+1}. {word}")
+                with col2:
+                    # Create a unique key for each button
+                    if st.button("Remove", key=f"remove_{i}"):
+                        st.session_state.ppc_word_list.pop(i)
+                        st.rerun()  # Rerun the app to update the display
+        else:
+            st.write("No words added yet.")
+
+
     
     def fetch_ppc_keywords(api_url):
         if not ppc_keywords and not ppc_description:
@@ -592,11 +665,12 @@ with tab2:
             st.error("Please select a language.")
             return
 
-        # Create payload with the new required parameters
+    
         payload = {
             "keywords": ppc_keywords, 
             "description": ppc_description,
-            "exclude_values": exclude_values,  # Convert to list as API expects
+            "exclude_values": exclude_values,
+            "branded_keyword":st.session_state.ppc_word_list,  
             "location_ids": location_ids,
             "language_id": language_id
         }

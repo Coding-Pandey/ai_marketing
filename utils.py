@@ -118,6 +118,28 @@ def flatten_ppc_data(json_data, df):
     return flattened_data
 
 
+def remove_branded_keywords(keywords_list, branded_keywords_list):
+    # Create a new list to store filtered keywords
+    filtered_keywords = []
+    
+    # Convert branded keywords to lowercase for case-insensitive comparison
+    branded_keywords_lower = [brand.lower() for brand in branded_keywords_list]
+    
+    # Filter out branded keywords
+    for keyword_item in keywords_list:
+        keyword_lower = keyword_item['Keyword'].lower()
+        
+        # Check if the keyword contains any branded keyword
+        is_branded = any(brand in keyword_lower for brand in branded_keywords_lower)
+        
+        # If not branded, add to filtered list
+        if not is_branded:
+            filtered_keywords.append(keyword_item)
+    
+    return filtered_keywords
+
+
+
 def extract_keywords(json_string):
     """Validate JSON and extract 'keywords' list if present.
     Returns keywords list if valid and <= 20 keywords with duplicates removed,

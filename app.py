@@ -13,7 +13,7 @@ from google_ads.seo_planner import seo_keywords_main
 from google_ads.ppc_process import ppc_keywords_main
 # from utils import flatten_seo_data , extract_first_json_object
 import asyncio
-from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data
+from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data, remove_branded_keywords
 import io
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -24,6 +24,7 @@ class KeywordRequest(BaseModel):
     keywords: Optional[str] = None
     description: Optional[str] = None
     exclude_values: Optional[List[int]] = []
+    branded_keyword: Optional[List[str]] = []
     location_ids: Optional[List[int]] = None
     language_id: Optional[int] = None
 
@@ -32,7 +33,14 @@ class KeywordRequest(BaseModel):
             raise ValueError("At least one of 'keywords' or 'description' must be provided")
         if self.location_ids is None or self.language_id is None:
             raise ValueError("Both 'location_ids' and 'language_id' must be provided")
-        
+
+class SuggestionKeywordRequest(BaseModel):
+    keywords: Optional[str] = None
+    description: Optional[str] = None
+
+    def validate(self):
+        if not self.keywords and not self.description:
+            raise ValueError("At least one of 'keywords' or 'description' must be provided")   
 
 
 @app.post("/seo_generate_keywords")
@@ -66,9 +74,12 @@ def seo_generate_keywords(request: KeywordRequest):
             raise HTTPException(status_code=500, detail="Invalid response from Google Ads API.")
 
         print(search_result)
-        
+        print(request.branded_keyword)
         if request.exclude_values:
             search_result = filter_keywords_by_searches(search_result, request.exclude_values)
+        
+        if request.branded_keyword:
+            search_result = remove_branded_keywords(search_result,request.branded_keyword,)
 
         return search_result
         
@@ -77,7 +88,7 @@ def seo_generate_keywords(request: KeywordRequest):
     
 
 @app.post("/seo_keyword_suggestion")
-def seo_keyword_suggestion(request: KeywordRequest):
+def seo_keyword_suggestion(request: SuggestionKeywordRequest):
     try:
         request.validate()
         keyword_json = query_keyword_suggestion(prompt_keyword_suggestion, request.keywords, request.description)
@@ -159,9 +170,12 @@ def ppc_generate_keywords(request: KeywordRequest):
             raise HTTPException(status_code=500, detail="Invalid response from Google Ads API.")
 
         print(search_result)
-        
+        print(request.branded_keyword)
         if request.exclude_values:
             search_result = filter_keywords_by_searches(search_result, request.exclude_values)
+
+        if request.branded_keyword:
+            search_result = remove_branded_keywords(search_result,request.branded_keyword,)    
 
         return search_result
         
@@ -169,23 +183,7 @@ def ppc_generate_keywords(request: KeywordRequest):
         raise HTTPException(status_code=400, detail=str(e))
     
 
-@app.post("/ppc_keyword_suggestion")
-def ppc_keyword_suggestion(request: KeywordRequest):
-    try:
-        request.validate()
-        keyword_json = query_keyword_suggestion(prompt_keyword_suggestion, request.keywords, request.description)
-        print(keyword_json)
-        # print(result)
-        keyword = extract_keywords(keyword_json)
-        if keyword:
-            return keyword
-        else:
-            return "Could you retry"
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Error processing request")    
+
     
 
 @app.post("/ppc_keyword_clustering")
