@@ -36,21 +36,21 @@ def get_language_resource_name(client, customer_id, language_id):
 def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywords):
     """Fetch keyword ideas from Google Ads API."""
     try:
-        keyword_plan_idea_service = client.get_service("KeywordPlanIdeaService")
+        keyword_plan_idea_service = client.get_service("KeywordPlanIdeaService", version="v18")
         
         # Convert location IDs to resource names
         location_rns = [f"geoTargetConstants/{loc}" for loc in location_ids]
         
         # Get language resource name
-        language_rn = get_language_resource_name(client, customer_id, language_id)
-        if not language_rn:
-            print("❌ Could not fetch language resource name. Exiting.")
-            return
+        # language_rn = get_language_resource_name(client, customer_id, language_id)
+        # if not language_rn:
+        #     print("❌ Could not fetch language resource name. Exiting.")
+        #     return
             
         # Create keyword plan idea request
         request = client.get_type("GenerateKeywordIdeasRequest")
         request.customer_id = customer_id
-        request.language = language_rn
+        request.language = f"languageConstants/{language_id}"
         request.geo_target_constants.extend(location_rns)
 
         
@@ -65,9 +65,10 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
         # Process results into a list of dictionaries
         data = []
         for idea in keyword_ideas:
+            metrics = idea.keyword_idea_metrics
             data.append({
                 "Keyword": idea.text,
-                "Avg Monthly Searches": idea.keyword_idea_metrics.avg_monthly_searches,
+                "Avg Monthly Searches": metrics.avg_monthly_searches if metrics else 0,
             })
 
         print(data)
@@ -85,9 +86,9 @@ def seo_keywords_main(keywords, location_ids, language_id):
     client = get_client()
     
     if location_ids is None:
-        location_ids = [2840] 
+        location_ids = [2638] 
     if language_id is None:     
-        language_id = 1036  
+        language_id = 1000  
     customer_id = os.environ.get("GOOGLE_ADS_CUSTOMER_ID") 
     # keywords = ["AI agent", "Database"]
     
@@ -103,5 +104,5 @@ def seo_keywords_main(keywords, location_ids, language_id):
     return result
 
 if __name__ == "__main__":
-    key = ["AI agent", "Database"]
+    key = ["nike"]
     seo_keywords_main(keywords=key, location_ids=None, language_id=None)

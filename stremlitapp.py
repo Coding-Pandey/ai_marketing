@@ -343,6 +343,13 @@ with tab1:
 
     st.caption(f"Will exclude keywords with monthly searches in: {exclude_values}")
 
+    remove_branded_status = st.checkbox("remove branded keywords")
+    if remove_branded_status:
+        remove_branded = True
+    else:
+        remove_branded = False
+
+
     if 'seo_word_list' not in st.session_state:
         st.session_state.seo_word_list = []
 
@@ -397,7 +404,8 @@ with tab1:
             "exclude_values": exclude_values,  
             "branded_keyword":st.session_state.seo_word_list, 
             "location_ids": location_ids,
-            "language_id": language_id
+            "language_id": language_id,
+            "branded_words": remove_branded
         }
         
         with st.spinner("Generating keywords..."):
