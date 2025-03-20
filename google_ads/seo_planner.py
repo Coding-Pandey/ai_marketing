@@ -86,7 +86,7 @@ def seo_keywords_main(keywords, location_ids, language_id):
     client = get_client()
     
     if location_ids is None:
-        location_ids = [2638] 
+        location_ids = [2826] 
     if language_id is None:     
         language_id = 1000  
     customer_id = os.environ.get("GOOGLE_ADS_CUSTOMER_ID") 
@@ -104,5 +104,5 @@ def seo_keywords_main(keywords, location_ids, language_id):
     return result
 
 if __name__ == "__main__":
-    key = ["nike"]
+    key = ["eis investment"]
     seo_keywords_main(keywords=key, location_ids=None, language_id=None)

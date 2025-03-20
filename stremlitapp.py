@@ -35,7 +35,7 @@ if "ppc_processed_df" not in st.session_state:
 # Sample location and language data (replace with your actual data)
 location_options =[
     {"id": 2840, "country": "United States"},
-    {"id": 2638, "country": "United Kingdom"},
+    {"id": 2826, "country": "United Kingdom"},
     {"id": 2616, "country": "Poland"},
     {"id": 2276, "country": "Germany"},
     {"id": 2250, "country": "France"},
