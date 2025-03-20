@@ -15,3 +15,5 @@ python-multipart
 sentence-transformers
 langchain-openai
 streamlit
+spacy
+# python -m spacy download en_core_web_lg

@@ -2,6 +2,18 @@ import json
 import pandas as pd
 from typing import List, Optional
 
+import spacy
+
+# Load the large English model
+nlp = spacy.load("en_core_web_lg")
+
+
+def filter_non_branded_keywords(keyword_list):
+
+    return [
+        item for item in keyword_list
+        if not any(ent.label_ in ["ORG", "PRODUCT"] for ent in nlp(item['Keyword']).ents)
+    ]
 def flatten_seo_data(json_data, search_volume_df):
     flattened_data = []
 
