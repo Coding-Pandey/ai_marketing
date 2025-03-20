@@ -5,7 +5,7 @@ from typing import List, Optional
 import spacy
 
 # Load the large English model
-nlp = spacy.load("en_core_web_lg")
+nlp = spacy.load("en_core_web_sm")
 
 
 def filter_non_branded_keywords(keyword_list):
