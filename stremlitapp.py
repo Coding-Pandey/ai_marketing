@@ -4,6 +4,11 @@ import pandas as pd
 import json
 from io import BytesIO
 from typing import List, Optional
+from docx import Document
+import io
+import os
+import subprocess
+import tempfile
 
 st.set_page_config(layout="wide")
 
@@ -20,9 +25,14 @@ PPC_GENERATE_API_URL = "http://127.0.0.1:8000/ppc_generate_keywords"
 PPC_CLUSTER_API_URL = "http://127.0.0.1:8000/ppc_keyword_clustering"
 
 SOCIAL_MEDIA_API_URL = "http://127.0.0.1:8000/social_media_post"
+UPLOAD_FILE_S3_BUCKET = "http://127.0.0.1:8000/uploadfile"
 
 # Create tabs for SEO and PPC processes
-tab1, tab2, tab3, tab4 = st.tabs(["SEO Process", "PPC Process", "Keywords suggestions","Social Media Post"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["SEO Process", 
+                                        "PPC Process", 
+                                        "Keywords suggestions",
+                                        "Social Media Post", 
+                                        "Upload Document"])
 
 # Initialize session state for both tabs
 if "seo_df" not in st.session_state:
@@ -838,7 +848,7 @@ with tab3:
 
 with tab4:
     # Streamlit app title
-    st.subheader("Social Media Post Upload")
+    st.subheader("Social Media Post (campaign)")
 
     # File uploader
     uploaded_file = st.file_uploader("Upload a Word document", type=["docx", "doc"])
@@ -876,3 +886,183 @@ with tab4:
                     
             except requests.exceptions.RequestException as e:
                 st.error(f"Request failed: {str(e)}")       
+
+
+
+
+
+
+def convert_doc_to_docx(input_file_path):
+    """Convert .doc to .docx using LibreOffice (Linux/Mac) or pywin32 (Windows).
+    
+    Args:
+        input_file_path (str): Path to the input .doc file
+    
+    Returns:
+        str: Path to the converted .docx file
+    """
+    # Ensure we only replace the last .doc extension and avoid double extensions
+    base_name, ext = os.path.splitext(input_file_path)
+    if ext.lower() == '.doc':
+        output_file = base_name + ".docx"
+    else:
+        output_file = input_file_path  # If not .doc, keep original (shouldn't happen here)
+    
+    try:
+        if os.name == "nt":  # Windows
+            import win32com.client
+            word = win32com.client.Dispatch("Word.Application")
+            word.Visible = False
+            doc = word.Documents.Open(os.path.abspath(input_file_path))
+            doc.SaveAs(os.path.abspath(output_file), 16)  # 16 = docx format
+            doc.Close()
+            word.Quit()
+        else:  # Linux/Mac using LibreOffice
+            subprocess.run([
+                "soffice",
+                "--headless",
+                "--convert-to",
+                "docx",
+                "--outdir",
+                os.path.dirname(input_file_path) or ".",
+                input_file_path
+            ], check=True)
+        
+        return output_file
+    
+    except Exception as e:
+        raise Exception(f"Conversion failed: {str(e)}")
+
+def read_docx(file):
+    """Read content from a .docx file.
+    
+    Args:
+        file: File object or path to .docx file
+    
+    Returns:
+        str: Text content of the document
+    """
+    try:
+        doc = Document(file)
+        text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+        return text if text else "Document is empty"
+    except Exception as e:
+        raise Exception(f"Error reading document: {str(e)}")
+
+def save_docx(text, filename="edited_document.docx"):
+    """Save text as a .docx file.
+    
+    Args:
+        text (str): Text content to save
+        filename (str): Name for the output file
+    
+    Returns:
+        BytesIO: Buffer containing the saved document
+    """
+    try:
+        doc = Document()
+        for line in text.split("\n"):
+            if line.strip():
+                doc.add_paragraph(line)
+        
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        return buffer
+    except Exception as e:
+        raise Exception(f"Error saving document: {str(e)}")
+
+           
+
+with tab5:
+    st.subheader("Upload & Edit Documents")
+
+    categories = {
+        "Buyer persona": "buyer",
+        "Tone of Voice": "tone",
+        "Brand identity": "brand",
+        "Offering": "offering"
+    }
+
+    for category, key in categories.items():
+        st.write(f"### {category}")
+        uploaded_file = st.file_uploader(
+            f"Upload a document for {category}",
+            type=["doc", "docx"],
+            key=key,
+            accept_multiple_files=False
+        )
+
+        if uploaded_file is not None:
+            try:
+                # Handle file based on extension
+                file_extension = uploaded_file.name.lower().split('.')[-1]
+                temp_file_path = None
+                
+                # Create temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
+                    temp_file.write(uploaded_file.getvalue())
+                    temp_file_path = temp_file.name
+
+                # Convert .doc to .docx if necessary
+                if file_extension == "doc":
+                    converted_path = convert_doc_to_docx(temp_file_path)
+                    file_to_read = converted_path
+                else:
+                    file_to_read = temp_file_path
+
+                # Read and display document content
+                file_text = read_docx(file_to_read)
+                edited_text = st.text_area(
+                    f"Edit the document ({category})",
+                    file_text,
+                    height=300,
+                    key=f"edit_{key}"
+                )
+
+                # Prepare files and data for upload
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                data = {"category": category}
+
+                # Combined Upload/Save/Edit button
+                if st.button(f"Save {category}", key=f"upload_save_{key}"):
+                    # If text was edited, save it first
+                    if edited_text != file_text:
+                        output_filename = os.path.splitext(uploaded_file.name)[0] + ".docx"
+                        updated_doc = save_docx(edited_text)
+                        files = {
+                            "file": (output_filename, updated_doc, 
+                                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                        }
+                        st.success(f"Changes saved for {category}")
+                        
+                        # Provide download button for edited file
+                        st.download_button(
+                            label=f"Download Edited {category} Document",
+                            data=updated_doc,
+                            file_name=output_filename,
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            key=f"download_{key}"
+                        )
+
+                if st.button(f"Upload {category}", key=f"upload_{key}"):
+                    response = requests.post(UPLOAD_FILE_S3_BUCKET, files=files, data=data)
+                    if response.status_code == 200:
+                        st.success(f"File uploaded to S3: {response.json()['s3_path']}")
+                        st.write(f"Uploaded file: {uploaded_file.name}")
+                    else:
+                        st.error(f"Upload failed: {response.json().get('detail', 'Unknown error')}")
+
+                # Clean up temporary files
+                if temp_file_path and os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                if file_extension == "doc" and os.path.exists(converted_path):
+                    os.unlink(converted_path)
+
+            except Exception as e:
+                st.error(f"Error processing {category} document: {str(e)}")
+                # Clean up on error
+                if temp_file_path and os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                if 'converted_path' in locals() and os.path.exists(converted_path):
+                    os.unlink(converted_path)

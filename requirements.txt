@@ -19,3 +19,4 @@ spacy
 # python -m spacy download en_core_web_lg
 python-docx
 pypandoc
+boto3

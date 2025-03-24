@@ -1,6 +1,6 @@
 # from chatbot import PROMPT, query_llm, prompt_keyword_suggestion, query_keyword_suggestion
 import pandas as pd
-from fastapi import FastAPI, HTTPException, File, UploadFile, Query
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from pydantic import BaseModel
 from typing import Optional
 import json
@@ -18,6 +18,10 @@ from utils import flatten_seo_data , extract_keywords, filter_keywords_by_search
 import io
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from fastapi.responses import JSONResponse
+from typing import Annotated, List
+from S3_bucket.S3_upload import upload_file_to_s3
+
 app = FastAPI()
 
 
@@ -249,3 +253,62 @@ async def social_media_post(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+#S3 bucket document upload
+@app.post("/uploadfile")
+async def create_upload_file(category: Annotated[str, Form()],
+                             file: UploadFile = File(...)):
+    
+    VALID_CATEGORIES = {"Buyer persona", "Tone of voice", "Brand identity", "Offering"}   
+    try:
+        # Validate category
+        print(category)
+        if category not in VALID_CATEGORIES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid category. Must be one of: {', '.join(VALID_CATEGORIES)}"
+            )
+
+        # Read file content
+        file_content = await file.read()
+        
+        # Validate file size (e.g., max 10MB)
+
+        max_size = 10 * 1024 * 1024  
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail="File size exceeds maximum limit of 10MB"
+            )
+
+        # Get filename and ensure it's safe
+        filename = file.filename
+        if not filename:
+            raise HTTPException(
+                status_code=400,
+                detail="No filename provided"
+            )
+
+        # Upload to S3
+        s3_path = upload_file_to_s3(file_content, filename, category)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "File uploaded successfully",
+                "s3_path": s3_path,
+                "filename": filename,
+                "category": category
+            }
+        )
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )
+
+   
