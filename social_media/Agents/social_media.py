@@ -12,6 +12,7 @@ load_dotenv()
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY")) 
 model_name = os.environ.get("OPENAI_MODEL_2")
 
+# print(client)
 
 def url_agent(items, previous_summaries=None, previous_Facebooks=None, previous_Twitters=None):
  
@@ -20,7 +21,7 @@ def url_agent(items, previous_summaries=None, previous_Facebooks=None, previous_
     previous_Twitters = previous_Twitters if previous_Twitters is not None else []
 
     try:
-        query = "Generate a social media post for a campaign. Given the previous Linkedin summary: {previous_summaries}, Facebook content: {previous_Facebooks} and Twitter content: {previous_Twitters}" 
+        query = "Generate a social media post for a campaign. Given the previous Linkedin summary: {previous_summaries}, Facebook content: {previous_Facebooks} and Twitter content: {previous_Twitters} try generating a new post." 
 
    
         formatted_prompt = social_media_prompt.format(

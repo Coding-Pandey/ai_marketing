@@ -855,7 +855,7 @@ with tab4:
                 # Check if the response was successful
                 if response.status_code == 200:
                     st.write("### LinkedIn, Facebook, Twitter posts")
-                    st.json(response.json())  
+                    # st.json(response.json())  
                     data = response.json()
                     df_data = [
                                 {
@@ -869,6 +869,7 @@ with tab4:
                             ]
 
                     df = pd.DataFrame(df_data)
+                    st.dataframe(df)
                 else:
                     # Handle error cases without assuming JSON
                     st.error(f"Error: {response.status_code}, {response.text}")
