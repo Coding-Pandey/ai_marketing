@@ -7,13 +7,31 @@ import spacy
 # Load the large English model
 nlp = spacy.load("en_core_web_sm")
 
+BRANDED_JSON_PATH = r"C:\Users\nickc\OneDrive\Desktop\AI marketing\branded_keywords\branded.json"
+
+def remove_keywords(data):
+    """Removes entries from data where Keyword (case-insensitive) matches any in keywords_to_remove."""
+    
+    with open(BRANDED_JSON_PATH, "r", encoding="utf-8") as f:
+        keywords_to_remove = json.load(f)
+
+    # Extract keywords to exclude (lowercased for case-insensitive matching)
+    keywords_to_exclude = {item["Keywords"].lower() for item in keywords_to_remove}
+
+    # Remove matching keywords but retain the original casing
+    filtered_data = [item for item in data if item["Keyword"].lower() not in keywords_to_exclude]
+
+    return filtered_data
+
 
 def filter_non_branded_keywords(keyword_list):
-
+    """Removes keywords that are recognized as brands (ORG or PRODUCT) by spaCy."""
+    
     return [
         item for item in keyword_list
-        if not any(ent.label_ in ["ORG", "PRODUCT"] for ent in nlp(item['Keyword']).ents)
+        if not any(ent.label_ in ["ORG", "PRODUCT"] for ent in nlp(item["Keyword"]).ents)
     ]
+
 def flatten_seo_data(json_data, search_volume_df):
     flattened_data = []
 

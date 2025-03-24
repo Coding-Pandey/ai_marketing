@@ -8,12 +8,13 @@ from Seo_process.Agents.Keyword_agent import query_keyword_suggestion,query_keyw
 from Seo_process.Agents.clusterURL_keyword import seo_main
 from Ppc_process.Agents.structure_agent import ppc_main
 from Seo_process.prompts.keywords_prompt import prompt_keyword,prompt_keyword_suggestion
+from social_media.Agents.social_media import agent_call
 from collections import defaultdict
 from google_ads.seo_planner import seo_keywords_main
 from google_ads.ppc_process import ppc_keywords_main
 # from utils import flatten_seo_data , extract_first_json_object
 import asyncio
-from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data, remove_branded_keywords, filter_non_branded_keywords
+from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data, remove_branded_keywords, filter_non_branded_keywords, remove_keywords
 import io
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -81,6 +82,7 @@ def seo_generate_keywords(request: KeywordRequest):
         
         if request.branded_words:
             search_result = filter_non_branded_keywords(search_result)
+            # search_result = remove_keywords(search_result)
             print(search_result)
 
         if request.branded_keyword:
@@ -223,3 +225,27 @@ async def ppc_keyword_clustering(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))     
+
+
+
+# Soical media post
+@app.post("/social_media_post")
+async def social_media_post(file: UploadFile = File(...)):
+    try:
+        if not file:
+            return {"error": "No file uploaded"}
+        
+        # Fixed the condition logic - was missing a 'not' and had incorrect operator
+        if not file.filename.endswith((".docx", ".doc")):
+            return {"error": "Invalid file format. Please upload a Word document (.docx or .doc)"}
+
+        file_contents = await file.read()
+  
+        result = agent_call(file=file_contents,file_name=file.filename, num_iterations=10)
+  
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

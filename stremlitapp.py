@@ -19,8 +19,10 @@ CLUSTER_API_URL = "http://127.0.0.1:8000/seo_keyword_clustering"
 PPC_GENERATE_API_URL = "http://127.0.0.1:8000/ppc_generate_keywords"
 PPC_CLUSTER_API_URL = "http://127.0.0.1:8000/ppc_keyword_clustering"
 
+SOCIAL_MEDIA_API_URL = "http://127.0.0.1:8000/social_media_post"
+
 # Create tabs for SEO and PPC processes
-tab1, tab2, tab3 = st.tabs(["SEO Process", "PPC Process", "Keywords suggestions"])
+tab1, tab2, tab3, tab4 = st.tabs(["SEO Process", "PPC Process", "Keywords suggestions","Social Media Post"])
 
 # Initialize session state for both tabs
 if "seo_df" not in st.session_state:
@@ -832,3 +834,44 @@ with tab3:
     with col1:
         if st.button("Suggest More SEO Keywords", key="suggest_seo"):
             fetch_suggested_seo_keywords()        
+
+
+with tab4:
+    # Streamlit app title
+    st.subheader("Social Media Post Upload")
+
+    # File uploader
+    uploaded_file = st.file_uploader("Upload a Word document", type=["docx", "doc"])
+
+    if uploaded_file is not None:
+        if st.button("Submit File"):
+            # Prepare the file for upload
+            files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+            
+            try:
+                # Make the API request
+                response = requests.post(SOCIAL_MEDIA_API_URL, files=files)
+                
+                # Check if the response was successful
+                if response.status_code == 200:
+                    st.write("### LinkedIn, Facebook, Twitter posts")
+                    st.json(response.json())  
+                    data = response.json()
+                    df_data = [
+                                {
+                                    "LinkedIn": iteration["LinkedIn"][0],
+                                    "Facebook": iteration["Facebook"][0],
+                                    "Twitter": iteration["Twitter"][0],
+                                    "Image Headline": iteration["Image Headline"][0],
+                                    "Subheadline": iteration["Subheadline"][0]
+                                }
+                                for iteration in data
+                            ]
+
+                    df = pd.DataFrame(df_data)
+                else:
+                    # Handle error cases without assuming JSON
+                    st.error(f"Error: {response.status_code}, {response.text}")
+                    
+            except requests.exceptions.RequestException as e:
+                st.error(f"Request failed: {str(e)}")       

@@ -17,3 +17,5 @@ langchain-openai
 streamlit
 spacy
 # python -m spacy download en_core_web_lg
+python-docx
+pypandoc
