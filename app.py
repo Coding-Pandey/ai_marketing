@@ -21,7 +21,8 @@ from typing import Optional, List
 from fastapi.responses import JSONResponse
 from typing import Annotated, List
 from S3_bucket.S3_upload import upload_file_to_s3
-
+from S3_bucket.fetch_document import fetch_document_from_s3, download_document
+from typing import Dict
 app = FastAPI()
 
 
@@ -46,7 +47,11 @@ class SuggestionKeywordRequest(BaseModel):
 
     def validate(self):
         if not self.keywords and not self.description:
-            raise ValueError("At least one of 'keywords' or 'description' must be provided")   
+            raise ValueError("At least one of 'keywords' or 'description' must be provided") 
+
+# Pydantic model to validate incoming dictionary
+class DocumentData(BaseModel):
+    data: Dict[str, str]          
 
 
 @app.post("/seo_generate_keywords")
@@ -312,3 +317,22 @@ async def create_upload_file(category: Annotated[str, Form()],
         )
 
    
+
+@app.get("/list-documents/{user_id}/{category}")
+async def list_documents(user_id: str, category: str):
+    user = user_id
+    category = category
+
+    try:
+        result = fetch_document_from_s3(user, category)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/process-documents")
+async def process_documents(dict_data: DocumentData):
+    """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
+    text = download_document(dict_data.data)
+    return {"status": "success", "extracted_texts": text}
+
+

@@ -27,6 +27,8 @@ PPC_CLUSTER_API_URL = "http://127.0.0.1:8000/ppc_keyword_clustering"
 SOCIAL_MEDIA_API_URL = "http://127.0.0.1:8000/social_media_post"
 UPLOAD_FILE_S3_BUCKET = "http://127.0.0.1:8000/uploadfile"
 
+FETCH_DOCUMENTS_URL = "http://127.0.0.1:8000/list-documents"
+DOWNLOAD_DOCUMENT_URL = "http://127.0.0.1:8000/process-documents"
 # Create tabs for SEO and PPC processes
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["SEO Process", 
                                         "PPC Process", 
@@ -846,15 +848,77 @@ with tab3:
             fetch_suggested_seo_keywords()        
 
 
+def get_documents(user_id: str = "User", category: Optional[str] = None) -> List[str]:
+    """Fetch a list of documents from the API."""
+    # print(f"{FETCH_DOCUMENTS_URL}/{user_id}/{category}")
+    response = requests.get(f"{FETCH_DOCUMENTS_URL}/{user_id}/{category}")
+    # print(response)
+    if response.status_code == 200:
+        return response.json().get("documents", [])
+    return []
+
+
 with tab4:
     # Streamlit app title
+    # Organize documents into folders
+    folders = {
+        "Buyer persona": [],
+        "Tone of voice": [],
+        "Brand identity": [],
+        "Offering": []
+    }
+    
+    user_id = "User"  
+    for category in folders.keys():
+        folders[category] = get_documents(user_id, category)
+        # print(folders[category])
+    
+
+    st.subheader("Select a Document from S3")
+    # Dropdowns for each folder
+    selected_documents = {}
+    for folder, docs in folders.items():
+        selected_documents[folder] = st.selectbox(
+            f"Select a document from {folder}", 
+            options=docs, 
+            key=folder
+        )
+        # print(docs)
+        # print(folder)
+        # print(selected_documents[folder])
+    print(selected_documents)
+
+    if st.button("🔄 Reload", key="reload_button"):
+        st.rerun()
+    # Display download buttons
+    # for folder, doc in selected_documents.items():
+    #     if doc != "None":
+    #         if st.button(f"Download {folder} Document"):
+    #             file_url = fetch_document(doc)
+    #             if file_url:
+    #                 st.markdown(f"[Download {doc.split('/')[-1]}]({file_url})")
+    #             else:
+    #                 st.error("Error fetching the document.")
+
     st.subheader("Social Media Post (campaign)")
 
-    # File uploader
     uploaded_file = st.file_uploader("Upload a Word document", type=["docx", "doc"])
 
     if uploaded_file is not None:
+
         if st.button("Submit File"):
+
+            try:
+                payload = {
+                    data: selected_documents
+                }
+
+                response = requests.post(DOWNLOAD_DOCUMENT_URL, json=payload)
+                if response.status_code == 200:
+                    extracted_texts = response.json().get("extracted_texts", {})
+                    # st.success("File uploaded successfully!")
+            except Exception as e:
+                st.error(f"Error processing file: {str(e)}")    
             # Prepare the file for upload
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
             
@@ -979,7 +1043,7 @@ with tab5:
 
     categories = {
         "Buyer persona": "buyer",
-        "Tone of Voice": "tone",
+        "Tone of voice": "tone",
         "Brand identity": "brand",
         "Offering": "offering"
     }

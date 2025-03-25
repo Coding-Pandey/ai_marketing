@@ -1,6 +1,7 @@
-from S3_bucket.S3_client import s3
+import sys
 import os
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from S3_bucket.S3_client import s3
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
 
