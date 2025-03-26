@@ -29,6 +29,8 @@ UPLOAD_FILE_S3_BUCKET = "http://127.0.0.1:8000/uploadfile"
 
 FETCH_DOCUMENTS_URL = "http://127.0.0.1:8000/list-documents"
 DOWNLOAD_DOCUMENT_URL = "http://127.0.0.1:8000/process-documents"
+
+
 # Create tabs for SEO and PPC processes
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["SEO Process", 
                                         "PPC Process", 
@@ -910,21 +912,31 @@ with tab4:
 
             try:
                 payload = {
-                    data: selected_documents
+                    "data": selected_documents
                 }
 
                 response = requests.post(DOWNLOAD_DOCUMENT_URL, json=payload)
+                print(response)
                 if response.status_code == 200:
-                    extracted_texts = response.json().get("extracted_texts", {})
+                    # extracted_texts = response.json().get("extracted_texts", {})
+                    summarized_data = response.json()
+                    # st.json(response.json())
                     # st.success("File uploaded successfully!")
             except Exception as e:
                 st.error(f"Error processing file: {str(e)}")    
+                
             # Prepare the file for upload
-            files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+            # files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+            files = {
+                    "file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type),
+                    "json_data": (None, json.dumps(summarized_data), "application/json")
+                    }
+
             
             try:
+                # json_payload = {"json_data": json.dumps(summerized_data)}
                 # Make the API request
-                response = requests.post(SOCIAL_MEDIA_API_URL, files=files)
+                response = requests.post(SOCIAL_MEDIA_API_URL, files=files)#,json= json_payload)
                 
                 # Check if the response was successful
                 if response.status_code == 200:

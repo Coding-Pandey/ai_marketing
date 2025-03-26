@@ -9,6 +9,7 @@ from Seo_process.Agents.clusterURL_keyword import seo_main
 from Ppc_process.Agents.structure_agent import ppc_main
 from Seo_process.prompts.keywords_prompt import prompt_keyword,prompt_keyword_suggestion
 from social_media.Agents.social_media import agent_call
+from social_media.Agents.document_summared import Document_summerizer
 from collections import defaultdict
 from google_ads.seo_planner import seo_keywords_main
 from google_ads.ppc_process import ppc_keywords_main
@@ -239,7 +240,7 @@ async def ppc_keyword_clustering(file: UploadFile = File(...)):
 
 # Soical media post
 @app.post("/social_media_post")
-async def social_media_post(file: UploadFile = File(...)):
+async def social_media_post(file: UploadFile = File(...),json_data: Optional[str] = Form(None)):
     try:
         if not file:
             return {"error": "No file uploaded"}
@@ -247,10 +248,12 @@ async def social_media_post(file: UploadFile = File(...)):
         # Fixed the condition logic - was missing a 'not' and had incorrect operator
         if not file.filename.endswith((".docx", ".doc")):
             return {"error": "Invalid file format. Please upload a Word document (.docx or .doc)"}
-
+ 
         file_contents = await file.read()
-  
-        result = agent_call(file=file_contents,file_name=file.filename, num_iterations=10)
+        # print(json_data)
+        # json_data_dict = json.loads(json_data) if json_data else None
+        # print(json_data_dict)
+        result = agent_call(file=file_contents,json_data=json_data,file_name=file.filename, num_iterations=5)
   
         return result
 
@@ -332,7 +335,13 @@ async def list_documents(user_id: str, category: str):
 @app.post("/process-documents")
 async def process_documents(dict_data: DocumentData):
     """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
-    text = download_document(dict_data.data)
-    return {"status": "success", "extracted_texts": text}
+    try:
+        text = download_document(dict_data.data)
+        print(text)
+        result = Document_summerizer(text)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))    
+
 
 

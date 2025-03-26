@@ -80,7 +80,7 @@ def extract_text_from_file(file_path: str) -> str:
     else:
         raise ValueError(f"Unsupported file type: {file_path}")
 
-def download_document(document: dict) -> dict:
+def download_document(data: dict) -> dict:
     extracted_texts = {}
     # Download each file
     with TemporaryDirectory() as temp_dir:
@@ -105,3 +105,4 @@ def download_document(document: dict) -> dict:
     return extracted_texts
 
 # data = download_document(data)
+# print(data)
