@@ -56,10 +56,11 @@ Instructions:
 ### Output Requirements:  
 
 - Provide a **five-point summary** in JSON format covering:  
-  - Tone of Voice Guidelines  
-  - Target Buyer Persona Guidelines  
-  - Services and Offerings Guidelines  
-  - Brand Identity Guidelines  
+- For each category, provide a key in the JSON object with a value that is a list of 5-10 strings summarizing the key points.
+  - Tone of Voice Guidelines :5-10 strings
+  - Target Buyer Persona Guidelines :5-10 strings
+  - Services and Offerings Guidelines :5-10 strings 
+  - Brand Identity Guidelines :5-10 strings
 
 **Input Format:**  
 - The input will be in JSON format, containing detailed text for each category.  

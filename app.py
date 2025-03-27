@@ -15,7 +15,7 @@ from google_ads.seo_planner import seo_keywords_main
 from google_ads.ppc_process import ppc_keywords_main
 # from utils import flatten_seo_data , extract_first_json_object
 import asyncio
-from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data, remove_branded_keywords, filter_non_branded_keywords, remove_keywords
+from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data, remove_branded_keywords, filter_non_branded_keywords, remove_keywords, add_keywords_to_json
 import io
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -92,11 +92,14 @@ def seo_generate_keywords(request: KeywordRequest):
         
         if request.branded_words:
             search_result = filter_non_branded_keywords(search_result)
-            # search_result = remove_keywords(search_result)
-            print(search_result)
+            search_result = remove_keywords(search_result)
+            # print(search_result)
 
         if request.branded_keyword:
-            search_result = remove_branded_keywords(search_result,request.branded_keyword,)
+            # print("hello",request.branded_keyword)
+            search_result = remove_branded_keywords(search_result,request.branded_keyword)
+            add_keywords_to_json(request.branded_keyword)
+
 
         return search_result
         

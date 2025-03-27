@@ -6,6 +6,8 @@ from openai import OpenAI
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from social_media.prompt.social_media_prompt import social_media_prompt
 from social_media.utils import convert_doc_to_text
+# from prompt.social_media_prompt import social_media_prompt
+# from utils import convert_doc_to_text
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -21,21 +23,30 @@ def url_agent(items, json_data,previous_summaries=None, previous_Facebooks=None,
     previous_Twitters = previous_Twitters if previous_Twitters is not None else []
 
     try:
-        query = "Generate a social media post for a campaign. Given the previous Linkedin summary: {previous_summaries}, Facebook content: {previous_Facebooks} and Twitter content: {previous_Twitters} try generating a new post." 
+        print(json_data)
+        query = "Generate a social media post for a campaign. Given the previous Linkedin summary: {previous_summaries}, Facebook content: {previous_Facebooks} and Twitter content: {previous_Twitters} try to generate a new linkedin (Title, content), Facebook, twitter posts." 
+        json_data = json.loads(json_data)
+        # Extracting into separate variables
+        tone_of_voice_guidelines = json_data.get("Tone of Voice Guidelines", [])
+        brand_identity_guidelines = json_data.get("Brand Identity Guidelines", [])
+        services_and_offerings_guidelines = json_data.get("Services and Offerings Guidelines", [])
+        target_buyer_persona_guidelines = json_data.get("Target Buyer Persona Guidelines", [])
 
-   
         formatted_prompt = social_media_prompt.format(
-            summarized_text=json_data,
+            Tone=tone_of_voice_guidelines,
+            Buyer=target_buyer_persona_guidelines,
+            Brand=brand_identity_guidelines,    
+            Offering=services_and_offerings_guidelines,
             items=items
         )
         
-        print(formatted_prompt)
+        # print(formatted_prompt)
         formatted_query = query.format(
             previous_summaries=", ".join(previous_summaries) if previous_summaries else "None",
             previous_Facebooks=", ".join(previous_Facebooks) if previous_Facebooks else "None",
             previous_Twitters=", ".join(previous_Twitters) if previous_Twitters else "None"
         )
-
+        # print(formatted_query)
         messages = [
             {'role': 'system', 'content': formatted_prompt},
             {'role': 'user', 'content': formatted_query}
@@ -141,61 +152,61 @@ def agent_call( file,file_name,json_data, num_iterations=5):
     return all_data
 
 # text ="""
-# Plug & Play, Grow
-# Campaign Overview
-# Tagline:
-# “Plug in, play fast, grow.”
-# Core Idea:
-# Replace the complexity and high costs of an in‑house marketing team with a ready‑to‑deploy, plug‑and‑play solution that delivers expert multi‑channel campaigns for just £5,000 per month. Our system—steeped in our organic tech identity—blends strategic creativity with digital precision. While subtle AI automation underpins efficiency, our primary promise is that you free up your internal bandwidth to focus on big‑picture strategy and growth.
+# # Plug & Play, Grow
+# # Campaign Overview
+# # Tagline:
+# # “Plug in, play fast, grow.”
+# # Core Idea:
+# # Replace the complexity and high costs of an in‑house marketing team with a ready‑to‑deploy, plug‑and‑play solution that delivers expert multi‑channel campaigns for just £5,000 per month. Our system—steeped in our organic tech identity—blends strategic creativity with digital precision. While subtle AI automation underpins efficiency, our primary promise is that you free up your internal bandwidth to focus on big‑picture strategy and growth.
 
-# Campaign Objectives
-# Secure a Meeting:
-# Goal: Engage Growth‑Focused Marketing Managers by showcasing our Accelerator service in a discovery call.
-# Metric: Generate at least 15 qualified leads per month through targeted outreach, aiming for a 50% conversion rate into booked meetings.
-
-
-# Sign the Contract:
-# Goal: Convert 30% of discovery calls into signed contracts for the £5,000/month Accelerator service.
-# Metric: Secure new contracts by demonstrating tangible ROI and cost‑efficiency, with a focus on how our solution outperforms an in‑house team costing £20K–£30K/month.
+# # Campaign Objectives
+# # Secure a Meeting:
+# # Goal: Engage Growth‑Focused Marketing Managers by showcasing our Accelerator service in a discovery call.
+# # Metric: Generate at least 15 qualified leads per month through targeted outreach, aiming for a 50% conversion rate into booked meetings.
 
 
-# Demonstrate Cost Savings & Value:
-# Goal: Clearly communicate that our £5K/month plug‑and‑play solution delivers the same (or superior) multi‑channel marketing outcomes as a costly in‑house team.
-# Metric: Use interactive infographics and cost‑comparison tools to educate prospects—targeting at least 70% recognition of the value differential during meetings.
+# # Sign the Contract:
+# # Goal: Convert 30% of discovery calls into signed contracts for the £5,000/month Accelerator service.
+# # Metric: Secure new contracts by demonstrating tangible ROI and cost‑efficiency, with a focus on how our solution outperforms an in‑house team costing £20K–£30K/month.
+
+
+# # Demonstrate Cost Savings & Value:
+# # Goal: Clearly communicate that our £5K/month plug‑and‑play solution delivers the same (or superior) multi‑channel marketing outcomes as a costly in‑house team.
+# # Metric: Use interactive infographics and cost‑comparison tools to educate prospects—targeting at least 70% recognition of the value differential during meetings.
 
 
 
-# Target Buyer Persona
-# The Growth‑Focused Marketing Manager
-# Profile Highlights:
-# Role: Marketing Manager or Head of Marketing in a company with 20–50 employees (often in a scale‑up phase).
-# Budget: Possesses a moderate, flexible marketing budget and values cost‑efficiency.
-# Team: Works with a small, established marketing team (often including a social media specialist, content writer, or junior marketer).
-# Pain Points:
-# Struggles to scale campaigns due to limited internal bandwidth and expertise.
-# Needs advanced tactics (like retargeting, A/B testing, and integrated reporting) but lacks resources for full‑time execution.
-# Faces pressure from leadership to drive pipeline growth and reduce cost per acquisition (CPA).
-# Goals & Motivations:
-# Aims to develop a robust inbound pipeline and enhance brand visibility.
-# Seeks a partner who can handle execution details, allowing them to focus on strategic planning.
-# Buying Triggers:
-# Recent funding or revenue growth necessitates an expansion in marketing efforts.
-# Leadership demands more efficient, measurable growth without compromising quality.
-# Our messaging is tailored to resonate with these managers—providing a clear, cost‑efficient solution that eases their execution bottlenecks while driving measurable results.
+# # Target Buyer Persona
+# # The Growth‑Focused Marketing Manager
+# # Profile Highlights:
+# # Role: Marketing Manager or Head of Marketing in a company with 20–50 employees (often in a scale‑up phase).
+# # Budget: Possesses a moderate, flexible marketing budget and values cost‑efficiency.
+# # Team: Works with a small, established marketing team (often including a social media specialist, content writer, or junior marketer).
+# # Pain Points:
+# # Struggles to scale campaigns due to limited internal bandwidth and expertise.
+# # Needs advanced tactics (like retargeting, A/B testing, and integrated reporting) but lacks resources for full‑time execution.
+# # Faces pressure from leadership to drive pipeline growth and reduce cost per acquisition (CPA).
+# # Goals & Motivations:
+# # Aims to develop a robust inbound pipeline and enhance brand visibility.
+# # Seeks a partner who can handle execution details, allowing them to focus on strategic planning.
+# # Buying Triggers:
+# # Recent funding or revenue growth necessitates an expansion in marketing efforts.
+# # Leadership demands more efficient, measurable growth without compromising quality.
+# # Our messaging is tailored to resonate with these managers—providing a clear, cost‑efficient solution that eases their execution bottlenecks while driving measurable results.
 
-# Creative & Messaging Concept
-# Key Messaging Pillars:
-# Speed & Simplicity: “No lengthy hiring process. Plug in our expert team and start growing immediately.”
-
-
-# Cost‑Efficiency: “For only £5K/month, replace a team that would cost £20K–£30K/month, without compromising on quality.”
+# # Creative & Messaging Concept
+# # Key Messaging Pillars:
+# # Speed & Simplicity: “No lengthy hiring process. Plug in our expert team and start growing immediately.”
 
 
-# Strategic Partnership: “Let our specialized team become your growth accelerator—handling execution while you focus on strategy.”
-# While our advanced AI automation subtly powers our systems to optimize retargeting, A/B testing, and analytics, the emphasis is on delivering measurable, high‑quality results without the overhead of an in‑house team.
+# # Cost‑Efficiency: “For only £5K/month, replace a team that would cost £20K–£30K/month, without compromising on quality.”
 
-# """
-# # data = agent_call(text, num_iterations=10)
+
+# # Strategic Partnership: “Let our specialized team become your growth accelerator—handling execution while you focus on strategy.”
+# # While our advanced AI automation subtly powers our systems to optimize retargeting, A/B testing, and analytics, the emphasis is on delivering measurable, high‑quality results without the overhead of an in‑house team.
+
+# # """
+# # # data = agent_call(text, num_iterations=10)
 
 # json_data ={"Tone of Voice Guidelines": {
 #     "Core attributes": [
@@ -268,5 +279,26 @@ def agent_call( file,file_name,json_data, num_iterations=5):
 # }
 # }
 
+# json_data = {"Tone of Voice Guidelines": 
+#  ["Optiminder's tone emphasizes a balance between natural warmth and digital precision,"
+#  " reflecting the blend of organic growth and AI efficiency.",
+#    "Key attributes include being technically organic, confidently nurturing, systematically intuitive, and progressively established across different audience touchpoints.",
+#      "Communication is tailored based on buyer personas, using simplified, empathetic language for SMB owners, "
+#      "balanced collaboration for marketing managers, and sophisticated, strategic insights for CMOs.", 
+#      "Pain points are acknowledged, and the messaging focuses on relief, support, and clear actions, ensuring clarity and engagement in communications.", 
+#      "Language evolves with client relationships, gradually introducing complexity while ensuring consistent brand messaging."], 
+#      "Target Buyer Persona Guidelines":
+#        ["Persona 1: Ben Hardy \u2013 The Scrappy Startup Founder: Founder/CEO of small SMBs, faces budget constraints and limited expertise, seeks cost-effective solutions for brand visibility.", 
+#         "Persona 2: The Growth-Focused Marketing Manager: Marketing Manager at companies with 20-50 employees, requires external partners for multi-channel execution, aims to scale efficiently while maintaining brand consistency.",
+#          "Persona 3: The Strategic Marketing Director/CMO: CMO/VP at larger companies (50-250+ employees), deals with complex marketing strategies, requires advanced data-driven solutions, and seeks proven ROI.",
+#            "All personas experience challenges such as scaling efforts, demonstrating ROI, and managing digital ecosystems; messaging should address these specific issues.", "Success metrics vary by persona; SMB owners focus on basic lead flow, managers on reduced CPA, and CMOs on multi-channel attribution."],
+#              "Services and Offerings Guidelines":
+#                ["Offering 1: Tier 1 \u2013 Essentials (Plant the Seed): For small/mid-sized businesses, priced at \u00a32,500 / $3,100 per month, includes basic SEO, social media management, PPC, and light email automation.",
+#                  "Offering 2: Tier 2 \u2013 Accelerator (Nurture Your Expansion): Priced at \u00a35,000 / $6,200 per month, targets growing companies with multi-channel marketing, advanced CRO, and comprehensive content strategies.", 
+#                  "Offering 3: Tier 3 \u2013 Enterprise (Harvest Success): Custom pricing starting at \u00a310,000 / $12,500 per month for larger businesses, with data-driven strategies, high-volume content production, and senior-level consulting.", 
+#                  "Each tier is designed to match the growth phase of the business while addressing unique marketing needs and providing value-driven results.", 
+#                  "Key benefits across services highlight a focus on generating consistent leads, improving ROI, and enabling clients to free up time for strategic initiatives."], 
+#                  "Brand Identity Guidelines":
+#                    ["Core Theme: 'Organic Tech/Fusion of Nature and Digital Elements' positions Optiminder at the intersection of nurturing growth and innovative marketing technology.", "Visual Elements include hybrid illustrations that combine organic growth symbols with digital motifs, along with a balanced color palette of earthy tones and modern accents.", "Implementation Strategies propose clear storytelling through communications that reflect the 'Root to Fruit Framework,' emphasizing growth trajectories and transparency in strategies.", "Target Audience applications provide persona-specific refinements to messaging, ensuring relevance and resonation with diverse clients.", "The brand narrative communicates Optiminder's commitment to fostering emotional connections and trust through a human-centric approach, highlighting the importance of sustainability in marketing."]}
 
 # data = agent_call(file=text,json_data= json_data ,num_iterations=2)

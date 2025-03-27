@@ -23,7 +23,33 @@ def remove_keywords(data):
 
     return filtered_data
 
+def add_keywords_to_json(new_keywords):
+    try:
+   
+        with open(BRANDED_JSON_PATH, 'r', encoding='utf-8') as f:
+            csv_json_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        csv_json_data = [] 
+    
+    existing_keywords = {item['Keywords'].strip().lower() for item in csv_json_data}
 
+    
+    added = False
+    for keyword in new_keywords:
+        keyword_clean = keyword.strip()
+        if keyword_clean.lower() not in existing_keywords:
+            csv_json_data.append({"Keywords": keyword_clean})
+            existing_keywords.add(keyword_clean.lower())
+            print(f"Added '{keyword_clean}' to {BRANDED_JSON_PATH}")
+            added = True
+        else:
+            print(f"Keyword '{keyword_clean}' already exists in {BRANDED_JSON_PATH}")
+
+    
+    if added:
+        with open(BRANDED_JSON_PATH, 'w', encoding='utf-8') as f:
+            json.dump(csv_json_data, f, indent=4, ensure_ascii=False)
+            
 def filter_non_branded_keywords(keyword_list):
     """Removes keywords that are recognized as brands (ORG or PRODUCT) by spaCy."""
     
@@ -196,3 +222,8 @@ def extract_keywords(json_string):
             return False, "'keywords' field is missing or not a list."
     except json.JSONDecodeError as e:
         return False, f"Invalid JSON: {e}" 
+    
+
+
+li = ["seo"]   
+add_keywords_to_json(li)
