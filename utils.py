@@ -1,14 +1,16 @@
 import json
 import pandas as pd
 from typing import List, Optional
-
+import os
 import spacy
-
+from dotenv import load_dotenv
+load_dotenv()
 # Load the large English model
 nlp = spacy.load("en_core_web_sm")
 
-BRANDED_JSON_PATH = r"C:\Users\nickc\OneDrive\Desktop\AI marketing\branded_keywords\branded.json"
+BRANDED_JSON_PATH = os.environ.get("BRANDED_JSON_PATH")
 
+# print(BRANDED_JSON_PATH)
 def remove_keywords(data):
     """Removes entries from data where Keyword (case-insensitive) matches any in keywords_to_remove."""
     
