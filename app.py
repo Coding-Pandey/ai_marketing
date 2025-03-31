@@ -256,7 +256,7 @@ async def social_media_post(file: UploadFile = File(...),json_data: Optional[str
         # print(json_data)
         # json_data_dict = json.loads(json_data) if json_data else None
         # print(json_data_dict)
-        result = agent_call(file=file_contents,json_data=json_data,file_name=file.filename, num_iterations=5)
+        result = agent_call(file=file_contents,json_data=json_data,file_name=file.filename, num_iterations=10)
   
         return result
 
