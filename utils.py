@@ -9,7 +9,7 @@ load_dotenv()
 nlp = spacy.load("en_core_web_sm")
 
 BRANDED_JSON_PATH = os.environ.get("BRANDED_JSON_PATH")
-
+print(f"Path: {BRANDED_JSON_PATH}")
 # print(BRANDED_JSON_PATH)
 def remove_keywords(data):
     """Removes entries from data where Keyword (case-insensitive) matches any in keywords_to_remove."""
@@ -227,5 +227,5 @@ def extract_keywords(json_string):
     
 
 
-li = ["seo"]   
-add_keywords_to_json(li)
+#li = ["seo"]   
+#add_keywords_to_json(li)
