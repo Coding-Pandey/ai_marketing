@@ -24,18 +24,19 @@ def fetch_document_from_s3(user_id: str, category: str) -> dict:
     """
     try:
         prefix = f"{user_id}/{category}"
-        print(prefix)
+        # print(prefix)
         response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=prefix)
-        print(response)
+        # print(response)
    
         if "Contents" not in response or not response["Contents"]:
             return {"documents": []}
         
        
-        documents = [
-                obj["Key"] for obj in response["Contents"]
-                if obj["Key"].endswith((".doc", ".docx", ".pdf")) 
-            ]
+        # documents = [
+        #         obj["Key"] for obj in response["Contents"]
+        #         if obj["Key"].endswith((".doc", ".docx", ".pdf")) 
+        #     ]
+        documents =[obj["Key"] for obj in response["Contents"]]
         return {"documents": documents}
         
 
@@ -93,7 +94,7 @@ def download_document(data: dict) -> dict:
             # Download the file
             s3.download_file(S3_BUCKET_NAME, file_path, local_path)
             print(f"Downloaded {file_name} successfully!")
-            # Extract text and store in dictionary
+ 
             try:
                 text = extract_text_from_file(local_path)
                 extracted_texts[folder] = text

@@ -20,3 +20,4 @@ spacy
 python-docx
 pypandoc
 boto3
+pywin32

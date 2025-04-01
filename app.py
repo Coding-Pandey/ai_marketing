@@ -21,10 +21,15 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from fastapi.responses import JSONResponse
 from typing import Annotated, List
-from S3_bucket.S3_upload import upload_file_to_s3
+from S3_bucket.S3_upload import upload_file_to_s3,upload_title_url
 from S3_bucket.fetch_document import fetch_document_from_s3, download_document
 from typing import Dict
-app = FastAPI()
+
+
+app = FastAPI(title="AI marketing app",
+    description="",
+    version="1.0.0",
+    openapi_url="/openapi.json")
 
 
 class KeywordRequest(BaseModel):
@@ -348,3 +353,46 @@ async def process_documents(dict_data: DocumentData):
 
 
 
+@app.post("/seo_uploadfile")
+async def csv_seo_upload_file(file: UploadFile = File(...)):
+      
+    try:
+        # Read file content
+        file_content = await file.read()
+
+        max_size = 10 * 1024 * 1024  
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail="File size exceeds maximum limit of 10MB"
+            )
+
+        # Get filename and ensure it's safe
+        filename = file.filename
+        if not filename:
+            raise HTTPException(
+                status_code=400,
+                detail="No filename provided"
+            )
+
+        # Upload to S3
+        folder_name = "seo_content_generation"
+        s3_path = upload_title_url(file_content, filename, folder_name)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "File uploaded successfully",
+                "s3_path": s3_path,
+                "filename": filename,
+                "category": folder_name
+            }
+        )
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )

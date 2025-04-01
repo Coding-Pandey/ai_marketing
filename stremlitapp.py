@@ -30,13 +30,15 @@ UPLOAD_FILE_S3_BUCKET = "http://127.0.0.1:8000/uploadfile"
 FETCH_DOCUMENTS_URL = "http://127.0.0.1:8000/list-documents"
 DOWNLOAD_DOCUMENT_URL = "http://127.0.0.1:8000/process-documents"
 
+SEO_PROCESS_FILE ="http://127.0.0.1:8000/seo_uploadfile"
 
 # Create tabs for SEO and PPC processes
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["SEO Process", 
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["SEO Process", 
                                         "PPC Process", 
                                         "Keywords suggestions",
                                         "Social Media Post", 
-                                        "Upload Document"])
+                                        "Upload Document",
+                                        "SEO content generation"])
 
 # Initialize session state for both tabs
 if "seo_df" not in st.session_state:
@@ -481,10 +483,13 @@ with tab1:
                 st.session_state.seo_processed_df = processed_df
                 st.subheader("Processed SEO Keywords DataFrame:")
                 st.dataframe(processed_df)
+                return processed_df 
             except Exception as e:
                 st.error(f"Error converting processed data to DataFrame: {e}")
+                return None
         else:
             st.error(f"Error: {response.json().get('detail', 'Unknown error')}")
+            return None
 
     # Buttons for generating and suggesting SEO keywords
     col1, col2 = st.columns(2)
@@ -535,7 +540,39 @@ with tab1:
 
         with col5:
             if st.button("Process SEO Keywords", key="process_seo"):
-                process_seo_keywords()
+                processed_df = process_seo_keywords()
+                if processed_df is not None:
+                    st.session_state.seo_processed_df = processed_df
+
+                if "seo_processed_df" in st.session_state and not st.session_state.seo_processed_df is not None:
+                    file_name = st.text_input("Enter filename (without extension):", "processed_seo")
+                    if st.button("Upload to S3", key="upload_s3"):
+
+                        csv_buffer = BytesIO()
+                        st.session_state.seo_processed_df.to_csv(csv_buffer, index=False)
+                        csv_buffer.seek(0)
+
+                        # Ensure filename is valid
+                        if not file_name.strip():
+                            st.error("Filename cannot be empty!")
+                        else:
+                            full_filename = f"{file_name.strip()}.csv"
+                            files = {"file": (full_filename, csv_buffer, "text/csv")}
+                            response = requests.post(SEO_PROCESS_FILE, files=files)
+            
+                            if response.status_code == 200:
+                                st.success(f"File uploaded to S3: {response.json()['s3_path']}")
+                            
+                            else:
+                                st.error(f"Upload failed: {response.json().get('detail', 'Unknown error')}")
+
+                        st.success("Uploading to S3...")  # Replace with actual S3 upload function
+                   
+                    if st.button("delete process csv", key="remove_upload_s3"):
+                        del st.session_state["seo_processed_df"]
+                        st.experimental_rerun()  # Refresh UI to remove the button
+                else:
+                    st.error("No processed SEO data available for upload.")     
 
         # Create another row of buttons
         # col4, col5 = st.columns([1, 1])
@@ -555,6 +592,16 @@ with tab1:
         if st.session_state.seo_processed_df is not None:
             st.subheader("Processed SEO Keywords DataFrame:")
             st.dataframe(st.session_state.seo_processed_df)
+
+    # if "seo_processed_df" in st.session_state and not st.session_state.seo_processed_df is not None:
+    #     if st.button("Upload to S3", key="upload_s3"):
+    #         st.success("Uploading to S3...")  # Replace with actual S3 upload function
+    #     # Add button to delete "Upload to S3" button from session
+    #     if st.button("Remove Upload to S3 Button", key="remove_upload_s3"):
+    #         del st.session_state["seo_processed_df"]
+    #         st.experimental_rerun()  # Refresh UI to remove the button
+    # else:
+    #     st.error("No processed SEO data available for upload.")      
 
 # PPC Tab
 with tab2:
@@ -1142,3 +1189,52 @@ with tab5:
                     os.unlink(temp_file_path)
                 if 'converted_path' in locals() and os.path.exists(converted_path):
                     os.unlink(converted_path)
+
+
+with tab6:
+    st.subheader("SEO Content generation")
+
+    upload_seo_file = st.checkbox("Upload file", value=False)
+
+    if upload_seo_file:
+        uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+        if uploaded_file:
+            if st.button("Upload to S3"):
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "text/csv")}
+                response = requests.post(SEO_PROCESS_FILE, files=files)
+
+                if response.status_code == 200:
+                    s3_path = response.json()["s3_path"]
+                    st.success(f"File uploaded successfully! 🚀")
+                    st.write(f"**S3 Path:** {s3_path}")
+                else:
+                    st.error(f"Upload failed: {response.json().get('detail', 'Unknown error')}")
+
+
+    content_folder = {"csv": []}
+
+    user_id = "User"  
+    folder_seo = "seo_content_generation"
+
+    # Fetch documents for each category
+    for category in content_folder.keys():
+        content_folder[category] = get_documents(user_id, folder_seo)
+
+    # st.write("Select a Document from S3")
+
+    # Dropdowns for each folder category
+    selected_documents = {}
+    for folder, docs in content_folder.items():
+        if docs:  # Show dropdown only if there are documents
+            selected_documents[folder] = st.selectbox(
+                f"Select a document from {folder}",
+                options=docs,
+                key=folder
+            )
+        else:
+            st.warning(f"No documents found in {folder}")
+
+    if st.button("🔄 Reload", key="reload_button_seo"):
+        st.rerun()        
+   
+
