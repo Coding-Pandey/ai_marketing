@@ -31,14 +31,16 @@ FETCH_DOCUMENTS_URL = "http://127.0.0.1:8000/list-documents"
 DOWNLOAD_DOCUMENT_URL = "http://127.0.0.1:8000/process-documents"
 
 SEO_PROCESS_FILE ="http://127.0.0.1:8000/seo_uploadfile"
+DOWNLOAD_CONTENT_CSV ="http://127.0.0.1:8000/process_content_generation"
 
 # Create tabs for SEO and PPC processes
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["SEO Process", 
+tab1, tab2, tab3, tab4, tab6, tab5 = st.tabs(["SEO Process", 
                                         "PPC Process", 
                                         "Keywords suggestions",
                                         "Social Media Post", 
+                                        "Content generation",
                                         "Upload Document",
-                                        "SEO content generation"])
+                                        ])
 
 # Initialize session state for both tabs
 if "seo_df" not in st.session_state:
@@ -1194,8 +1196,33 @@ with tab5:
 with tab6:
     st.subheader("SEO Content generation")
 
-    upload_seo_file = st.checkbox("Upload file", value=False)
+    folders_cg = {
+        "Buyer persona": [],
+        "Tone of voice": [],
+        "Brand identity": [],
+        "Offering": []
+    }
+    
+    user_id = "User"  
+    for category in folders_cg.keys():
+        folders_cg[category] = get_documents(user_id, category)
+        # print(folders[category])
+    
 
+    st.write("Select a Document from S3")
+    # Dropdowns for each folder
+    selected_documents_cg = {}
+    for folder, docs in folders_cg.items():
+        selected_documents_cg[folder] = st.selectbox(
+            f"Select a documents from {folder}", 
+            options=docs, 
+            key=f"{folder}_ss"
+        )
+    
+    print(selected_documents_cg)
+
+        
+    upload_seo_file = st.checkbox("Upload keywords file", value=False)
     if upload_seo_file:
         uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
         if uploaded_file:
@@ -1223,10 +1250,10 @@ with tab6:
     # st.write("Select a Document from S3")
 
     # Dropdowns for each folder category
-    selected_documents = {}
+    selected_csv = {}
     for folder, docs in content_folder.items():
         if docs:  # Show dropdown only if there are documents
-            selected_documents[folder] = st.selectbox(
+            selected_csv[folder] = st.selectbox(
                 f"Select a document from {folder}",
                 options=docs,
                 key=folder
@@ -1236,5 +1263,39 @@ with tab6:
 
     if st.button("🔄 Reload", key="reload_button_seo"):
         st.rerun()        
+    
+    st.subheader("Blog content generation")
+
+    uploaded_file_cg = st.file_uploader("Upload a blog content", type=["docx", "doc"])
+
+    if uploaded_file_cg is not None:
+        if st.button("Submit File"):
+            try:
+                    
+                payload = {
+                        "data": selected_csv
+                    }
+                # print(payload)
+                response_csv = requests.post(DOWNLOAD_CONTENT_CSV, json=payload)
+                if response_csv.status_code == 200:
+                    json_data = response_csv.json()
+                
+                payload = {
+                        "data": selected_documents_cg
+                    }
+
+                response = requests.post(DOWNLOAD_DOCUMENT_URL, json=payload)
+                # print(response)
+                if response.status_code == 200:
+                    summarized_data = response.json()
+
+            
+
+
+            except requests.exceptions.RequestException as e:
+                st.error(f"Request failed: {str(e)}")       
+
+    
+
    
 

@@ -226,6 +226,32 @@ def extract_keywords(json_string):
         return False, f"Invalid JSON: {e}" 
     
 
+from collections import defaultdict
+import json
+import pandas as pd
+
+def group_by_page_title(data):
+    grouped_data = defaultdict(lambda: {"keywords": [], "monthly_search_volume": [], "intent": [], "urls": []})
+    
+    for entry in data:
+        page_title = entry["page_title"]
+        grouped_entry = grouped_data[page_title]
+        
+        # Append values ensuring uniqueness
+        if entry["keyword"] not in grouped_entry["keywords"]:
+            grouped_entry["keywords"].append(entry["keyword"])
+        
+        if entry["monthly_search_volume"] not in grouped_entry["monthly_search_volume"]:
+            grouped_entry["monthly_search_volume"].append(entry["monthly_search_volume"])
+        
+        if entry["intent"] not in grouped_entry["intent"]:
+            grouped_entry["intent"].append(entry["intent"])
+        
+        if entry["url_structure"] not in grouped_entry["urls"]:
+            grouped_entry["urls"].append(entry["url_structure"])
+    
+    # Convert defaultdict back to list of dicts
+    return [{"page_title": title, **values} for title, values in grouped_data.items()]
 
 #li = ["seo"]   
 #add_keywords_to_json(li)

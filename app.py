@@ -22,7 +22,7 @@ from typing import Optional, List
 from fastapi.responses import JSONResponse
 from typing import Annotated, List
 from S3_bucket.S3_upload import upload_file_to_s3,upload_title_url
-from S3_bucket.fetch_document import fetch_document_from_s3, download_document
+from S3_bucket.fetch_document import fetch_document_from_s3, download_document, download_csv
 from typing import Dict
 
 
@@ -59,6 +59,8 @@ class SuggestionKeywordRequest(BaseModel):
 class DocumentData(BaseModel):
     data: Dict[str, str]          
 
+class CsvData(BaseModel):
+    data: Dict[str, str] 
 
 @app.post("/seo_generate_keywords")
 def seo_generate_keywords(request: KeywordRequest):
@@ -340,6 +342,7 @@ async def list_documents(user_id: str, category: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/process-documents")
 async def process_documents(dict_data: DocumentData):
     """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
@@ -396,3 +399,15 @@ async def csv_seo_upload_file(file: UploadFile = File(...)):
             status_code=500,
             detail=f"An unexpected error occurred: {str(e)}"
         )
+    
+
+@app.post("/process_content_generation")
+async def process_content_generation(csv_data: CsvData):
+    """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
+    try:
+        json_data = download_csv(csv_data.data)
+        print(json_data)
+   
+        return json_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))     
