@@ -13,6 +13,7 @@ from social_media.Agents.document_summared import Document_summerizer
 from collections import defaultdict
 from google_ads.seo_planner import seo_keywords_main
 from google_ads.ppc_process import ppc_keywords_main
+from content_generation.Agent_content.blog_generation import blog_generation
 # from utils import flatten_seo_data , extract_first_json_object
 import asyncio
 from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data, remove_branded_keywords, filter_non_branded_keywords, remove_keywords, add_keywords_to_json
@@ -411,3 +412,14 @@ async def process_content_generation(csv_data: CsvData):
         return json_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))     
+    
+
+@app.post("/blog_generation")
+async def Blog_generation(file: UploadFile = File(...), json_data: Optional[str] = Form(None) ):
+    try:
+        json_data = blog_generation(file= file, json_data=json_data)
+        print(json_data)
+   
+        return json_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))   
