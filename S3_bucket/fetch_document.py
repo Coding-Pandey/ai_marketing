@@ -91,7 +91,12 @@ def download_document(data: dict) -> dict:
     with TemporaryDirectory() as temp_dir:
         for folder, file_path in data.items():
             # Extract the file name from the path for local saving
-            file_name = file_path.split('/')[-1]
+            # file_name = file_path.split('/')[-1]
+            if not file_path or file_path.endswith('/'):
+                extracted_texts[folder] = "No file selected or path is a directory."
+                continue
+
+            file_name = os.path.basename(file_path)
             local_path = os.path.join(temp_dir, file_name)
             print(f"Downloading {file_name} from {S3_BUCKET_NAME}/{file_path}...")
             
