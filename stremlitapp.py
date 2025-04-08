@@ -28,12 +28,13 @@ SOCIAL_MEDIA_API_URL = "http://127.0.0.1:8000/social_media_post"
 UPLOAD_FILE_S3_BUCKET = "http://127.0.0.1:8000/uploadfile"
 
 FETCH_DOCUMENTS_URL = "http://127.0.0.1:8000/list-documents"
-DOWNLOAD_DOCUMENT_URL = "http://127.0.0.1:8000/process-documents"
+# DOWNLOAD_DOCUMENT_URL = "http://127.0.0.1:8000/process-documents"
 
 SEO_PROCESS_FILE ="http://127.0.0.1:8000/seo_uploadfile"
-DOWNLOAD_CONTENT_CSV ="http://127.0.0.1:8000/process_content_generation"
+# DOWNLOAD_CONTENT_CSV ="http://127.0.0.1:8000/process_content_generation"
 
 BLOG_GENERATION_TEXT ="http://127.0.0.1:8000/blog_generation"
+SEO_BASED_BLOG ="http://127.0.0.1:8000/seo_based_blog"
 # Create tabs for SEO and PPC processes
 tab1, tab2, tab3, tab4, tab6, tab5 = st.tabs(["SEO Process", 
                                         "PPC Process", 
@@ -958,19 +959,19 @@ with tab4:
 
     if uploaded_file is not None:
 
-        if st.button("Submit File"):
+        if st.button("Post generation"):
 
             try:
                 payload = {
                     "data": selected_documents
                 }
 
-                response = requests.post(DOWNLOAD_DOCUMENT_URL, json=payload)
-                print(response)
-                if response.status_code == 200:
-                    # extracted_texts = response.json().get("extracted_texts", {})
-                    summarized_data = response.json()
-                    # st.json(response.json())
+                # response = requests.post(DOWNLOAD_DOCUMENT_URL, json=payload)
+                # print(response)
+                # if response.status_code == 200:
+                #     # extracted_texts = response.json().get("extracted_texts", {})
+                #     summarized_data = response.json()
+                #     # st.json(response.json())
                     # st.success("File uploaded successfully!")
             except Exception as e:
                 st.error(f"Error processing file: {str(e)}")    
@@ -979,7 +980,7 @@ with tab4:
             # files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
             files = {
                     "file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type),
-                    "json_data": (None, json.dumps(summarized_data), "application/json")
+                    "json_data": (None, json.dumps(payload), "application/json")
                     }
 
             
@@ -1272,54 +1273,86 @@ with tab6:
     if uploaded_file_bg is not None:
         if st.button("Submit File"):
             try:
-                    
-                # payload = {
-                #         "data": selected_csv
-                #     }
-                # print(payload)
-                # response_csv = requests.post(DOWNLOAD_CONTENT_CSV, json=payload)
-                # if response_csv.status_code == 200:
-                #     json_data = response_csv.json()
-                #     print(json_data)
+                # Your existing code for processing the uploaded file
                 payload = {
-                        "data": selected_documents_cg
-                    }
+                    "data": selected_documents_cg
+                }
 
-                response_summ = requests.post(DOWNLOAD_DOCUMENT_URL, json=payload)
-                # print(response)
-                if response_summ.status_code == 200:
-                    summarized_data = response_summ.json()
-                    print(summarized_data)
-
+                # response_summ = requests.post(DOWNLOAD_DOCUMENT_URL, json=payload)
+                # if response_summ.status_code == 200:
+                #     summarized_data = response_summ.json()
+                #     print(summarized_data)
 
                 files = {
                     "file": (uploaded_file_bg.name, uploaded_file_bg.getvalue(), uploaded_file_bg.type),
-                    "json_data": (None, json.dumps(summarized_data), "application/json")
-                    }
+                    "json_data": (None, json.dumps(payload), "application/json")
+                }
 
                 try:
-                    response = requests.post(BLOG_GENERATION_TEXT, files=files)#,json= json_payload)
+                    response = requests.post(BLOG_GENERATION_TEXT, files=files)
                     if response.status_code == 200:
-                       data = response.json()
-                       st.session_state.blog_text = data
+                        data = response.json()
+                        st.session_state.blog_text = data
                     else:
                         st.error(f"Error: {response.status_code}, {response.text}")
                         
                 except requests.exceptions.RequestException as e:
                     st.error(f"Request failed: {str(e)}") 
                 
-                # Display the editor
-                st.title("Edit Your Blog Post")
-                edited_text = st.text_area(
-                    "Blog Post Content",
-                    value=st.session_state.blog_text,
-                    height=600,  # Tall enough for the full blog
-                    key="blog_editor"
-                )
-                st.session_state.blog_text = edited_text
-
             except requests.exceptions.RequestException as e:
-                st.error(f"Request failed: {str(e)}")       
+                st.error(f"Request failed: {str(e)}")
+
+        # Display the editor (moved outside the Submit File button condition)
+        if 'blog_text' in st.session_state:
+            st.title("Edit Your Blog Post")
+            edited_text = st.text_area(
+                "Blog Post Content",
+                value=st.session_state.blog_text,
+                height=600,  # Tall enough for the full blog
+                key="blog_editor"
+            )
+            st.session_state.blog_text = edited_text
+
+            # SEO refine blog button (placed outside the first button condition)
+            if st.button("SEO refine blog"):
+                try:
+                    payload = {
+                        "data": selected_csv
+                    }
+                    print(payload)
+                    # response_csv = requests.post(DOWNLOAD_CONTENT_CSV, json=payload)
+                    # if response_csv.status_code == 200:
+                    #     json_data = response_csv.json()
+                    #     print(json_data)
+
+
+                    # seo_blog = requests.post(SEO_BASED_BLOG, files= {"data": (None, json.dumps(json_data), "application/json"), "text": (None, st.session_state.blog_text)})
+                    seo_blog = requests.post(SEO_BASED_BLOG, files= {
+                            "text": (None, st.session_state.blog_text),
+                            "csv_data": (None, json.dumps(payload), "application/json")
+                        })
+
+                    if seo_blog.status_code == 200:
+                        seo_blog_post = seo_blog.json()
+                        print(seo_blog_post)
+                        st.session_state.Seo_blog_text = seo_blog_post
+                        
+                    if 'Seo_blog_text' in st.session_state:
+                        st.title("Edit Your Seo Blog Post")
+                        edited_text = st.text_area(
+                            "Blog Post Content",
+                            value=st.session_state.Seo_blog_text,
+                            height=600,  # Tall enough for the full blog
+                            key="seo_blog_editor"
+                        )
+                        st.session_state.Seo_blog_text = edited_text
+
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Request failed: {str(e)}")    
+
+
+
+
 
     
 

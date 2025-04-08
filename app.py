@@ -13,7 +13,8 @@ from social_media.Agents.document_summared import Document_summerizer
 from collections import defaultdict
 from google_ads.seo_planner import seo_keywords_main
 from google_ads.ppc_process import ppc_keywords_main
-from content_generation.Agent_content.blog_generation import blog_generation
+from content_generation.blog_agent.blog_generation import blog_generation
+from content_generation.blog_agent.seo_blog import generation_blog_async
 # from utils import flatten_seo_data , extract_first_json_object
 import asyncio
 from utils import flatten_seo_data , extract_keywords, filter_keywords_by_searches, flatten_ppc_data, remove_branded_keywords, filter_non_branded_keywords, remove_keywords, add_keywords_to_json
@@ -163,10 +164,6 @@ async def seo_keyword_clustering(file: UploadFile = File(...)):
     
 
 
-
-
-
-
 @app.post("/ppc_generate_keywords")
 def ppc_generate_keywords(request: KeywordRequest):
     try:
@@ -216,8 +213,6 @@ def ppc_generate_keywords(request: KeywordRequest):
     
 
 
-    
-
 @app.post("/ppc_keyword_clustering")
 async def ppc_keyword_clustering(file: UploadFile = File(...)):
     try:
@@ -259,12 +254,17 @@ async def social_media_post(file: UploadFile = File(...),json_data: Optional[str
         # Fixed the condition logic - was missing a 'not' and had incorrect operator
         if not file.filename.endswith((".docx", ".doc")):
             return {"error": "Invalid file format. Please upload a Word document (.docx or .doc)"}
+        
+        dict_data = json.loads(json_data)
+        text = download_document(dict_data['data'])
+        # print(text)
+        json_data = Document_summerizer(text)
  
         file_contents = await file.read()
         # print(json_data)
         # json_data_dict = json.loads(json_data) if json_data else None
         # print(json_data_dict)
-        result = agent_call(file=file_contents,json_data=json_data,file_name=file.filename, num_iterations=10)
+        result = agent_call(file=file_contents,json_data=json_data,file_name=file.filename, num_iterations=5)
   
         return result
 
@@ -344,16 +344,16 @@ async def list_documents(user_id: str, category: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/process-documents")
-async def process_documents(dict_data: DocumentData):
-    """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
-    try:
-        text = download_document(dict_data.data)
-        print(text)
-        result = Document_summerizer(text)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))    
+# @app.post("/process-documents")
+# async def process_documents(dict_data: DocumentData):
+#     """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
+#     try:
+#         text = download_document(dict_data.data)
+#         print(text)
+#         result = Document_summerizer(text)
+#         return result
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))    
 
 
 
@@ -402,24 +402,46 @@ async def csv_seo_upload_file(file: UploadFile = File(...)):
         )
     
 
-@app.post("/process_content_generation")
-async def process_content_generation(csv_data: CsvData):
-    """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
-    try:
-        json_data = download_csv(csv_data.data)
-        print(json_data)
+# @app.post("/process_content_generation")
+# async def process_content_generation(csv_data: CsvData):
+#     """FastAPI endpoint to process S3 documents and return extracted text as a dict."""
+#     try:
+#         json_data = download_csv(csv_data.data)
+#         print(json_data)
    
-        return json_data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))     
+#         return json_data
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))     
     
 
 @app.post("/blog_generation")
 async def Blog_generation(file: UploadFile = File(...), json_data: Optional[str] = Form(None) ):
     try:
-        json_data = blog_generation(file= file, json_data=json_data)
+        dict_data = json.loads(json_data)
+        # print(dict_data)
+        text = download_document(dict_data['data'])
+        # print(text)
+        summerized_text_json = Document_summerizer(text)
+       
+        json_data = blog_generation(file= file, json_data=summerized_text_json)
         print(json_data)
    
         return json_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))   
+
+
+@app.post("/seo_based_blog")
+async def Seo_based_blog(csv_data: str = Form(...), text: Optional[str] = Form(None)):
+    try:
+        parsed_data = json.loads(csv_data) 
+        print(parsed_data)
+        json_data = download_csv(parsed_data['data'])
+        print(json_data)
+        keywords = [item['keyword'] for item in json_data['csv']]
+        new_blog = await generation_blog_async(keywords, text)
+        
+        return new_blog
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))    

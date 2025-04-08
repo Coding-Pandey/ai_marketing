@@ -55,7 +55,7 @@ blog content
 {items}
 """
 
-new_promt ="""
+blog_generation_prompt ="""
 Write a comprehensive blog post using the provided copy and external link sources.
 The article must integrate external information with internal factors such as tone of voice, brand identity, and target personas.
 
@@ -109,33 +109,30 @@ blog content
 
 """
 
-summary = {
-  "Tone of Voice Guidelines": [
-    "Authoritative & Trustworthy: Use clear, evidence-based language backed by scientific research.",
-    "Reassuring & Empathetic: Address patient anxiety and emphasize non-invasive procedures to create a compassionate tone.",
-    "Innovative & Forward-Looking: Highlight cutting-edge technology and future potential for early cancer detection.",
-    "Accessible & Clear: Communicate in plain language, avoiding jargon while ensuring understanding.",
-    "Regular updates: Keep messaging relevant by aligning with recent clinical data and developments."
-  ],
-  "Target Buyer Persona Guidelines": [
-    "Proactive Patricia – The Health-Conscious Professional: Values early detection and seeks non-invasive screening options.",
-    "Dr. David – The Forward-Thinking Physician: Focuses on reliable testing methods and clinically validated research.",
-    "Skeptical Sam – The Health Insurance/Clinic Decision Maker: Aims to reduce healthcare costs and requires strong data to validate decisions.",
-    "Common traits include a commitment to preventative care, detailed research needs, and concern for cost-effectiveness.",
-    "Communication preferences vary from data-driven, clear messaging to concise executive summaries."
-  ],
-  "Services and Offerings Guidelines": [
-    "Colosafe Darmkrebsfrüherkennungstest: A non-invasive cancer detection test with 99% accuracy, aimed at patients seeking early diagnosis.",
-    "13-in-1 PCR: A multiplex PCR assay that detects 13 targets simultaneously for efficient diagnostics.",
-    "Key marketing points highlight rapid results, non-invasiveness, and endorsements from leading oncologists.",
-    "Each product is positioned to enhance patient outcomes and offers cost efficiency by reducing the need for traditional invasive procedures.",
-    "Ongoing innovation and digital integration are emphasized to ensure accessibility and a seamless testing experience."
-  ],
-  "Brand Identity Guidelines": [
-    "Market Leader in Diagnostic Innovation: Position as a pioneer in colon cancer testing through scientific excellence.",
-    "Patient Empowerment: Focus on providing reliable, non-invasive tools that foster proactive health management.",
-    "Trusted by Medical Experts: Build credibility through endorsements and robust clinical validation.",
-    "Future-Forward: Vision of broader adoption and continuous innovation to improve access and sustainability.",
-    "All branding elements emphasize emotional connection, scientific rigor, and ongoing engagement with patients and healthcare providers."
-  ]
-}
+keyword_matching = """
+You are an expert in natural language processing and contextual reasoning. Your task is to rewrite the sentence provided below by replacing specific words or phrases with the given keywords, but only if the keywords contextually fit and maintain the sentence's meaning and grammatical correctness. For each replacement, reason about whether the keyword makes sense in the context of the sentence. If a keyword does not fit, skip that replacement and retain the original word or phrase. Provide your reasoning for each decision in a structured format, followed by the final rewritten sentence.
+
+**Input**:
+- Sentence: {sentence}
+- Replacements: {replacements}
+
+**Instructions**:
+1. Analyze the provided sentence and each replacement pair listed in the replacements.
+2. For each replacement:
+   - Evaluate if the keyword preserves the sentence's meaning and fits grammatically.
+   - Use the similarity score as a hint (higher scores suggest better fits), but prioritize contextual appropriateness over the score alone.
+   - Provide a brief reasoning explaining whether you accept or reject the replacement.
+3. Construct the final sentence by applying only the accepted replacements, retaining the original word/phrase where replacements are rejected.
+4. Ensure the final sentence maintains proper capitalization, punctuation, and grammatical structure.
+
+
+**Output Format**:
+- Reasoning:
+  - Replacement 1: [Original → Keyword, Similarity: X] - [Reasoning for accepting or rejecting]
+  - Replacement 2: [Original → Keyword, Similarity: X] - [Reasoning for accepting or rejecting]
+  - ... (continue for all replacements)
+- Final Sentence: [The complete rewritten sentence with appropriate replacements]
+
+**Note**:
+- Do not return any extra text
+"""

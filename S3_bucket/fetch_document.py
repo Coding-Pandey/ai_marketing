@@ -154,8 +154,8 @@ def download_csv(data: dict) -> dict:
             # Convert DataFrame to JSON using 'records' orientation
             json_data = df.to_json(orient='records')
             json_data = json.loads(json_data)
-            sorted_data = group_by_page_title(json_data)
-            result[folder] = sorted_data
+            # sorted_data = group_by_page_title(json_data)
+            result[folder] = json_data
             print(f"Converted {file_name} to JSON successfully!")
             
         except Exception as e:

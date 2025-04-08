@@ -25,7 +25,7 @@ def url_agent(items, json_data,previous_summaries=None, previous_Facebooks=None,
     try:
         print(json_data)
         query = "Generate a social media post for a campaign. Given the previous Linkedin summary: {previous_summaries}, Facebook content: {previous_Facebooks} and Twitter content: {previous_Twitters} try to generate a new linkedin (Title, content), Facebook, twitter posts." 
-        json_data = json.loads(json_data)
+        # json_data = json.loads(json_data)
         # Extracting into separate variables
         tone_of_voice_guidelines = json_data.get("Tone of Voice Guidelines", [])
         brand_identity_guidelines = json_data.get("Brand Identity Guidelines", [])
