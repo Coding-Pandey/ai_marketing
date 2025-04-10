@@ -18,5 +18,7 @@ jobs:
         script: |
           cd /home/ubuntu/ai_marketing
           git pull origin main
+          source venv/bin/activate
+          pip install -r requirements.txt --no-deps
           sudo systemctl restart fastapi.service
           sudo systemctl restart streamlit.service
