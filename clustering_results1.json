@@ -2,1168 +2,180 @@
   {
     "Pages": [
       {
-        "Page Title": "Learn Python Programming: A Comprehensive Beginner's Guide",
+        "Page Title": "Nauka j\u0119zyka angielskiego: Metody, Kursy i Darmowe Opcje",
         "Keywords": [
-          "learn python",
-          "python programming",
-          "python for beginners",
-          "python basics",
-          "python programming for beginners",
-          "learn python online",
-          "learn python programming",
-          "python 101",
-          "best way to learn python",
-          "kaggle com learn python"
+          "nauka jezyka angielskiego",
+          "nauka jezyka angielskiego online",
+          "szybka nauka jezyka angielskiego",
+          "nauka jezyka angielskiego dla dzieci",
+          "nauka jezyka angielskiego dla 5 latka",
+          "nauka jezyka angielskiego od podstaw",
+          "nauka jezyka angielskiego za darmo",
+          "darmowa nauka jezyka angielskiego",
+          "beata pawlikowska nauka j\u0019zyka angielskiego",
+          "metody nauki j\u0119zyka angielskiego",
+          "praktyczna nauka j\u0119zyka angielskiego",
+          "nauka jezyka angielskiego dla poczatkujacych"
+        ],
+        "Intent": "Interest",
+        "Suggested URL Structure": "/nauka-jezyka-angielskiego/metody-kursy-darmowe-opcje"
+      },
+      {
+        "Page Title": "Samodzielna i Skuteczna Nauka J\u0119zyk\u00f3w Obcych Online",
+        "Keywords": [
+          "samodzielna nauka j\u0119zyka",
+          "skuteczna nauka jezyka",
+          "szybka nauka jezyka",
+          "strona do nauki j\u0119zyk\u00f3w"
+        ],
+        "Intent": "Consideration",
+        "Suggested URL Structure": "/nauka-jezykow/samodzielna-skuteczna-online"
+      },
+      {
+        "Page Title": "J\u0119zyk Polski i Obce: Kursy i Darmowe Materia\u0142y",
+        "Keywords": [
+          "nauka j\u0119zyka polskiego",
+          "nauka j\u0119zyka polskiego dla obcokrajowc\u00f3w za darmo",
+          "j\u0119zyk polski nauka",
+          "nauka j\u0119zyka obcego"
         ],
         "Intent": "Awareness",
-        "Suggested URL Structure": "/learn-python/programming-guide"
+        "Suggested URL Structure": "/nauka-jezyka-polskiego/obce-kursy-darmowe-materialy"
       },
       {
-        "Page Title": "Python Online Courses: Find the Best Platform for You",
+        "Page Title": "Rozwijaj Jezyki: Niderlandzki, Du\u0144ski i Szwajcarski",
         "Keywords": [
-          "python online",
-          "codecademy python",
-          "coursera python",
-          "udemy python",
-          "sololearn python",
-          "freecodecamp python",
-          "datacamp python",
-          "cs50 python",
-          "hackerrank python",
-          "30 days of python"
+          "j\u0119zyk niderlandzki nauka",
+          "nauka j\u0119zyka du\u0144skiego",
+          "nauka j\u0119zyka szwajcarskiego"
         ],
         "Intent": "Interest",
-        "Suggested URL Structure": "/learn-python/online-courses"
+        "Suggested URL Structure": "/nauka-jezykow/niderlandzki-dunski-szwajcarski"
       },
       {
-        "Page Title": "Python for Data Science and Analysis",
+        "Page Title": "Nauka J\u0119zyka Migowego dla Pocz\u0105tkuj\u0105cych",
         "Keywords": [
-          "python for data science",
-          "data science from scratch",
-          "python for data analysis",
-          "numpy python",
-          "pandas python",
-          "matplotlib python",
-          "data with python",
-          "python data"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/data-science-analysis"
-      },
-      {
-        "Page Title": "Advanced Python Programming Techniques",
-        "Keywords": [
-          "advanced python",
-          "fluent python",
-          "deep learning with python",
-          "tensorflow python",
-          "python ai",
-          "python machine learning",
-          "python algorithms",
-          "python automation",
-          "automate the boring stuff with python",
-          "python if"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/advanced-techniques"
-      },
-      {
-        "Page Title": "Python for Web Development",
-        "Keywords": [
-          "python web development",
-          "django python",
-          "flask python",
-          "fastapi python",
-          "python web",
-          "python website",
-          "selenium python",
-          "web3 python",
-          "python with open",
-          "with open python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/web-development"
-      },
-      {
-        "Page Title": "Using Python for Financial and Business Insights",
-        "Keywords": [
-          "python for finance",
-          "python for business",
-          "financial modeling with python",
-          "business analytics python",
-          "python data",
-          "excel python",
-          "numpy python",
-          "matplotlib python",
-          "pandas python"
-        ],
-        "Intent": "Conversion",
-        "Suggested URL Structure": "/python/finance-business-insights"
-      },
-      {
-        "Page Title": "Python in Machine Learning and AI",
-        "Keywords": [
-          "python ai",
-          "python machine learning",
-          "tensorflow python",
-          "deep learning with python",
-          "python algorithms",
-          "numpy python",
-          "scikit-learn python",
-          "opencv python",
-          "artificial intelligence python"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/machine-learning-ai"
-      },
-      {
-        "Page Title": "Python for Software Developers",
-        "Keywords": [
-          "python developer",
-          "python software",
-          "software development python",
-          "python coding",
-          "python programming language",
-          "python language",
-          "python software development",
-          "python for developers",
-          "python coding challenges",
-          "python programming tricks"
-        ],
-        "Intent": "Conversion",
-        "Suggested URL Structure": "/python/software-development"
-      },
-      {
-        "Page Title": "Data Manipulation and Analysis with Python",
-        "Keywords": [
-          "data science from scratch",
-          "numpy python",
-          "pandas python",
-          "data with python",
-          "data manipulation python",
-          "data analysis python",
-          "python data library",
-          "matplotlib python",
-          "jupyter python",
-          "python for data"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/data-manipulation-analysis"
-      },
-      {
-        "Page Title": "Automate Everyday Tasks with Python",
-        "Keywords": [
-          "python automation",
-          "automate the boring stuff with python",
-          "python scripting",
-          "task automation python",
-          "python scheduler",
-          "cron jobs python",
-          "pyautogui python",
-          "rpa python",
-          "python task automation",
-          "scripting with python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/task-automation"
-      },
-      {
-        "Page Title": "Learn Python for Beginners: Start Your Coding Journey",
-        "Keywords": [
-          "python for beginners",
-          "python basics",
-          "beginner python tutorials",
-          "easy python projects",
-          "python for everyone",
-          "beginner coding python",
-          "getting started python",
-          "introductory python",
-          "starting with python",
-          "learn python the easy way"
+          "nauka jezyka migowego"
         ],
         "Intent": "Awareness",
-        "Suggested URL Structure": "/learn-python/for-beginners"
+        "Suggested URL Structure": "/nauka-jezyka-migowego/poczatkujacy"
+      },
+      {
+        "Page Title": "Najlepsze Metody Nauki J\u0119zyka dla Dzieci",
+        "Keywords": [
+          "nauka jezyka dla dzieci",
+          "najlepsza metoda nauki jezyka",
+          "nauka jezyka ang"
+        ],
+        "Intent": "Interest",
+        "Suggested URL Structure": "/nauka-jezyka-dla-dzieci/najlepsze-metody"
       }
     ]
   },
   {
     "Pages": [
       {
-        "Page Title": "Explore Java and Python: Versatile Programming Languages",
+        "Page Title": "Comprehensive Guide to Business English: Courses and Vocabulary",
         "Keywords": [
-          "java python",
-          "python3 online",
-          "python docs",
-          "python tutorialspoint",
-          "think python",
-          "python if and",
-          "python m",
-          "repl python",
-          "pythonanywhere",
-          "python geeksforgeeks",
-          "eclipse python",
-          "jdoodle python",
-          "re python"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/learn-python/java-vs-python"
-      },
-      {
-        "Page Title": "Python Development Tools and Libraries",
-        "Keywords": [
-          "python curses",
-          "raspberry pi python",
-          "python websockets",
-          "sqlalchemy python",
-          "gitpython",
-          "micro python",
-          "nltk",
-          "grpc python",
-          "networkx python",
-          "iron python",
-          "cv2 python",
-          "keras python",
-          "xgboost python",
-          "qt python"
+          "angielski biznesowy",
+          "angielski biznesowy kurs",
+          "biznesowy angielski",
+          "kurs angielskiego biznesowy",
+          "kurs angielski biznesowy",
+          "kurs j\u0119zyka angielskiego biznesowego",
+          "j\u0119zyk angielski biznesowy",
+          "j\u0119zyk angielski biznesowy kurs",
+          "angielski biznesowy korepetycje",
+          "nauka angielskiego biznesowego",
+          "angielski biznesowy konwersacje",
+          "angielski biznesowy s\u0142ownictwo",
+          "kurs angielskiego biznesowego",
+          "s\u0142ownictwo biznesowe angielski",
+          "angielski biznesowy do s\u0142uchania",
+          "angielski ekonomiczny",
+          "fiszki angielski biznesowy",
+          "jezyk biznesowy",
+          "s\u0142ownik biznesowy angielski"
         ],
         "Intent": "Interest",
-        "Suggested URL Structure": "/python/development-tools-libraries"
-      },
-      {
-        "Page Title": "Web Development with Python Frameworks",
-        "Keywords": [
-          "web3 py",
-          "python graphql",
-          "python html",
-          "python cookbook",
-          "python list",
-          "python opencv",
-          "arduino python",
-          "blender python",
-          "dir python",
-          "lightgbm python",
-          "microbit python",
-          "fpdf python",
-          "python w3",
-          "python html"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/web-development-frameworks"
-      },
-      {
-        "Page Title": "Python Data Science Libraries and Applications",
-        "Keywords": [
-          "dask python",
-          "nltk python",
-          "fizzbuzz python",
-          "fibonacci python",
-          "n in python",
-          "numba",
-          "pypi python",
-          "numpy to list",
-          "sklearn python",
-          "jax python",
-          "lxml python",
-          "numpy to list",
-          "all python"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/python/data-science-libraries"
-      },
-      {
-        "Page Title": "Python Automation and Scripting Essentials",
-        "Keywords": [
-          "requests python",
-          "celery python",
-          "head python",
-          "exit python",
-          "curl python",
-          "mkdir python",
-          "get in python",
-          "get python",
-          "head python",
-          "curl python",
-          "dir python",
-          "env python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/automation-scripting-essentials"
-      },
-      {
-        "Page Title": "Machine Learning and AI with Python",
-        "Keywords": [
-          "ml in python",
-          "ironpython",
-          "scipy python",
-          "gitpython",
-          "sqlalchemy python",
-          "pandas in python",
-          "pandas python",
-          "keras in python",
-          "tensorflow python",
-          "machine learning in python",
-          "strings in python",
-          "deep learning python",
-          "machine learning python"
-        ],
-        "Intent": "Conversion",
-        "Suggested URL Structure": "/python/machine-learning-ai"
-      },
-      {
-        "Page Title": "Python Installations and Environment Configuration",
-        "Keywords": [
-          "pip python",
-          "brew python",
-          "conda python",
-          "conda tensorflow",
-          "pip tensorflow",
-          "pip numpy",
-          "pip opencv",
-          "& in python",
-          "* * in python",
-          "* * python",
-          "* in python",
-          "cpython",
-          "env python"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/installations-environment"
-      },
-      {
-        "Page Title": "Computer Vision and Image Processing with Python",
-        "Keywords": [
-          "opencv python",
-          "cv2 python",
-          "pil python",
-          "pillow python",
-          "opencv programming with python",
-          "dir in python",
-          "path in python",
-          "image in python",
-          "images in python",
-          "fibonacci in python",
-          "fizzbuzz python",
-          "gitpython"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/computer-vision-image-processing"
-      },
-      {
-        "Page Title": "Data Structures and Algorithms in Python",
-        "Keywords": [
-          "sqlalchemy in python",
-          "blender in python",
-          "celery in python",
-          "dir python",
-          "sql python",
-          "lists in python",
-          "list in python",
-          "struct in python",
-          "dict in python",
-          "python",
-          "python list",
-          "python csv",
-          "list in python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/data-structures-algorithms"
-      },
-      {
-        "Page Title": "Introduction to Python: Comprehensive Guides and Tutorials",
-        "Keywords": [
-          "base64 python",
-          "protobuf python",
-          "grpc python",
-          "sqlalchemy python",
-          "python",
-          "python",
-          "python python",
-          "python",
-          "python",
-          "python",
-          "python"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/learn-python/introduction-guides"
+        "Suggested URL Structure": "/angielski/biznesowy/kursy-i-slownictwo"
       }
     ]
   },
   {
     "Pages": [
       {
-        "Page Title": "Introduction to PyCUDA and Its Applications",
+        "Page Title": "Online Language School: English, Polish, and More",
         "Keywords": [
-          "pycuda"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/advanced-techniques/pycuda-introduction"
-      },
-      {
-        "Page Title": "Using Pyramid Framework in Python for Web Development",
-        "Keywords": [
-          "pyramid python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/web-development-frameworks/pyramid-framework"
-      },
-      {
-        "Page Title": "Exploring Python Abstract Syntax Trees (AST)",
-        "Keywords": [
-          "python ast"
+          "szko\u0142a j\u0119zykowa online",
+          "kursy j\u0119zyka angielskiego",
+          "lekcje jezyka angielskiego online",
+          "kurs j\u0119zyka angielskiego za darmo",
+          "kursy jezyka angielskiego online",
+          "kurs jezyk angielski",
+          "najlepszy kurs jezyka angielskiego",
+          "kurs jezyka szwedzkiego",
+          "kurs jezyka czeskiego",
+          "kursy j\u0119zyka japo\u0144skiego",
+          "kurs j\u0119zyka islandzkiego",
+          "kurs j\u0019zyka norweskiego"
         ],
         "Intent": "Awareness",
-        "Suggested URL Structure": "/python/advanced-techniques/abstract-syntax-trees"
+        "Suggested URL Structure": "language-school/online-courses"
       },
       {
-        "Page Title": "Integrating Python with Binance for Financial Solutions",
+        "Page Title": "Learn Polish: Courses for Foreigners",
         "Keywords": [
-          "python binance"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/finance-business-insights/binance-integration"
-      },
-      {
-        "Page Title": "Clearing Lists and Screens in Python: Essential Techniques",
-        "Keywords": [
-          "python clear list",
-          "python clear screen"
+          "szko\u0142a j\u0119zyka polskiego",
+          "kursy jezyka polskiego dla cudzoziemcow"
         ],
         "Intent": "Interest",
-        "Suggested URL Structure": "/python/automation-scripting-essentials/clear-list-screen"
-      },
-      {
-        "Page Title": "Utilizing Python Dateutil for Efficient Date Handling",
-        "Keywords": [
-          "python dateutil"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/data-manipulation-analysis/dateutil-library"
-      },
-      {
-        "Page Title": "Effective List Operations in Python: Finding Items",
-        "Keywords": [
-          "python find in list"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/data-structures-algorithms/lists-operations"
-      },
-      {
-        "Page Title": "Leveraging Python gRPC for Microservices",
-        "Keywords": [
-          "python grpc"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/web-development/grpc-microservices"
-      },
-      {
-        "Page Title": "Exploring Python Jinja2 for Web Templating",
-        "Keywords": [
-          "python jinja2"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/python/web-development-frameworks/jinja2-templating"
-      },
-      {
-        "Page Title": "Implementing Linting in Python: Ensuring Code Quality",
-        "Keywords": [
-          "python linter"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/development-tools-libraries/linting-code-quality"
-      },
-      {
-        "Page Title": "Python Hashing Techniques: MD5 and SHA256 Explained",
-        "Keywords": [
-          "python md5",
-          "python sha256"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/advanced-techniques/hashing-md5-sha256"
-      },
-      {
-        "Page Title": "Accelerating Code Performance with Python Numba",
-        "Keywords": [
-          "python numba"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/advanced-techniques/numba-acceleration"
-      },
-      {
-        "Page Title": "Understanding Python Protobuf for Data Serialization",
-        "Keywords": [
-          "python protobuf"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/advanced-techniques/protobuf-serialization"
-      },
-      {
-        "Page Title": "Making HTTP Requests in Python Using Request Get",
-        "Keywords": [
-          "python request get"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/web-development/http-requests"
-      },
-      {
-        "Page Title": "Mastering Python Time Formatting with Strftime",
-        "Keywords": [
-          "python strftime"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/data-manipulation-analysis/time-formatting"
-      },
-      {
-        "Page Title": "Exploring PyTorch for Machine Learning in Python",
-        "Keywords": [
-          "python torch"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/machine-learning-ai/pytorch-introduction"
-      },
-      {
-        "Page Title": "Building Web Servers with Python Tornado",
-        "Keywords": [
-          "python tornado"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/web-development-frameworks/tornado-servers"
-      },
-      {
-        "Page Title": "Understanding Python Wait Commands and Implementation",
-        "Keywords": [
-          "python wait",
-          "python wait 5 seconds"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/automation-scripting-essentials/wait-commands"
-      },
-      {
-        "Page Title": "Working with Python Wheels for Package Distribution",
-        "Keywords": [
-          "python wheel"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/development-tools-libraries/package-distribution"
-      },
-      {
-        "Page Title": "Working with XML Data Using Python",
-        "Keywords": [
-          "python xml"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/data-manipulation-analysis/xml-data"
-      },
-      {
-        "Page Title": "Exploring Python Community and Resources on Reddit",
-        "Keywords": [
-          "reddit python"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/learn-python/introduction-guides/reddit-community"
-      },
-      {
-        "Page Title": "Machine Learning Fundamentals with Scikit-learn in Python",
-        "Keywords": [
-          "sklearn in python"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/machine-learning-ai/scikit-learn-fundamentals"
-      },
-      {
-        "Page Title": "Documentation Best Practices with Sphinx for Python",
-        "Keywords": [
-          "sphinx python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/development-tools-libraries/documentation-sphinx"
-      },
-      {
-        "Page Title": "Implementing Optical Character Recognition with Tesseract in Python",
-        "Keywords": [
-          "tesseract python"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/computer-vision-image-processing/tesseract-ocr"
-      },
-      {
-        "Page Title": "Creating a Simple Tic Tac Toe Game in Python",
-        "Keywords": [
-          "tic tac toe python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/learn-python/for-beginners/tic-tac-toe-game"
-      },
-      {
-        "Page Title": "Integrating Vim Editor with Python Development",
-        "Keywords": [
-          "vim python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/development-tools-libraries/vim-integration"
-      },
-      {
-        "Page Title": "Implementing Word2Vec in Python for NLP Tasks",
-        "Keywords": [
-          "word2vec python"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python/machine-learning-ai/word2vec-implementation"
-      },
-      {
-        "Page Title": "Creating Excel Files with XlsxWriter in Python",
-        "Keywords": [
-          "xlsxwriter python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python/data-manipulation-analysis/excel-xlsxwriter"
+        "Suggested URL Structure": "learn-polish/foreigners-courses"
       }
     ]
   },
   {
     "Pages": [
       {
-        "Page Title": "Comprehensive Guide to Python Downloads: All Versions & Platforms",
+        "Page Title": "Nauka J\u0119zyka Angielskiego dla Doros\u0142ych: Przewodnik i Kursy",
         "Keywords": [
-          "python download",
-          "python 3 download",
-          "python 3.9 download",
-          "python 3.10 download",
-          "python 3.11",
-          "python 3.12",
-          "download python 3.9",
-          "download python 3.10",
-          "download python 3.8",
-          "download python 3.7",
-          "python 2.7 download",
-          "download python 3.7",
-          "python 3.7",
-          "python 3.8 download",
-          "python 3.7 download",
-          "python 2.7"
+          "lektor j\u0119zyka angielskiego",
+          "szkola jezyka angielskiego",
+          "samouczek j\u0119zyka angielskiego",
+          "lekcje jezyka angielskiego",
+          "nauka jezyka angielskiego dla doroslych"
+        ],
+        "Intent": "Interest",
+        "Suggested URL Structure": "nauka-jezyka-angielskiego/dla-doros\u0142ych"
+      },
+      {
+        "Page Title": "Gramatyka J\u0119zyka Angielskiego: Od Podstaw do Zaawansowania",
+        "Keywords": [
+          "wielka gramatyka j\u0119zyka angielskiego",
+          "gramatyka jezyka angielskiego",
+          "wielka gramatyka edgard"
+        ],
+        "Intent": "Awareness",
+        "Suggested URL Structure": "gramatyka-jezyka-angielskiego"
+      },
+      {
+        "Page Title": "Poziomy J\u0119zyka Angielskiego: Od A2 do B2",
+        "Keywords": [
+          "j\u0119zyk angielski b2",
+          "j angielski b1",
+          "poziom jezyka a2",
+          "poziom jezyka angielskiego"
         ],
         "Intent": "Consideration",
-        "Suggested URL Structure": "/downloads/python-versions-guide"
+        "Suggested URL Structure": "poziomy-jezyka-angielskiego"
       },
       {
-        "Page Title": "Python Installation and Setup: Mac, Windows, and Linux",
+        "Page Title": "Podstawy J\u0119zyka Angielskiego: Tw\u00f3j Start w Angielskim",
         "Keywords": [
-          "python download windows",
-          "python 3.10",
-          "python download for windows 10 64 bit",
-          "python for mac",
-          "idle python download",
-          "pycharm download for windows",
-          "spyder python download",
-          "pygame download",
-          "python 3.8",
-          "python 3.8 10",
-          "python 3.6",
-          "python 3.6 download",
-          "python download mac",
-          "python linux",
-          "python ubuntu"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/installation/python-mac-windows-linux"
-      },
-      {
-        "Page Title": "Anaconda for Python: Software and Tools Download",
-        "Keywords": [
-          "anaconda python",
-          "anaconda download",
-          "anaconda python download",
-          "anaconda python 3.7 download",
-          "anaconda download for windows",
-          "download anaconda for windows",
-          "anaconda download for windows 10",
-          "anaconda software",
-          "anaconda jupyter notebook",
-          "anaconda jupyter",
-          "anaconda spyder",
-          "anaconda windows",
-          "anaconda mac",
-          "anaconda linux",
-          "anaconda prompt",
-          "anaconda ubuntu",
-          "anaconda com download"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/downloads/anaconda-python-tools"
-      },
-      {
-        "Page Title": "Choosing the Best Python IDEs: From Beginners to Experts",
-        "Keywords": [
-          "python ide",
-          "best python ide",
-          "python ide download",
-          "visual studio python",
-          "vscode python",
-          "python vscode"
+          "podstawy jezyka angielskiego"
         ],
         "Intent": "Awareness",
-        "Suggested URL Structure": "/ide/best-python-ide"
-      },
-      {
-        "Page Title": "Getting Started with Python Development: Tutorials and Bootcamps",
-        "Keywords": [
-          "python bootcamp",
-          "python tutor",
-          "python tester"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/development/python-tutorials-bootcamps"
-      },
-      {
-        "Page Title": "Exploring Python Libraries and Tools: From Email to Docker",
-        "Keywords": [
-          "python email",
-          "python redis",
-          "python docker",
-          "boto3 python",
-          "python boto3",
-          "python coverage",
-          "django docker",
-          "python sleep",
-          "python setup py",
-          "py2exe",
-          "pyinstaller"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/libraries-tools/python-email-docker"
-      },
-      {
-        "Page Title": "Effective Use of Python for Command Line and Networking",
-        "Keywords": [
-          "python cmd",
-          "python get request",
-          "python ping",
-          "python pwd",
-          "python readline",
-          "python ssh",
-          "python unzip",
-          "python wget",
-          "python yaml",
-          "python discord"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/command-line-networking/python-tools"
-      },
-      {
-        "Page Title": "Managing Python Environment: Pip, Setuptools, and Conda",
-        "Keywords": [
-          "pip download",
-          "get pip",
-          "get pip py",
-          "pip windows",
-          "pip list",
-          "pip requests",
-          "pip m pip",
-          "python m pip",
-          "python setuptools",
-          "python env",
-          "conda env",
-          "conda env list",
-          "python diff",
-          "python 2",
-          "python 4",
-          "python 3",
-          "python 3.9",
-          "python 3.10",
-          "python 3.11",
-          "python 3.12",
-          "python basename",
-          "python diff",
-          "python discord",
-          "python env",
-          "python get request",
-          "python gitlab",
-          "python ldap",
-          "python m pip",
-          "python ping",
-          "python pwd",
-          "python readline",
-          "python setuptools",
-          "python ssh",
-          "python unzip",
-          "python wget",
-          "python yaml",
-          "python3 8"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/environment-management/python-pip-conda"
-      },
-      {
-        "Page Title": "Advanced Python Development Tools: Docker and Git",
-        "Keywords": [
-          "python gitlab",
-          "django github",
-          "discord py"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/development-tools/python-docker-git"
-      }
-    ]
-  },
-  {
-    "Pages": [
-      {
-        "Page Title": "Advanced Python Tools: pywin32, win32com, and Setup with setuptools",
-        "Keywords": [
-          "python3 m",
-          "python3 pip",
-          "pywin32",
-          "setup py",
-          "setuptools",
-          "vscode jupyter",
-          "win32com"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/development-tools/advanced-python-tools-pywin32-setuptools"
-      }
-    ]
-  },
-  {
-    "Pages": [
-      {
-        "Page Title": "Comprehensive Guide to Python IDEs and Editors - Pycharm, Nvidia Thonny, Wing IDE",
-        "Keywords": [
-          "pycharm",
-          "pycharm download",
-          "jetbrains pycharm",
-          "python pycharm",
-          "pycharm online",
-          "pycharm professional",
-          "pycharm ide",
-          "jetbrains com pycharm",
-          "thonny download",
-          "wing ide",
-          "thonny",
-          "intellij python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python-ides-editors/pycharm-thonny-wing/"
-      },
-      {
-        "Page Title": "Exploring Python Data Visualization with Seaborn, Matplotlib, and Plotly",
-        "Keywords": [
-          "seaborn",
-          "matplotlib",
-          "plotly python",
-          "seaborn python",
-          "matplotlib 3d"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/python-data-visualization/seaborn-matplotlib-plotly/"
-      },
-      {
-        "Page Title": "Web Development Frameworks in Python - Django, Flask, FastAPI",
-        "Keywords": [
-          "django rest",
-          "django postgresql",
-          "django project",
-          "django redis",
-          "django bootstrap",
-          "flask python",
-          "flask bootstrap",
-          "flask cors",
-          "flask github",
-          "flask restful",
-          "flask socketio",
-          "flask sqlalchemy",
-          "gunicorn",
-          "gunicorn flask",
-          "fastapi",
-          "fastapi sqlalchemy"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/web-development-frameworks/python-django-flask-fastapi/"
-      },
-      {
-        "Page Title": "Data Science and Machine Learning Libraries in Python",
-        "Keywords": [
-          "numpy",
-          "pandas python",
-          "scipy",
-          "scipy python",
-          "pyspark",
-          "numpy github",
-          "matplotlib",
-          "h5py",
-          "pymodbus",
-          "lxml",
-          "cvxpy",
-          "biopython",
-          "cffi"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/data-science-ml-libraries/python-numpy-pandas-scipy/"
-      },
-      {
-        "Page Title": "Advanced Python Toolkit for Scripting and Automation",
-        "Keywords": [
-          "pypdf2",
-          "pdfminer",
-          "pyautogui",
-          "pysimplegui",
-          "instapy",
-          "pyarmor",
-          "scrapy",
-          "scrapy python",
-          "beautifulsoup",
-          "beautifulsoup4",
-          "openpyxl",
-          "openpyxl python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/scripting-automation/python-advanced-toolkit/"
-      },
-      {
-        "Page Title": "Python Game Development with Pygame and Kivy",
-        "Keywords": [
-          "pygame",
-          "python pygame",
-          "kivy",
-          "kivy python",
-          "pyqt",
-          "pyqt5",
-          "pyqt6",
-          "pyside",
-          "pyside6"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/game-development/python-pygame-kivy/"
-      },
-      {
-        "Page Title": "Jupyter Notebook and IPython for Data Analysis in Python",
-        "Keywords": [
-          "jupyter python",
-          "jupyter notebook python",
-          "ipython notebook",
-          "python jupyter notebook",
-          "ipykernel",
-          "ipython",
-          "ipynb to py"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/data-analysis/jupyter-notebook-ipython-python/"
-      },
-      {
-        "Page Title": "Using Python for Excel, Databases, and Data Manipulation",
-        "Keywords": [
-          "python excel",
-          "xlwings",
-          "psycopg2",
-          "python postgresql",
-          "mongoengine",
-          "cx_oracle",
-          "pandas python",
-          "numpy"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/data-manipulation/python-excel-databases/"
-      },
-      {
-        "Page Title": "Graphical User Interfaces in Python with Tkinter, PyQT, and PySimpleGUI",
-        "Keywords": [
-          "tkinter python",
-          "tkinter",
-          "pyqt",
-          "pyqt5",
-          "pyqt6",
-          "pyside",
-          "pyside6",
-          "pysimplegui"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/gui-development/python-tkinter-pyqt-pysimplegui/"
-      },
-      {
-        "Page Title": "Python Text Processing and NLP with TextBlob, SpaCy, and lxml",
-        "Keywords": [
-          "textblob",
-          "spacy python",
-          "lxml",
-          "pypdf2",
-          "pdfminer"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/text-processing-nlp/python-textblob-spacy/"
-      },
-      {
-        "Page Title": "Python Coding Standards and Tools: PyLinter, PEP8, Black, Flake8, Mypy",
-        "Keywords": [
-          "pep8",
-          "pep8 python",
-          "flake8",
-          "mypy"
-        ],
-        "Intent": "Conversion",
-        "Suggested URL Structure": "/python-coding-standards/tools-linters/"
-      },
-      {
-        "Page Title": "Python Tools for Data Processing and Reporting",
-        "Keywords": [
-          "reportlab",
-          "gspread",
-          "geopy"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/data-processing-reporting/python-tools/"
-      },
-      {
-        "Page Title": "Introduction to Python Programming and its Pioneers",
-        "Keywords": [
-          "discord py docs",
-          "guido van rossum"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/introduction/python-programming-pioneers/"
-      },
-      {
-        "Page Title": "Working with Scientific and Engineering Libraries in Python",
-        "Keywords": [
-          "graphviz python",
-          "h5py",
-          "pyomo"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/scientific-engineering/python-libraries/"
-      }
-    ]
-  },
-  {
-    "Pages": [
-      {
-        "Page Title": "Getting Started with Pandas for Data Manipulation and Conversion",
-        "Keywords": [
-          "pandas df",
-          "pandas excel",
-          "pandas to excel",
-          "pandas to list",
-          "pandas to numpy"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/data-manipulation/pandas-data-manipulation/"
-      },
-      {
-        "Page Title": "Installing Python Packages: Pandas, Matplotlib, and More via Pip",
-        "Keywords": [
-          "pandas pypi",
-          "pip matplotlib",
-          "pip pandas"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/package-installation/python-pip-packages/"
-      },
-      {
-        "Page Title": "Setting Up Pycharm on Linux and Mac for Python Development",
-        "Keywords": [
-          "pycharm linux",
-          "pycharm mac"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python-ides-editors/pycharm-linux-mac/"
-      },
-      {
-        "Page Title": "Exploring Additional Python Tools and Libraries",
-        "Keywords": [
-          "pycurl",
-          "pydev",
-          "pydoc",
-          "pydroid",
-          "pygithub",
-          "pyglet",
-          "pygui",
-          "pylint",
-          "pymysql",
-          "pyo3",
-          "pyopengl",
-          "pypy",
-          "pyqtgraph",
-          "pyscripter",
-          "pyscripter download",
-          "pysftp",
-          "pyside2",
-          "pytest",
-          "pyyaml",
-          "qpython"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/scripting-automation/python-additional-tools/"
-      },
-      {
-        "Page Title": "Network and Visualization Tools in Python",
-        "Keywords": [
-          "scapy",
-          "scapy python",
-          "scipy in python",
-          "seaborn in python",
-          "skimage"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/scientific-engineering/python-network-visualization/"
-      },
-      {
-        "Page Title": "Python IDEs: Spyder and Vpython for Effective Coding",
-        "Keywords": [
-          "spyder ide",
-          "vpython"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/python-ides-editors/spyder-vpython/"
-      },
-      {
-        "Page Title": "Python Mathematical Libraries: SymPy and More",
-        "Keywords": [
-          "sympy",
-          "sympy python"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/scientific-engineering/python-mathematical-libraries/"
-      },
-      {
-        "Page Title": "Python Integrated Development Environments: Thonny and Others",
-        "Keywords": [
-          "thonny ide"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/python-ides-editors/thonny-ide/"
-      },
-      {
-        "Page Title": "Enhance Web Experiences with Tkinter and Wxpython Widgets",
-        "Keywords": [
-          "tkinter widgets",
-          "wxpython"
-        ],
-        "Intent": "Consideration",
-        "Suggested URL Structure": "/gui-development/python-tkinter-wxpython-widgets/"
-      },
-      {
-        "Page Title": "Engaging Python Libraries for Social Media and WebApps",
-        "Keywords": [
-          "tweepy",
-          "wtforms",
-          "wsgi"
-        ],
-        "Intent": "Interest",
-        "Suggested URL Structure": "/web-development-frameworks/python-social-media-bots/"
-      },
-      {
-        "Page Title": "Python Environment Setups: WinPython and Xarray",
-        "Keywords": [
-          "winpython",
-          "xarray"
-        ],
-        "Intent": "Awareness",
-        "Suggested URL Structure": "/scientific-engineering/python-environment-setups/"
-      },
-      {
-        "Page Title": "Excel File Management with XlsxWriter in Python",
-        "Keywords": [
-          "xlsxwriter"
-        ],
-        "Intent": "Conversion",
-        "Suggested URL Structure": "/data-manipulation/python-excel-file-management/"
+        "Suggested URL Structure": "podstawy-jezyka-angielskiego"
       }
     ]
   }
