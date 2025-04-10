@@ -31,7 +31,10 @@ from typing import Dict
 app = FastAPI(title="AI marketing app",
     description="",
     version="1.0.0",
-    openapi_url="/openapi.json")
+    openapi_url="/api/openapi.json",  # Serve OpenAPI schema at /api/openapi.json
+    docs_url="/api/docs",            # Serve docs at /api/docs
+    root_path="/api"
+    )
 
 
 class KeywordRequest(BaseModel):
