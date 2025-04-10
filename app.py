@@ -30,7 +30,11 @@ from typing import Dict
 
 app = FastAPI(title="AI marketing app",
     description="",
-    version="1.0.0"
+    version="1.0.0",
+    openapi_url="/api/openapi.json",  
+    docs_url="/api/docs",            
+    redoc_url="/api/redoc",         
+    root_path="/api"
     )
 
 
