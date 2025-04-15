@@ -556,12 +556,13 @@ with tab1:
                         csv_buffer = BytesIO()
                         st.session_state.seo_processed_df.to_csv(csv_buffer, index=False)
                         csv_buffer.seek(0)
-
+                         
                         # Ensure filename is valid
                         if not file_name.strip():
                             st.error("Filename cannot be empty!")
                         else:
                             full_filename = f"{file_name.strip()}.csv"
+                            print(full_filename)
                             files = {"file": (full_filename, csv_buffer, "text/csv")}
                             response = requests.post(SEO_PROCESS_FILE, files=files)
             
