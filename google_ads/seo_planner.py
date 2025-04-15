@@ -71,7 +71,7 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
                 "Avg Monthly Searches": metrics.avg_monthly_searches if metrics else 0,
             })
 
-        print(data)
+        # print(data)
         return data    
             
     except GoogleAdsException as ex:
@@ -103,6 +103,6 @@ def seo_keywords_main(keywords, location_ids, language_id):
 
     return result
 
-if __name__ == "__main__":
-    key = ["eis investment"]
-    seo_keywords_main(keywords=key, location_ids=None, language_id=None)
+# if __name__ == "__main__":
+#     key = ["eis investment"]
+#     seo_keywords_main(keywords=key, location_ids=None, language_id=None)

@@ -93,7 +93,7 @@ def download_document(data: dict) -> dict:
             # Extract the file name from the path for local saving
             # file_name = file_path.split('/')[-1]
             if not file_path or file_path.endswith('/'):
-                extracted_texts[folder] = "No file selected or path is a directory."
+                extracted_texts[folder] = []
                 continue
 
             file_name = os.path.basename(file_path)

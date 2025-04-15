@@ -480,10 +480,11 @@ with tab1:
         if response.status_code == 200:
             st.success("SEO Keywords Processed Successfully!")
             processed_data = response.json()
+            st.write(f"Total token count: {processed_data[1]}")
 
             # Convert JSON response to DataFrame
             try:
-                processed_df = pd.DataFrame(processed_data)
+                processed_df = pd.DataFrame(processed_data[0])
                 st.session_state.seo_processed_df = processed_df
                 st.subheader("Processed SEO Keywords DataFrame:")
                 st.dataframe(processed_df)
@@ -548,7 +549,7 @@ with tab1:
                 if processed_df is not None:
                     st.session_state.seo_processed_df = processed_df
 
-                if "seo_processed_df" in st.session_state and not st.session_state.seo_processed_df is not None:
+                if "seo_processed_df" in st.session_state and st.session_state.seo_processed_df is not None:
                     file_name = st.text_input("Enter filename (without extension):", "processed_seo")
                     if st.button("Upload to S3", key="upload_s3"):
 
@@ -800,10 +801,10 @@ with tab2:
         if response.status_code == 200:
             st.success("ppc Keywords Processed Successfully!")
             processed_data = response.json()
-
+            st.write(f"Total token count: {processed_data[1]}")
             # Convert JSON response to DataFrame
             try:
-                processed_df = pd.DataFrame(processed_data)
+                processed_df = pd.DataFrame(processed_data[0])
                 st.session_state.ppc_processed_df = processed_df
                 # st.subheader("Processed SEO Keywords DataFrame:")
                 # st.dataframe(processed_df)
@@ -1292,6 +1293,8 @@ with tab6:
                     response = requests.post(BLOG_GENERATION_TEXT, files=files)
                     if response.status_code == 200:
                         data = response.json()
+                        st.write(f"Total token count: {data[1]}")   
+                        data = data[0]
                         st.session_state.blog_text = data
                     else:
                         st.error(f"Error: {response.status_code}, {response.text}")
@@ -1334,11 +1337,12 @@ with tab6:
 
                     if seo_blog.status_code == 200:
                         seo_blog_post = seo_blog.json()
-                        print(seo_blog_post)
-                        st.session_state.Seo_blog_text = seo_blog_post
+                        # print(seo_blog_post)
+                        st.session_state.Seo_blog_text = seo_blog_post[0]
                         
                     if 'Seo_blog_text' in st.session_state:
                         st.title("Edit Your Seo Blog Post")
+                        st.write(f"Total token count: {seo_blog_post[1]}")
                         edited_text = st.text_area(
                             "Blog Post Content",
                             value=st.session_state.Seo_blog_text,

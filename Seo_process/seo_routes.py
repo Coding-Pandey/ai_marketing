@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
+import json
 import pandas as pd
 import io
 from .seo_models import KeywordRequest, SuggestionKeywordRequest
@@ -27,9 +28,15 @@ def seo_generate_keywords(request: KeywordRequest):
         # If both location and language are missing, raise an error
         if request.location_ids is None and request.language_id is None:
             raise HTTPException(status_code=400, detail="Both 'location_ids' and 'language_id' must be provided.")
-        
-        keyword_json = query_keywords_description(prompt_keyword, request.keywords, request.description)
-        # print(result)
+
+        if request.description:
+            keyword_json = query_keywords_description(prompt_keyword, request.keywords, request.description)
+  
+        else:
+            keywords_list = [kw.strip() for kw in request.keywords.split(",")] if request.keywords else []
+            keyword_json = {"keywords": keywords_list}
+            keyword_json = json.dumps(keyword_json) 
+            print(f"keyword json: {keyword_json}")
         keyword = extract_keywords(str(keyword_json))
         
         if isinstance(keyword, tuple) and keyword[0] is False:
@@ -106,10 +113,10 @@ async def seo_keyword_clustering(file: UploadFile = File(...)):
         print("Parsed DataFrame:", df1.head())
         data= df1.to_dict(orient="records")
         print("Parsed data:", data)
-        cluster_data = await seo_main(df1.to_dict(orient="records"))  
+        cluster_data, total_token  = await seo_main(df1.to_dict(orient="records"))  
         result = flatten_seo_data(cluster_data,df)
 
-        return result
+        return result , total_token
     except Exception as e:
         return {"error": str(e)}
 

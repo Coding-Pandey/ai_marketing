@@ -86,10 +86,10 @@ async def ppc_keyword_clustering(file: UploadFile = File(...)):
         print("Parsed data:", data)  
 
         # result = asyncio.run(ppc_main(data))
-        result = await ppc_main(data)
+        result, total_token = await ppc_main(data)
         ppc_data = flatten_ppc_data(result,df)
   
-        return ppc_data
+        return ppc_data, total_token
 
 
     except ValueError as e:

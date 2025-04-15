@@ -52,10 +52,12 @@ def url_agent(items, json_data):
         )
 
         response_content = response.choices[0].message.content
+        total_token = response.usage.total_tokens
   
         response_json = json.loads(response_content)
         text_data = json_to_text(response_json)
-        return text_data
+        # print(text_data)
+        return text_data, total_token
 
     except KeyError as e:
         print(f"Key error: {e}. The expected key was not found in the response.")
@@ -71,17 +73,15 @@ def url_agent(items, json_data):
 def blog_generation(file,json_data):
     text = file
     try:    
-        output = url_agent(
+        output, token = url_agent(
             text, 
             json_data, 
         )
-           
+        # print(output)   
+        return output, token
+
     except json.JSONDecodeError as e:
         print(f"JSON decoding error in iteration  {str(e)}")
         print(f"Output was: {output}")
     except Exception as e:
         print(f"Error formatting data in iteration  {str(e)}")
-
-    return output
-
-

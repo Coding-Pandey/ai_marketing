@@ -34,7 +34,8 @@ def Document_summerizer(items):
         response_content = response.choices[0].message.content
         print(response_content)
         response_content = json.loads(response_content)
-        return response_content
+        total_token = response.usage.total_tokens
+        return response_content, total_token
 
     except KeyError as e:
         print(f"Key error: {e}. The expected key was not found in the response.")

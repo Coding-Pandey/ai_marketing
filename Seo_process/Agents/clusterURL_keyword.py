@@ -44,6 +44,8 @@ async def url_agent(PROMPT, items, previous_page_titles=None, previous_URL=None)
 
      
         response_content = response.choices[0].message.content
+        total_token = response.usage.total_tokens
+
         output_json = json.loads(response_content) if response_content else []
         print("Response received:", output_json)
 
@@ -91,11 +93,11 @@ async def url_agent(PROMPT, items, previous_page_titles=None, previous_URL=None)
         print("URL structures extracted:", url_structures)
           
    
-        return output_json, page_titles, url_structures
+        return output_json, page_titles, url_structures, total_token
 
     except Exception as e:
         print(f"Error in url_agent: {e}")
-        return None, []
+        return None, None, None,0
 
 
 def process_clusters(data):
@@ -132,18 +134,24 @@ async def agent_call(cluster_items):
     previous_page_titles = []
     structured_results = []
     previous_structured_URL = []
+    total_token_count = 0
+
     # Process in batches of 100
     for i in range(0, len(cluster_items), 100): 
         batch = cluster_items[i:i+100]  
         print(f"Processing batch {i//100 + 1} with {len(batch)} items")
         
         # Pass previous page titles to url_agent
-        structured_data, batch_page_titles, url_structure = await url_agent(
+        structured_data, batch_page_titles, url_structure, batch_tokens  = await url_agent(
             PROMPT=prompt,
             items=batch, 
             previous_page_titles=previous_page_titles,
             previous_URL=previous_structured_URL
         )
+        # Accumulate token count for this cluster
+        if batch_tokens:
+            total_token_count += batch_tokens
+            print(f"Batch token count: {batch_tokens}, Running total: {total_token_count}")
 
         if structured_data:
             structured_results.extend([structured_data] if not isinstance(structured_data, list) else structured_data)
@@ -152,20 +160,23 @@ async def agent_call(cluster_items):
             previous_page_titles.extend(batch_page_titles)  
 
         if url_structure:
-            previous_structured_URL.extend(url_structure)    
+            previous_structured_URL.extend(url_structure) 
+   
 
     print(f"Processed {len(structured_results)} items, structured_results {structured_results}")       
 
-    return structured_results
+    return structured_results, total_token_count
 
 
 async def agent_recursion(clusters): 
     cluster_data = process_clusters(clusters)
     final_results = []
-
+    global_token_count = 0 
     for cluster_id, cluster_items in cluster_data.items():
         print(f"Processing cluster {cluster_id} with {len(cluster_items)} items")
-        structured_data = await agent_call(cluster_items)
+        structured_data, cluster_token_count  = await agent_call(cluster_items)
+
+        global_token_count += cluster_token_count
 
         if structured_data:
             for structure in structured_data:
@@ -176,19 +187,21 @@ async def agent_recursion(clusters):
                 else:
                     # Already a dict/JSON object
                     final_results.append(structure)
-    print(f"Processed {len(final_results)} items", final_results)                
+    print(f"Processed {len(final_results)} items", final_results)      
+    print(f"Total token usage across all clusters: {global_token_count}")          
 
-    return final_results
+    return final_results, global_token_count
 
 
 # Main entry point to run the code
 async def seo_main(input_data):
-    results = await agent_recursion(input_data)
+    results, total_token_count = await agent_recursion(input_data)
     # Save results to file
-    with open("clustering_results1.json", "w") as f:
-        json.dump(results, f, indent=2)
-    print(f"Processed {len(results)} items and saved to clustering_results.json")
-    return results
+    # with open("clustering_results1.json", "w") as f:
+    #     json.dump(results, f, indent=2)
+    # print(f"Processed {len(results)} items and saved to clustering_results.json")
+    print(f"Total token count: {total_token_count}")
+    return results, total_token_count
 
 
 # # Example of how to run the code

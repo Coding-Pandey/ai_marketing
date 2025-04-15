@@ -61,7 +61,7 @@ def query_keywords_description(PROMPT, keywords=None, description=None):
     )
 
     tool_calls = response.choices[0].message.tool_calls 
-    print(tool_calls) 
+    # print(tool_calls) 
     if tool_calls:
         arguments = tool_calls[0].function.arguments
         print(arguments)

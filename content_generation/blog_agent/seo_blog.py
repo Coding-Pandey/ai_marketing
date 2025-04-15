@@ -124,18 +124,7 @@ def keywords_blog(keywords, text):
 
 
 
-async def open_ai_async(blog: str, sentence_data: Dict[str, Any], retry_count: int = 2) -> str:
-    """
-    Asynchronous version of open_ai function with error handling and retries.
-    
-    Args:
-        blog: The full blog text
-        sentence_data: Dict with 'sentence', 'noun_matches', and 'noun_phrase_matches'
-        retry_count: Number of retry attempts for API failures
-    
-    Returns:
-        Rewritten sentence or original sentence if all retries fail
-    """
+async def open_ai_async(blog: str, sentence_data: Dict[str, Any], retry_count: int = 2) -> tuple:
     original_sentence = sentence_data['sentence']
     query = ""
     
@@ -147,12 +136,10 @@ async def open_ai_async(blog: str, sentence_data: Dict[str, Any], retry_count: i
             for m in sentence_data.get('noun_phrase_matches', [])]
         )
         
-      
         if not replacements:
-            return original_sentence
-            
+            return original_sentence, 0
+
         replacements_str = json.dumps(replacements, indent=2)
-        
         formatted_prompt = keyword_matching.format(
             sentence=original_sentence,
             replacements=replacements_str,
@@ -164,11 +151,9 @@ async def open_ai_async(blog: str, sentence_data: Dict[str, Any], retry_count: i
             {'role': 'user', 'content': query}
         ]
 
-        # Implement retry logic
         attempts = 0
         while attempts <= retry_count:
             try:
-                # Run the API call in a thread to avoid blocking the event loop
                 loop = asyncio.get_event_loop()
                 with ThreadPoolExecutor() as executor:
                     response = await loop.run_in_executor(
@@ -182,104 +167,68 @@ async def open_ai_async(blog: str, sentence_data: Dict[str, Any], retry_count: i
 
                 full_response = response.choices[0].message.content.strip()
                 final_sentence = full_response.split("Final Sentence:")[-1].strip()
-                
-           
+                total_tokens = response.usage.total_tokens if response.usage else 0
+
                 if not final_sentence:
                     raise ValueError("Empty response received from API")
                     
-                return final_sentence
-                
+                return final_sentence, total_tokens
+
             except Exception as attempt_error:
                 attempts += 1
-                error_msg = f"Error in open_ai_async (attempt {attempts}/{retry_count+1}): {str(attempt_error)}"
-                print(error_msg)
-                
                 if attempts <= retry_count:
-                    # Wait with exponential backoff before retrying
                     backoff_time = 2 ** attempts
-                    print(f"Retrying in {backoff_time} seconds...")
                     await asyncio.sleep(backoff_time)
                 else:
-                    print(f"All retry attempts failed for sentence: {original_sentence[:50]}...")
-                    return original_sentence
+                    return original_sentence, 0
     
     except Exception as e:
-        error_msg = f"Unexpected error processing sentence: {str(e)}"
-        print(error_msg)
         traceback.print_exc()
-        return original_sentence
+        return original_sentence, 0
+
 
 async def process_sentence_batch(blog: str, batch: List[Dict[str, Any]], 
-                               semaphore: asyncio.Semaphore) -> List[str]:
-    """
-    Process a batch of sentences with rate limiting via semaphore.
-    
-    Args:
-        blog: The full blog text
-        batch: List of sentence data dicts
-        semaphore: Semaphore for rate limiting
-    
-    Returns:
-        List of rewritten sentences
-    """
+                                 semaphore: asyncio.Semaphore) -> tuple:
     tasks = []
     for sentence_data in batch:
-   
         async with semaphore:
             task = asyncio.create_task(open_ai_async(blog, sentence_data))
             tasks.append(task)
     
     results = await asyncio.gather(*tasks, return_exceptions=True)
     
-    # Handle any exceptions that were returned
     processed_results = []
+    total_token_count = 0
+
     for i, result in enumerate(results):
         if isinstance(result, Exception):
-            print(f"Task failed with error: {str(result)}")
-            # Fall back to original sentence
             processed_results.append(batch[i]['sentence'])
         else:
-            processed_results.append(result)
+            sentence, token_count = result
+            processed_results.append(sentence)
+            total_token_count += token_count
     
-    return processed_results
+    return processed_results, total_token_count
+
 
 async def generation_blog_async(keywords: List[str], text: str, 
-                              max_concurrent: int = 5) -> str:
-    """
-    Generate a rewritten blog by processing sentences concurrently with proper error handling.
-    
-    Args:
-        keywords: List of keywords for content optimization
-        text: Original blog text
-        max_concurrent: Maximum number of concurrent API calls
-    
-    Returns:
-        Rewritten blog text
-    """
+                                max_concurrent: int = 5) -> tuple:
     try:
-        # Get keyword data
         keywords_data = keywords_blog(keywords=keywords, text=text)
         
         if not keywords_data:
-            print("No sentence data returned from keywords_blog. Returning original text.")
-            return text
+            return text, 0
         
-        # Create a semaphore to limit concurrent API calls
         semaphore = asyncio.Semaphore(max_concurrent)
+        rewritten_sentences, total_token_count = await process_sentence_batch(text, keywords_data, semaphore)
         
-        rewritten_sentences = await process_sentence_batch(text, keywords_data, semaphore)
-        
-        # Join all rewritten sentences with newlines
         blog_text = "\n".join(rewritten_sentences)
-        
-        return blog_text
-        
+        return blog_text, total_token_count
+
     except Exception as e:
-        error_msg = f"Error in generation_blog_async: {str(e)}"
-        print(error_msg)
         traceback.print_exc()
-  
-        return text
+        return text, 0
+
 
 # def generation_blog(keywords: List[str], text: str, max_concurrent: int = 5) -> str:
 #     """
