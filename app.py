@@ -7,7 +7,9 @@ from S3_bucket.bucket_routes import router as bucket_router
 
 app = FastAPI(title="AI marketing app",
     description="",
-    version="1.0.0")
+    version="1.0.0",
+    root_path="/api"
+         )
 
 @app.get("/")
 def read_root():
