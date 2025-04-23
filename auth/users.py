@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from auth.schemas import UserCreate, UserOut, Token
 from auth.models import User
@@ -8,7 +8,11 @@ from auth.auth import oauth2_scheme
 from fastapi.responses import JSONResponse
 from auth.database import Base, engine
 from pydantic import BaseModel, EmailStr
+from jose import JWTError, jwt
 
+class APIException(HTTPException):
+    def __init__(self, status_code: int, detail: str):
+        super().__init__(status_code=status_code, detail=detail)
 
 class EmailPasswordLogin(BaseModel):
     email: EmailStr
@@ -40,17 +44,48 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
     return new_user
 
+
 @router.post("/login", response_model=Token)
-def login_for_access_token(login_data: EmailPasswordLogin, db=Depends(get_db)):
+async def login_for_access_token(login_data: EmailPasswordLogin, db=Depends(get_db)):
+    try:
+      
+        if not login_data.email or not login_data.password:
+            raise APIException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Bad Request. Email and password are required."
+            )
 
-    user = authenticate_user(db, email=login_data.email, password=login_data.password)
+        user = authenticate_user(db, email=login_data.email, password=login_data.password)
+        
+        if not user:
+            raise APIException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Incorrect email or password"
+            )
 
-    if not user: 
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
-    
-    token = create_access_token({"sub": user.email})
+        if hasattr(user, 'is_active') and not user.is_active:
+            raise APIException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden. User account is not active."
+            )
 
-    return {"access_token": token, "token_type": "bearer"}
+        try:
+            token = create_access_token({"sub": user.email})
+        except JWTError:
+            raise APIException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal Server Error. Failed to generate access token."
+            )
+
+        return {"access_token": token, "token_type": "bearer", "user": user.username}
+
+    except APIException as e:
+        raise e
+    except Exception as e:
+        raise APIException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal Server Error. An unexpected error occurred."
+        )
 
 
 @router.get("/me", response_model=UserOut)
