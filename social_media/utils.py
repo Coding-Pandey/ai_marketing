@@ -54,3 +54,32 @@ def convert_doc_to_text(file_bytes, filename):
 # Example usage
 # text = convert_doc_to_text(r"C:\Users\nickc\OneDrive\Desktop\AI marketing\doc\Plug_%26_Play%2C_Grow_-_campaing (1).docx")
 # print(text)
+
+import re
+import emoji
+
+def clean_post(text, remove_emojis=True, remove_hashtags=True):
+    if remove_emojis:
+        text = ''.join(char for char in text if not emoji.is_emoji(char))
+
+    if remove_hashtags:
+        text = re.sub(r'#\w+', '', text)
+
+    return text.strip()
+
+
+def clean_post_list(data_list, remove_emojis=True, remove_hashtags=True):
+    cleaned = []
+    for item in data_list:
+        new_item = {}
+        for key, val_list in item.items():
+            new_item[key] = [
+                clean_post(
+                    text,
+                    remove_emojis=remove_emojis,
+                    remove_hashtags=remove_hashtags,
+                ) if isinstance(text, str) else text
+                for text in val_list
+            ]
+        cleaned.append(new_item)
+    return cleaned

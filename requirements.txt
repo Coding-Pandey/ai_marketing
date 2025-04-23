@@ -27,3 +27,4 @@ passlib[bcrypt]
 python-jose
 python-multipart
 pydantic[email]
+emoji

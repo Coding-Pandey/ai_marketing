@@ -5,12 +5,21 @@ from social_media.social_media_routes import router as social_media_router
 from content_generation.content_generation_routes import router as content_generate_router
 from S3_bucket.bucket_routes import router as bucket_router
 from auth.users import router as auth_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="AI marketing app",
     description="",
     version="1.0.0",
     root_path="/api"
          )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
