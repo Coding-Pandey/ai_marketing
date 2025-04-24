@@ -4,6 +4,7 @@ class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
+    role: str = "user" 
 
 class UserOut(BaseModel):
     id: int
@@ -16,8 +17,13 @@ class UserOut(BaseModel):
         "from_attributes": True
     }
 
+class User(BaseModel):
+    username: str
+    id: int
+    email: str
+    
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user: str
+    user: User
 

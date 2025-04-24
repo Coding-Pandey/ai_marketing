@@ -1,14 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status,  Request
 from sqlalchemy.orm import Session
-from auth.schemas import UserCreate, UserOut, Token
-from auth.models import User
+from auth.schemas import UserCreate, UserOut, Token, User
+from auth.models import User, UserPermission
 from auth.auth import get_db, get_password_hash, authenticate_user, create_access_token
 from auth.deps import get_current_active_user, get_admin_user
 from auth.auth import oauth2_scheme
 from fastapi.responses import JSONResponse
 from auth.database import Base, engine
 from pydantic import BaseModel, EmailStr
+from starlette.middleware.sessions import SessionMiddleware
 from jose import JWTError, jwt
+from authlib.integrations.starlette_client import OAuth
+from starlette.config import Config
+from datetime import datetime, timedelta
+from auth.permission import get_default_permissions
+import os
 
 class APIException(HTTPException):
     def __init__(self, status_code: int, detail: str):
@@ -21,12 +27,27 @@ class EmailPasswordLogin(BaseModel):
 router = APIRouter()
 
 Base.metadata.create_all(bind=engine)
+# Add session middleware for OAuth
+config = Config(".env")
+
+oauth = OAuth(config)
+oauth.register(
+    name='google',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
 
 @router.post("/register", response_model=UserOut)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
 
     db_user_email = db.query(User).filter(User.email == user.email).first()
+
 
     if db_user_email:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -36,17 +57,42 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     
     hashed_pw = get_password_hash(user.password)
 
-    new_user = User(username=user.username, email=user.email, hashed_password=hashed_pw)
+    new_user = User(username=user.username, email=user.email, hashed_password=hashed_pw, role=user.role)
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
+    default_permissions = get_default_permissions(role=new_user.role)
+
+    for api_name, call_limit in default_permissions.items():
+        permission = UserPermission(
+            user_id=new_user.id,
+            api_name=api_name,
+            call_limit=call_limit,
+            call_count=0,
+            last_reset=datetime.utcnow()
+        )
+        db.add(permission)
+
+    db.commit()
+
     return new_user
 
+@router.get("/google_login")
+async def login(request: Request):
+    redirect_uri = request.url_for("auth")
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+# Auth callback
+@router.get("/auth")
+async def auth(request: Request):
+    token = await oauth.google.authorize_access_token(request)
+    user = await oauth.google.parse_id_token(request, token)
+    return JSONResponse(content={"user": user})
 
 @router.post("/login", response_model=Token)
-async def login_for_access_token(login_data: EmailPasswordLogin, db=Depends(get_db)):
+async def login_for_access_token(login_data: EmailPasswordLogin, db= Depends(get_db)):
     try:
       
         if not login_data.email or not login_data.password:
@@ -70,14 +116,15 @@ async def login_for_access_token(login_data: EmailPasswordLogin, db=Depends(get_
             )
 
         try:
-            token = create_access_token({"sub": user.email})
+            token = create_access_token({"email": user.email, "sub": user.username, "id": user.id})
+
         except JWTError:
             raise APIException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal Server Error. Failed to generate access token."
             )
-
-        return {"access_token": token, "token_type": "bearer", "user": user.username}
+        
+        return {"access_token": token, "token_type": "bearer", "user": {"username": user.username, "id": user.id, "email": user.email}}
 
     except APIException as e:
         raise e

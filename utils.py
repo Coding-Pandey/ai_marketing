@@ -1,3 +1,9 @@
+from fastapi import Request, HTTPException, Depends
+from sqlalchemy.orm import Session
+from datetime import datetime
+from auth.models import UserPermission
+from auth.auth import get_current_user 
+from auth.auth import get_db
 import json
 import pandas as pd
 from typing import List, Optional
@@ -5,10 +11,20 @@ import os
 import spacy
 from dotenv import load_dotenv
 load_dotenv()
+from collections import defaultdict
+import json
+import pandas as pd
 # Load the large English model
 nlp = spacy.load("en_core_web_sm")
 
+from jose import JWTError, jwt
+from typing import Optional
+from datetime import datetime, timedelta
+
 BRANDED_JSON_PATH = os.environ.get("BRANDED_JSON_PATH")
+
+SECRET_KEY = os.environ.get("JWT_SECRET")
+ALGORITHM = os.environ.get("JWT_ALGORITHM")
 print(f"Path: {BRANDED_JSON_PATH}")
 # print(BRANDED_JSON_PATH)
 def remove_keywords(data):
@@ -226,9 +242,7 @@ def extract_keywords(json_string):
         return False, f"Invalid JSON: {e}" 
     
 
-from collections import defaultdict
-import json
-import pandas as pd
+
 
 def group_by_page_title(data):
     grouped_data = defaultdict(lambda: {"keywords": [], "monthly_search_volume": [], "intent": [], "urls": []})
@@ -255,3 +269,66 @@ def group_by_page_title(data):
 
 #li = ["seo"]   
 #add_keywords_to_json(li)
+def verify_jwt_token(request: Request) -> str:
+    auth_header: Optional[str] = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid or missing authorization token")
+    
+    token = auth_header[len("Bearer "):]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        id: int = payload.get("id")
+
+        if username is None or id is None:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        return username, id
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+
+def enforce_user_api_limit(user, db):
+    if user.role in ["admin", "prime"]:
+        return  # No limit for premium roles
+
+    now = datetime.utcnow()
+    # Reset if it's been more than 30 days
+    if not user.last_reset or (now - user.last_reset) > timedelta(days=30):
+        user.api_call_count = 0
+        user.last_reset = now
+
+    if user.api_call_count >= 10:
+        raise HTTPException(status_code=429, detail="Monthly API limit reached")
+
+    user.api_call_count += 1
+    db.commit()
+
+
+
+
+def check_api_limit(api_name: str):
+    def _inner(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
+        permission = db.query(UserPermission).filter_by(
+            user_id=user.id,
+            api_name=api_name
+        ).first()
+
+        if not permission:
+            raise HTTPException(status_code=403, detail="No permission for this API")
+
+        # Reset monthly usage if needed
+        now = datetime.utcnow()
+        if permission.last_reset.month != now.month or permission.last_reset.year != now.year:
+            permission.call_count = 0
+            permission.last_reset = now
+
+        if permission.call_count >= permission.call_limit:
+            raise HTTPException(status_code=429, detail="API call limit exceeded")
+
+        # Increment usage
+        permission.call_count += 1
+        db.commit()
+
+        return user  # returns user so you can use it in the route
+    return _inner
