@@ -68,7 +68,7 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
             metrics = idea.keyword_idea_metrics
             data.append({
                 "Keyword": idea.text,
-                "Avg Monthly Searches": metrics.avg_monthly_searches if metrics else 0,
+                "Avg_Monthly_Searches": metrics.avg_monthly_searches if metrics else 0,
             })
 
         # print(data)

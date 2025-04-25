@@ -59,7 +59,7 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
             metrics = idea.keyword_idea_metrics
             keyword_data = {
                 "Keyword": idea.text,
-                "Avg Monthly Searches": metrics.avg_monthly_searches if metrics else 0,
+                "Avg_Monthly_Searches": metrics.avg_monthly_searches if metrics else 0,
                 "Competition": metrics.competition.name if metrics and metrics.competition else "UNKNOWN",
                 "LowTopOfPageBid": metrics.low_top_of_page_bid_micros / 1_000_000 if metrics and metrics.low_top_of_page_bid_micros else 0.0,
                 "HighTopOfPageBid": metrics.high_top_of_page_bid_micros / 1_000_000 if metrics and metrics.high_top_of_page_bid_micros else 0.0

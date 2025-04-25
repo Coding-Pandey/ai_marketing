@@ -80,7 +80,7 @@ def flatten_seo_data(json_data, search_volume_df):
     flattened_data = []
 
     # Create a mapping dictionary for fast lookup
-    keyword_search_volume = dict(zip(search_volume_df["Keyword"], search_volume_df["Avg Monthly Searches"]))
+    keyword_search_volume = dict(zip(search_volume_df["Keyword"], search_volume_df["Avg_Monthly_Searches"]))
 
     for item in json_data:  
         if "Pages" not in item or not item["Pages"]:  
@@ -150,14 +150,14 @@ def filter_keywords_by_searches(keyword_ideas, exclude_values: List[int]):
     """
     return [
         idea for idea in keyword_ideas
-        if idea["Avg Monthly Searches"] not in exclude_values
+        if idea["Avg_Monthly_Searches"] not in exclude_values
     ]
 
 
 def flatten_ppc_data(json_data, df):
 
     # ✅ Convert DataFrame columns to dictionaries for quick lookup
-    search_volume_map = df.set_index("Keyword")["Avg Monthly Searches"].to_dict()
+    search_volume_map = df.set_index("Keyword")["Avg_Monthly_Searches"].to_dict()
     bid_low_map = df.set_index("Keyword")["LowTopOfPageBid"].to_dict()
     bid_high_map = df.set_index("Keyword")["HighTopOfPageBid"].to_dict()
     # currency_map = df.set_index("Keyword")["Currency"].to_dict()
