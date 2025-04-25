@@ -6,6 +6,7 @@ from content_generation.content_generation_routes import router as content_gener
 from S3_bucket.bucket_routes import router as bucket_router
 from auth.users import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI(title="AI marketing app",
     description="",
@@ -13,12 +14,18 @@ app = FastAPI(title="AI marketing app",
     root_path="/api"
          )
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="!secret"
 )
 
 @app.get("/")

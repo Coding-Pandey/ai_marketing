@@ -1,9 +1,9 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException , Form
+from fastapi import APIRouter, UploadFile, File, HTTPException , Form,Depends, Request
 from S3_bucket.S3_upload import upload_file_to_s3,upload_title_url
 from S3_bucket.fetch_document import fetch_document_from_s3
 from fastapi.responses import JSONResponse
 from typing import Annotated
-
+from utils import verify_jwt_token, check_api_limit
 router = APIRouter()
 
 #S3 bucket document upload
@@ -76,12 +76,15 @@ async def list_documents(user_id: str, category: str):
 
 
 @router.post("/seo_uploadfile")
-async def csv_seo_upload_file(file: UploadFile = File(...)):
+async def csv_seo_upload_file(file: UploadFile = File(...),
+    id: str = Depends(verify_jwt_token),
+    user=Depends(check_api_limit("seo_csv"))):
       
     try:
+        
         # Read file content
         file_content = await file.read()
-
+        
         max_size = 10 * 1024 * 1024  
         if len(file_content) > max_size:
             raise HTTPException(
@@ -98,8 +101,9 @@ async def csv_seo_upload_file(file: UploadFile = File(...)):
             )
 
         # Upload to S3
-        folder_name = "seo_content_generation"
-        s3_path = upload_title_url(file_content, filename, folder_name)
+        user_folder = id
+        folder_name = "seo_clustering_data"
+        s3_path = upload_title_url(user_folder, file_content, filename, folder_name)
 
         return JSONResponse(
             status_code=200,
@@ -118,4 +122,52 @@ async def csv_seo_upload_file(file: UploadFile = File(...)):
             status_code=500,
             detail=f"An unexpected error occurred: {str(e)}"
         )
+    
+@router.post("/ppc_uploadfile")
+async def csv_ppc_upload_file(file: UploadFile = File(...),
+    id: str = Depends(verify_jwt_token),
+    user=Depends(check_api_limit("ppc_csv"))):
+      
+    try:
+        
+        # Read file content
+        file_content = await file.read()
+        
+        max_size = 10 * 1024 * 1024  
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail="File size exceeds maximum limit of 10MB"
+            )
+
+        # Get filename and ensure it's safe
+        filename = file.filename
+        if not filename:
+            raise HTTPException(
+                status_code=400,
+                detail="No filename provided"
+            )
+
+        # Upload to S3
+        user_folder = id
+        folder_name = "ppc_clustering_data"
+        s3_path = upload_title_url(user_folder, file_content, filename, folder_name)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "File uploaded successfully",
+                "s3_path": s3_path,
+                "filename": filename,
+                "category": folder_name
+            }
+        )
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )    
     

@@ -28,3 +28,5 @@ python-jose
 python-multipart
 pydantic[email]
 emoji
+authlib
+itsdangerous

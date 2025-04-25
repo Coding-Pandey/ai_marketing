@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from sqlalchemy.orm import Session
 import pandas as pd
 import io
 from Seo_process.Agents.Keyword_agent import query_keywords_description
@@ -9,7 +10,8 @@ from utils import (
     filter_keywords_by_searches,
     filter_non_branded_keywords,
     remove_branded_keywords,
-    flatten_ppc_data
+    flatten_ppc_data,
+    check_api_limit
 )
 
 from Ppc_process.Agents.structure_agent import ppc_main
@@ -20,7 +22,7 @@ router = APIRouter()
 
 
 @router.post("/ppc_generate_keywords")
-def ppc_generate_keywords(request: KeywordRequest):
+def ppc_generate_keywords(request: KeywordRequest,user=Depends(check_api_limit("ppc_keywords"))):
     try:
         request.validate()
         # If both location and language are missing, raise an error
@@ -69,7 +71,7 @@ def ppc_generate_keywords(request: KeywordRequest):
 
 
 @router.post("/ppc_keyword_clustering")
-async def ppc_keyword_clustering(file: UploadFile = File(...)):
+async def ppc_keyword_clustering(file: UploadFile = File(...),user=Depends(check_api_limit("ppc_cluster"))):
     try:
 
         if not file:

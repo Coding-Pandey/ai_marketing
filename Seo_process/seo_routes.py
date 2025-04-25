@@ -1,4 +1,6 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from sqlalchemy.orm import Session
+from auth.auth import get_db
 import json
 import pandas as pd
 import io
@@ -10,7 +12,8 @@ from utils import (
     remove_keywords,
     remove_branded_keywords,
     add_keywords_to_json,
-    flatten_seo_data
+    flatten_seo_data,
+    check_api_limit
 )
 
 from google_ads.seo_planner import seo_keywords_main
@@ -22,7 +25,8 @@ from Seo_process.prompts.keywords_prompt import prompt_keyword,prompt_keyword_su
 router = APIRouter()
 
 @router.post("/seo_generate_keywords")
-def seo_generate_keywords(request: KeywordRequest):
+def seo_generate_keywords(request: KeywordRequest, user=Depends(check_api_limit("seo_keywords")),
+    db: Session = Depends(get_db)):
     try:
         request.validate()
         # If both location and language are missing, raise an error
@@ -99,7 +103,7 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
     
 
 @router.post("/seo_keyword_clustering")
-async def seo_keyword_clustering(file: UploadFile = File(...)):
+async def seo_keyword_clustering(file: UploadFile = File(...), user=Depends(check_api_limit("seo_cluster"))):
     try:
         if not file:
             return {"error": "No file uploaded"}
