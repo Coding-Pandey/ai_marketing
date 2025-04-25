@@ -104,7 +104,6 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
     
 
 
-
 @router.post("/seo_keyword_clustering")
 async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(check_api_limit("seo_cluster"))):
     try:

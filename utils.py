@@ -309,6 +309,10 @@ def enforce_user_api_limit(user, db):
 
 def check_api_limit(api_name: str):
     def _inner(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
+
+        if user.role == "admin":
+            return user  
+
         permission = db.query(UserPermission).filter_by(
             user_id=user.id,
             api_name=api_name
