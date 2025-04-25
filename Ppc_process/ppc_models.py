@@ -32,3 +32,10 @@ class DocumentData(BaseModel):
 
 class CsvData(BaseModel):
     data: Dict[str, str] 
+
+class KeywordItem(BaseModel):
+    Keyword: str
+    Avg_Monthly_Searches: int
+    Competition: Optional[float] = None
+    LowTopOfPageBid: Optional[float] = None
+    HighTopOfPageBid: Optional[float] = None

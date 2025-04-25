@@ -1,10 +1,11 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
+from typing import List
 from auth.auth import get_db
 import json
 import pandas as pd
 import io
-from .seo_models import KeywordRequest, SuggestionKeywordRequest
+from .seo_models import KeywordRequest, SuggestionKeywordRequest, KeywordItem
 from utils import (  
     extract_keywords,
     filter_keywords_by_searches,
@@ -102,14 +103,15 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
         raise HTTPException(status_code=500, detail=str(e))    
     
 
+
+
 @router.post("/seo_keyword_clustering")
-async def seo_keyword_clustering(file: UploadFile = File(...), user=Depends(check_api_limit("seo_cluster"))):
+async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(check_api_limit("seo_cluster"))):
     try:
-        if not file:
-            return {"error": "No file uploaded"}
+        if not keywords:
+            return {"error": "No keywords provided"}
         # Read file contents and convert to DataFrame
-        file_contents = await file.read()
-        df = pd.read_csv(io.StringIO(file_contents.decode("utf-8")))  
+        df = pd.DataFrame([k.dict() for k in keywords]) 
         print({"COLUMNS":df.columns, "len":len(df)})
 
         df1 = df[["Keyword"]]

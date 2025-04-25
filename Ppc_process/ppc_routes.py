@@ -1,9 +1,10 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from typing import List
 import pandas as pd
 import io
 from Seo_process.Agents.Keyword_agent import query_keywords_description
-from .ppc_models import KeywordRequest
+from .ppc_models import KeywordRequest, KeywordItem
 from Seo_process.prompts.keywords_prompt import prompt_keyword
 from utils import (  
     extract_keywords,
@@ -71,14 +72,14 @@ def ppc_generate_keywords(request: KeywordRequest,user=Depends(check_api_limit("
 
 
 @router.post("/ppc_keyword_clustering")
-async def ppc_keyword_clustering(file: UploadFile = File(...),user=Depends(check_api_limit("ppc_cluster"))):
+async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_api_limit("ppc_cluster"))):
     try:
 
-        if not file:
-            return {"error": "No file uploaded"}
-        # Read file contents and convert to DataFrame
-        file_contents = await file.read()
-        df = pd.read_csv(io.StringIO(file_contents.decode("utf-8")))  
+        if not keywords:
+            return {"error": "No keywords provided"}
+        
+        # Convert keywords to DataFrame
+        df = pd.DataFrame(keywords)
         print({"COLUMNS":df.columns, "len":len(df)})
 
         df1 = df[["Keyword"]]
