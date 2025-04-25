@@ -36,7 +36,7 @@ def get_language_resource_name(client, customer_id, language_id):
 def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywords):
     """Fetch keyword ideas from Google Ads API."""
     try:
-        keyword_plan_idea_service = client.get_service("KeywordPlanIdeaService", version="v18")
+        keyword_plan_idea_service = client.get_service("KeywordPlanIdeaService")
         
         # Convert location IDs to resource names
         location_rns = [f"geoTargetConstants/{loc}" for loc in location_ids]
@@ -103,6 +103,8 @@ def seo_keywords_main(keywords, location_ids, language_id):
 
     return result
 
-# if __name__ == "__main__":
-#     key = ["eis investment"]
-#     seo_keywords_main(keywords=key, location_ids=None, language_id=None)
+if __name__ == "__main__":
+    key = ["eis investment"]
+    seo = seo_keywords_main(keywords=key, location_ids=None, language_id=None)
+    print(seo)
+
