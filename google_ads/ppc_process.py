@@ -55,9 +55,11 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
 
         # Process and store the results
         keyword_suggestions = []
+        Keyword_id = 0
         for idea in response:
             metrics = idea.keyword_idea_metrics
             keyword_data = {
+                "Keyword_ID": Keyword_id,
                 "Keyword": idea.text,
                 "Avg_Monthly_Searches": metrics.avg_monthly_searches if metrics else 0,
                 "Competition": metrics.competition.name if metrics and metrics.competition else "UNKNOWN",
@@ -66,7 +68,7 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
                 # "Currency": currency
             }
             keyword_suggestions.append(keyword_data)
-
+            Keyword_id += 1
         return keyword_suggestions    
             
     except GoogleAdsException as ex:

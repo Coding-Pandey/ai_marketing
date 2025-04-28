@@ -12,6 +12,7 @@ from auth.auth import get_db
 import pandas as pd
 import uuid
 import io
+import json
 router = APIRouter()
 
 #S3 bucket document upload
@@ -71,9 +72,11 @@ async def create_upload_file(category: Annotated[str, Form()],
         )
 
 @router.get("/seo_csv_list/{user_id}")
-async def seo_csv_documents(user_id: int, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+async def seo_csv_documents(user_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
     try:
         # Query the SEOFile table based on user_id
+        user_id = int(id[1]) 
+        print(user_id) # Extract user_id from the JWT token
         seo_files = db.query(SEOFile).filter(SEOFile.user_id == user_id).all()
 
         file_count = len(seo_files)
@@ -84,7 +87,7 @@ async def seo_csv_documents(user_id: int, db: Session = Depends(get_db), id: str
 
         # Prepare the result with file_name and uuid
         result = [
-            {"file_name": seo_file.file_name, "uuid": seo_file.uuid}
+            {"file_name": seo_file.file_name, "uuid": seo_file.uuid, "upload_time": seo_file.upload_time}
             for seo_file in seo_files
         ]
         seo_csv_record = db.query(SEOCSV).filter(SEOCSV.user_id == user_id).first()
@@ -117,18 +120,23 @@ async def csv_seo_upload_file(json_data: dict = Body(...),
                 detail="No data provided"
             )
         
-        data = convert_into_csvdata(file_content)
-        df = pd.DataFrame(data)
-        print(df.head())
-        
-        csv_buffer = io.StringIO()
-        df.to_csv(csv_buffer, index=False)
-        csv_buffer.seek(0)  # Go to start of buffer
+        # data = convert_into_csvdata(file_content)
+        # df = pd.DataFrame(data)
+        # print(df.head())
+        json_str = json.dumps(file_content)
+
+        # Create a buffer for the JSON data
+        json_buffer = io.StringIO(json_str)
+        json_buffer.seek(0)
+
+        # csv_buffer = io.StringIO()
+        # df.to_csv(csv_buffer, index=False)
+        # csv_buffer.seek(0)  # Go to start of buffer
 
         unique_id = uuid.uuid4().hex
         
         max_size = 10 * 1024 * 1024  
-        if csv_buffer.tell() > max_size:
+        if json_buffer.tell() > max_size:
             raise HTTPException(
                 status_code=400,
                 detail="File size exceeds maximum limit of 10MB"
@@ -151,7 +159,7 @@ async def csv_seo_upload_file(json_data: dict = Body(...),
         # print(user_id)
         folder_name = "seo_clustering_data"
 
-        s3_path = upload_title_url(user_folder, csv_buffer.getvalue(), str(unique_id), folder_name)
+        s3_path = upload_title_url(user_folder, json_buffer.getvalue(), str(unique_id), folder_name)
 
         if s3_path is None:
             raise HTTPException(
