@@ -124,7 +124,7 @@ async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(chec
         # result = flatten_seo_data(cluster_data,df)
         result = map_seo_pages_with_search_volume(cluster_data, df)
 
-        return result , total_token
+        return result 
     
 
 

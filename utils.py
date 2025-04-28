@@ -113,8 +113,8 @@ def map_seo_pages_with_search_volume(json_data, search_volume_df):
 
     # Create a mapping dictionary for fast lookup (case-insensitive)
     keyword_search_volume = {k.lower(): v for k, v in 
-                            zip(search_volume_df["Keyword"], 
-                               search_volume_df["Avg_Monthly_Searches"])}
+                              zip(search_volume_df["Keyword"], 
+                                  search_volume_df["Avg_Monthly_Searches"])}
 
     # Handle different input formats
     pages_to_process = []
@@ -127,7 +127,9 @@ def map_seo_pages_with_search_volume(json_data, search_volume_df):
             for item in json_data:
                 if isinstance(item, dict) and "Pages" in item and isinstance(item["Pages"], list):
                     pages_to_process.extend(item["Pages"])
-    
+
+    page_id_counter = 1  # Start page_title_id from 1
+
     for page in pages_to_process:
         if not isinstance(page, dict):
             continue
@@ -140,51 +142,57 @@ def map_seo_pages_with_search_volume(json_data, search_volume_df):
         keywords_with_volume = []
         keywords_data = page.get("Keywords", [])
         
+        keyword_index = 1  # reset keyword index for each page
+        
         # Handle different input formats for keywords
         if isinstance(keywords_data, list):
-            # Keywords is a list of strings
             if all(isinstance(k, str) for k in keywords_data if k):
                 for keyword in keywords_data:
                     if keyword:
                         volume = keyword_search_volume.get(keyword.lower(), 0)
                         keywords_with_volume.append({
+                            "Keyword_id": float(f"{page_id_counter}.{keyword_index}"),
                             "Keyword": keyword,
                             "Avg_Monthly_Searches": volume
                         })
-            
-            # Keywords is already a list of objects
+                        keyword_index += 1
+
             elif all(isinstance(k, dict) and "Keyword" in k for k in keywords_data if k):
                 for keyword_obj in keywords_data:
                     if keyword_obj and "Keyword" in keyword_obj:
                         keyword = keyword_obj["Keyword"]
-                        # Use existing volume if present, otherwise look up in DataFrame
                         if "Avg_Monthly_Searches" in keyword_obj:
                             volume = keyword_obj["Avg_Monthly_Searches"]
                         else:
                             volume = keyword_search_volume.get(keyword.lower(), 0)
                         
                         keywords_with_volume.append({
+                            "Keyword_id": float(f"{page_id_counter}.{keyword_index}"),
                             "Keyword": keyword,
                             "Avg_Monthly_Searches": volume
                         })
-        
-        # Keywords is a dictionary
+                        keyword_index += 1
+
         elif isinstance(keywords_data, dict):
             for keyword, volume in keywords_data.items():
                 keywords_with_volume.append({
+                    "Keyword_id": float(f"{page_id_counter}.{keyword_index}"),
                     "Keyword": keyword,
                     "Avg_Monthly_Searches": volume
                 })
-        
+                keyword_index += 1
+
         # Create the new page structure
         processed_page = {
-            "Page Title": page_title,
+            "Page_title_id": page_id_counter,
+            "Page_Title": page_title,
             "Keywords": keywords_with_volume,
             "Intent": intent,
-            "Suggested URL Structure": url
+            "Suggested_URL_Structure": url
         }
-        
+
         processed_data.append(processed_page)
+        page_id_counter += 1  # Increase page ID for next page
 
     return processed_data
 

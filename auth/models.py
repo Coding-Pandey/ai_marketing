@@ -17,6 +17,7 @@ class User(Base):
     files = relationship("FileStorage", back_populates="user")
 
 
+
 class UserPermission(Base):
     __tablename__ = "user_permission"
 
@@ -30,6 +31,7 @@ class UserPermission(Base):
     user = relationship("User", back_populates="permissions")
 
 
+
 class FileStorage(Base):
     __tablename__ = "file_storage"
 
@@ -41,3 +43,85 @@ class FileStorage(Base):
     last_reset = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="files")
+
+
+# class SEOCSV(Base):
+#     __tablename__ = "seo_csv"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     total_files_count = Column(Integer)
+#     file_count = Column(Integer)
+#     created_at = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="seo_csv_records")
+
+# class PPCCSV(Base):
+#     __tablename__ = "ppc_csv"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     total_files_count = Column(Integer)
+#     file_count = Column(Integer)
+#     created_at = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="ppc_csv_records")
+
+# class SEOKeywords(Base):
+#     __tablename__ = "seo_keywords"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     call_limit = Column(Integer, default=10)
+#     call_count = Column(Integer, default=0)
+#     last_reset = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="seo_keyword_records")
+
+# class PPCKeywords(Base):
+#     __tablename__ = "ppc_keywords"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     call_limit = Column(Integer, default=10)
+#     call_count = Column(Integer, default=0)
+#     last_reset = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="ppc_keyword_records")
+
+# class SEOCluster(Base):
+#     __tablename__ = "seo_cluster"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     call_limit = Column(Integer, default=10)
+#     call_count = Column(Integer, default=0)
+#     total_tokens = Column(Integer, default=0)
+#     last_reset = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="seo_cluster_records")
+
+# class PPCCluster(Base):
+#     __tablename__ = "ppc_cluster"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     call_limit = Column(Integer, default=10)
+#     call_count = Column(Integer, default=0)
+#     total_tokens = Column(Integer, default=0)
+#     last_reset = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="ppc_cluster_records")
+
+# class SocialMedia(Base):
+#     __tablename__ = "social_media"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     call_limit = Column(Integer, default=10)
+#     call_count = Column(Integer, default=0)
+#     total_tokens = Column(Integer, default=0)
+#     last_reset = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="social_media_records")
+   
