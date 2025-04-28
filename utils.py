@@ -1,7 +1,7 @@
 from fastapi import Request, HTTPException, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime
-from auth.models import UserPermission
+from auth.models import UserPermission, FileStorage, SEOCSV, PPCCSV, SEOKeywords, PPCKeywords, SEOCluster, PPCCluster, SocialMedia
 from auth.auth import get_current_user 
 from auth.auth import get_db
 import json
@@ -401,12 +401,34 @@ def check_api_limit(api_name: str):
     def _inner(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
 
         if user.role == "admin":
-            return user  
+            return user  # Admin bypasses the API limits
 
-        permission = db.query(UserPermission).filter_by(
-            user_id=user.id,
-            api_name=api_name
-        ).first()
+        # Check the corresponding table based on the `api_name`
+        if api_name == "ppc_cluster":
+            permission = db.query(PPCCluster).filter_by(user_id=user.id).first()
+        elif api_name == "social_media":
+            permission = db.query(SocialMedia).filter_by(user_id=user.id).first()         
+        elif api_name == "seo_cluster":
+            permission = db.query(SEOCluster).filter_by(user_id=user.id).first()
+        elif api_name == "seo_csv":
+            permission = db.query(SEOCSV).filter_by(user_id=user.id).first()
+            
+        elif api_name == "ppc_csv":
+            permission = db.query(PPCCSV).filter_by(user_id=user.id).first()
+        elif api_name == "seo_keywords":
+            permission = db.query(SEOKeywords).filter_by(user_id=user.id).first()        
+        elif api_name == "ppc_keywords":
+            permission = db.query(PPCKeywords).filter_by(user_id=user.id).first()
+        elif api_name == "seo_cluster":
+            permission = db.query(SEOCluster).filter_by(user_id=user.id).first()
+        elif api_name == "ppc_cluster":
+            permission = db.query(PPCCluster).filter_by(user_id=user.id).first()
+        elif api_name == "social_media":
+            permission = db.query(SocialMedia).filter_by(user_id=user.id).first()     
+        # Add more checks for other APIs here as needed
+        
+        else:
+            raise HTTPException(status_code=403, detail="No permission for this API")
 
         if not permission:
             raise HTTPException(status_code=403, detail="No permission for this API")

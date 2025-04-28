@@ -14,6 +14,7 @@ from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from datetime import datetime, timedelta
 from auth.permission import get_default_permissions
+from auth.utiles import create_permissions_for_user
 import os
 
 class APIException(HTTPException):
@@ -63,19 +64,20 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    default_permissions = get_default_permissions(role=new_user.role)
+    # default_permissions = get_default_permissions(role=new_user.role)
+    dataa = create_permissions_for_user(new_user, db)
+    # for api_name, call_limit in default_permissions.items():
+    #     permission = UserPermission(
+    #         user_id=new_user.id,
+    #         api_name=api_name,
+    #         call_limit=call_limit,
+    #         call_count=0,
+    #         last_reset=datetime.utcnow()
+    #     )
+    #     db.add(permission)
 
-    for api_name, call_limit in default_permissions.items():
-        permission = UserPermission(
-            user_id=new_user.id,
-            api_name=api_name,
-            call_limit=call_limit,
-            call_count=0,
-            last_reset=datetime.utcnow()
-        )
-        db.add(permission)
-
-    db.commit()
+    # db.commit()
+    print(dataa)
 
     return new_user
 

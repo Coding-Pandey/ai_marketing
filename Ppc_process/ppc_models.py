@@ -36,6 +36,6 @@ class CsvData(BaseModel):
 class KeywordItem(BaseModel):
     Keyword: str
     Avg_Monthly_Searches: int
-    Competition: Optional[float] = None
+    Competition: str = None
     LowTopOfPageBid: Optional[float] = None
     HighTopOfPageBid: Optional[float] = None
