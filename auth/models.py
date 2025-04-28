@@ -14,6 +14,7 @@ class User(Base):
 
     # Relationship to permissions
     permissions = relationship("UserPermission", back_populates="user")
+    files = relationship("FileStorage", back_populates="user")
 
 
 class UserPermission(Base):
@@ -29,3 +30,14 @@ class UserPermission(Base):
     user = relationship("User", back_populates="permissions")
 
 
+class FileStorage(Base):
+    __tablename__ = "file_storage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    file_name = Column(String)
+    uuid = Column(String)  
+    
+    last_reset = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="files")

@@ -14,7 +14,8 @@ from utils import (
     remove_branded_keywords,
     add_keywords_to_json,
     flatten_seo_data,
-    check_api_limit
+    check_api_limit,
+    map_seo_pages_with_search_volume
 )
 
 from google_ads.seo_planner import seo_keywords_main
@@ -118,12 +119,14 @@ async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(chec
         print("Parsed DataFrame:", df1.head())
         data= df1.to_dict(orient="records")
         print("Parsed data:", data)
-        cluster_data, total_token  = await seo_main(df1.to_dict(orient="records"))  
-        result = flatten_seo_data(cluster_data,df)
+        cluster_data, total_token  = await seo_main(df1.to_dict(orient="records")) 
+        print("Clustered data:", cluster_data) 
+        # result = flatten_seo_data(cluster_data,df)
+        result = map_seo_pages_with_search_volume(cluster_data, df)
 
         return result , total_token
-    except Exception as e:
-        return {"error": str(e)}
+    
+
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

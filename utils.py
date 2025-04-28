@@ -108,6 +108,88 @@ def flatten_seo_data(json_data, search_volume_df):
 
     return flattened_data
 
+def map_seo_pages_with_search_volume(json_data, search_volume_df):
+    processed_data = []
+
+    # Create a mapping dictionary for fast lookup (case-insensitive)
+    keyword_search_volume = {k.lower(): v for k, v in 
+                            zip(search_volume_df["Keyword"], 
+                               search_volume_df["Avg_Monthly_Searches"])}
+
+    # Handle different input formats
+    pages_to_process = []
+    if isinstance(json_data, list):
+        # If json_data is already a list of pages
+        if all(isinstance(item, dict) and "Page Title" in item for item in json_data):
+            pages_to_process = json_data
+        # If json_data contains items with "Pages" key
+        else:
+            for item in json_data:
+                if isinstance(item, dict) and "Pages" in item and isinstance(item["Pages"], list):
+                    pages_to_process.extend(item["Pages"])
+    
+    for page in pages_to_process:
+        if not isinstance(page, dict):
+            continue
+
+        page_title = page.get("Page Title", "")
+        intent = page.get("Intent", "")
+        url = page.get("Suggested URL Structure", "")
+        
+        # Process keywords and add search volumes
+        keywords_with_volume = []
+        keywords_data = page.get("Keywords", [])
+        
+        # Handle different input formats for keywords
+        if isinstance(keywords_data, list):
+            # Keywords is a list of strings
+            if all(isinstance(k, str) for k in keywords_data if k):
+                for keyword in keywords_data:
+                    if keyword:
+                        volume = keyword_search_volume.get(keyword.lower(), 0)
+                        keywords_with_volume.append({
+                            "Keyword": keyword,
+                            "Avg_Monthly_Searches": volume
+                        })
+            
+            # Keywords is already a list of objects
+            elif all(isinstance(k, dict) and "Keyword" in k for k in keywords_data if k):
+                for keyword_obj in keywords_data:
+                    if keyword_obj and "Keyword" in keyword_obj:
+                        keyword = keyword_obj["Keyword"]
+                        # Use existing volume if present, otherwise look up in DataFrame
+                        if "Avg_Monthly_Searches" in keyword_obj:
+                            volume = keyword_obj["Avg_Monthly_Searches"]
+                        else:
+                            volume = keyword_search_volume.get(keyword.lower(), 0)
+                        
+                        keywords_with_volume.append({
+                            "Keyword": keyword,
+                            "Avg_Monthly_Searches": volume
+                        })
+        
+        # Keywords is a dictionary
+        elif isinstance(keywords_data, dict):
+            for keyword, volume in keywords_data.items():
+                keywords_with_volume.append({
+                    "Keyword": keyword,
+                    "Avg_Monthly_Searches": volume
+                })
+        
+        # Create the new page structure
+        processed_page = {
+            "Page Title": page_title,
+            "Keywords": keywords_with_volume,
+            "Intent": intent,
+            "Suggested URL Structure": url
+        }
+        
+        processed_data.append(processed_page)
+
+    return processed_data
+
+
+
 def extract_first_json_object(text):
     """
     Extracts the first complete JSON object from `{` to `}` found in the input text.
