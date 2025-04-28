@@ -268,12 +268,12 @@ def flatten_ppc_data(json_data, df):
                 keyword = keywords[i] if i < len(keywords) else None
 
                 record = {
-                    "Ad Group": ad_group,
+                    "Ad_Group": ad_group,
                     "Keywords": keyword,
-                    "Avg. Monthly Searches": search_volume_map.get(keyword, None) if keyword else None,
-                    "Top of Page Bid Low": bid_low_map.get(keyword, None) if keyword else None,
-                    "Top of Page Bid High": bid_high_map.get(keyword, None) if keyword else None,
-                    "Ad Headline": ad_headlines[i] if i < len(ad_headlines) else None,
+                    "Avg._Monthly _Searches": search_volume_map.get(keyword, None) if keyword else None,
+                    "Top_of_Page_Bid_Low": bid_low_map.get(keyword, None) if keyword else None,
+                    "Top_of_Page_Bid_High": bid_high_map.get(keyword, None) if keyword else None,
+                    "Ad_Headline": ad_headlines[i] if i < len(ad_headlines) else None,
                     "Description": descriptions[i] if i < len(descriptions) else None,
                     # "Currency": currency_map.get(keyword, None) if keyword else None,
                 }
