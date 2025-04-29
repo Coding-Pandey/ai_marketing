@@ -59,7 +59,7 @@ def generate_keyword_ideas(client, customer_id, location_ids, language_id, keywo
         for idea in response:
             metrics = idea.keyword_idea_metrics
             keyword_data = {
-                "Keyword_ID": Keyword_id,
+                "Keyword_ID": str(Keyword_id),
                 "Keyword": idea.text,
                 "Avg_Monthly_Searches": metrics.avg_monthly_searches if metrics else 0,
                 "Competition": metrics.competition.name if metrics and metrics.competition else "UNKNOWN",

@@ -465,8 +465,7 @@ def check_api_limit(api_name: str):
         elif api_name == "seo_cluster":
             permission = db.query(SEOCluster).filter_by(user_id=user.id).first()
         elif api_name == "seo_csv":
-            permission = db.query(SEOCSV).filter_by(user_id=user.id).first()
-            
+            permission = db.query(SEOCSV).filter_by(user_id=user.id).first()         
         elif api_name == "ppc_csv":
             permission = db.query(PPCCSV).filter_by(user_id=user.id).first()
         elif api_name == "seo_keywords":
