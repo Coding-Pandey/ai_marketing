@@ -17,6 +17,8 @@ import io
 import json
 router = APIRouter()
 from pydantic import BaseModel
+from datetime import timedelta
+
 class UUIDRequest(BaseModel):
     uuid: str
 #S3 bucket document upload
@@ -89,6 +91,9 @@ async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
         seo_csv_record = db.query(SEOCSV).filter(SEOCSV.user_id == user_id).first()
 
         last_reset = seo_csv_record.last_reset if seo_csv_record else None
+        # Add 30 days to last_reset if it exists
+        reset_plus_30 = last_reset + timedelta(days=30) if last_reset else None
+
 
         if seo_csv_record:
         
@@ -102,7 +107,7 @@ async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
                 "file_name": seo_file.file_name,
                 "uuid": seo_file.uuid,
                 "upload_time": seo_file.upload_time,
-                "last_reset": last_reset
+                "last_reset": reset_plus_30
             }
             for seo_file in seo_files
         ]
@@ -126,6 +131,7 @@ async def ppc_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
         ppc_csv_record = db.query(PPCCSV).filter(PPCCSV.user_id == user_id).first()
 
         last_reset = ppc_csv_record.last_reset if ppc_csv_record else None
+        reset_plus_30 = last_reset + timedelta(days=30) if last_reset else None
 
         if ppc_csv_record:
             # Update file_count and call_count
@@ -139,7 +145,7 @@ async def ppc_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
                 "file_name": ppc_file.file_name,
                 "uuid": ppc_file.uuid,
                 "upload_time": ppc_file.upload_time,
-                "last_reset": last_reset
+                "last_reset": reset_plus_30
             }
             for ppc_file in ppc_files
         ]
