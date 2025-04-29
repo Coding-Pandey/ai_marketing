@@ -119,56 +119,35 @@ def download_document(data: dict) -> dict:
 
 
 
-def download_csv(data: dict) -> dict:
-    """
-    Download CSV or Excel file from S3 and convert it to JSON format.
-    
-    Args:
-        data: Dictionary with folder as key and file path as value
-        bucket_name: Name of the S3 bucket
-    
-    Returns:
-        Dictionary containing the converted JSON data
-    """
-    result = {}
+def fetch_seo_cluster_file(user_id: str, uuid: str) -> dict:
+    try:
+        category = "seo_clustering_data"
+        user_prefix = f"User_{user_id}"
+        prefix = f"{user_prefix}/{category}/{uuid}"
 
-    for folder, file_path in data.items():
-        file_name = file_path.split('/')[-1]
+        response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=prefix)
 
-        
-        print(f"Downloading {file_name} from {S3_BUCKET_NAME}/{file_path}...")
-        
-        try:
-            # Download the file from S3
-            response =  s3.get_object(Bucket=S3_BUCKET_NAME, Key=file_path)
-            content = response['Body'].read()
-            print(f"Downloaded {file_name} successfully!")
-            
-             # Determine file type and load the content accordingly
-            if file_name.lower().endswith('.csv'):
-                # Decode content to string and use StringIO for CSV reading
-                s = content.decode('utf-8')
-                df = pd.read_csv(io.StringIO(s))
-            elif file_name.lower().endswith(('.xls', '.xlsx')):
-                # Use BytesIO for Excel files
-                df = pd.read_excel(io.BytesIO(content))
-            else:
-                print(f"Unsupported file format: {file_name}")
-                continue
+        if "Contents" not in response or not response["Contents"]:
+            return {"documents": []}
 
-            # Convert DataFrame to JSON using 'records' orientation
-            json_data = df.to_json(orient='records')
-            json_data = json.loads(json_data)
-            # sorted_data = group_by_page_title(json_data)
-            result[folder] = json_data
-            print(f"Converted {file_name} to JSON successfully!")
-            
-        except Exception as e:
-            print(f"Error processing {file_name}: {str(e)}")
-            result[folder] = {"error": str(e)}
-    
-    return result
+        documents = []
+
+        for obj in response["Contents"]:
+            key = obj["Key"]
+            if not key.endswith("/"): 
+                s3_object = s3.get_object(Bucket=S3_BUCKET_NAME, Key=key)
+                content = s3_object['Body'].read().decode('utf-8')
+                # documents.append({
+                #     "key": key,
+                #     "content": content
+                # })
+
+        return {"documents": content}
+
+    except ClientError as e:
+        raise HTTPException(status_code=404, detail=f"Failed to fetch document from S3: {str(e)}")
 
 
 
-
+# result = fetch_seo_cluster_file(user_id="3", uuid="543e82dd5632494b955be1f76b19247b")
+# print(result)

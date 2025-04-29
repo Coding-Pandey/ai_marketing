@@ -1,12 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException , Form,Depends, Request
 from S3_bucket.S3_upload import upload_file_to_s3,upload_title_url
 from sqlalchemy.orm import Session
-from S3_bucket.fetch_document import fetch_document_from_s3
+from S3_bucket.fetch_document import fetch_document_from_s3, fetch_seo_cluster_file
 from fastapi.responses import JSONResponse
 from fastapi import Body
 from typing import Annotated
 from utils import verify_jwt_token, check_api_limit
 from S3_bucket.utile import convert_into_csvdata, upload_seo_table
+from S3_bucket.delete_doc import seo_cluster_delete_document
 from auth.models import SEOFile, SEOCSV
 from auth.auth import get_db
 import pandas as pd
@@ -14,7 +15,9 @@ import uuid
 import io
 import json
 router = APIRouter()
-
+from pydantic import BaseModel
+class UUIDRequest(BaseModel):
+    uuid: str
 #S3 bucket document upload
 @router.post("/uploadfile")
 async def create_upload_file(category: Annotated[str, Form()],
@@ -71,32 +74,37 @@ async def create_upload_file(category: Annotated[str, Form()],
             detail=f"An unexpected error occurred: {str(e)}"
         )
 
-@router.get("/seo_csv_list/{user_id}")
-async def seo_csv_documents(user_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+@router.get("/seo_csv_list")
+async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
     try:
-        # Query the SEOFile table based on user_id
-        user_id = int(id[1]) 
-        print(user_id) # Extract user_id from the JWT token
+        user_id = int(id[1])  # Extract user_id from the JWT token
         seo_files = db.query(SEOFile).filter(SEOFile.user_id == user_id).all()
-
         file_count = len(seo_files)
 
-        # Check if any records exist
         if not seo_files:
             raise HTTPException(status_code=404, detail="No files found for the user")
 
-        # Prepare the result with file_name and uuid
-        result = [
-            {"file_name": seo_file.file_name, "uuid": seo_file.uuid, "upload_time": seo_file.upload_time}
-            for seo_file in seo_files
-        ]
+        # Fetch the SEOCSV record for last_reset value
         seo_csv_record = db.query(SEOCSV).filter(SEOCSV.user_id == user_id).first()
 
+        last_reset = seo_csv_record.last_reset if seo_csv_record else None
+
         if seo_csv_record:
-            # Update the file_count field
+            # Update file_count and call_count
             seo_csv_record.file_count = file_count
             seo_csv_record.call_count = file_count
-            db.commit()  # Commit the changes to the database
+            db.commit()
+
+        # Include last_reset in each file entry
+        result = [
+            {
+                "file_name": seo_file.file_name,
+                "uuid": seo_file.uuid,
+                "upload_time": seo_file.upload_time,
+                "last_reset": last_reset
+            }
+            for seo_file in seo_files
+        ]
 
         return result
 
@@ -236,3 +244,43 @@ async def csv_ppc_upload_file(file: UploadFile = File(...),
             detail=f"An unexpected error occurred: {str(e)}"
         )    
     
+@router.post("/seo_cluster_fetch_data")
+async def fetch_document(request: UUIDRequest, id: str = Depends(verify_jwt_token)):
+
+    try:
+        user_id = str(id[1])  # Extract user_id from the JWT token
+        uuid = request.uuid
+        data = fetch_seo_cluster_file(user_id, uuid)
+        if not data:
+            raise HTTPException(status_code=404, detail="No documents found for the user")
+        json_data = json.loads(data["documents"])
+        return json_data
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+from fastapi import APIRouter, Depends, HTTPException
+from botocore.exceptions import ClientError
+
+router = APIRouter()
+
+@router.delete("/seo_cluster_delete_document")
+async def delete_document(request: UUIDRequest, id: str = Depends(verify_jwt_token)):
+    try:
+        user_id = str(id[1])  # Extract user_id from the JWT token
+        uuid = request.uuid
+        delete = seo_cluster_delete_document(uuid, user_id)
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Document deleted successfully",
+                "uuid": uuid
+            }
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete documents: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
