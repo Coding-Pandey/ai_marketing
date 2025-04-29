@@ -151,7 +151,7 @@ def map_seo_pages_with_search_volume(json_data, search_volume_df):
                     if keyword:
                         volume = keyword_search_volume.get(keyword.lower(), 0)
                         keywords_with_volume.append({
-                            "Keyword_id": float(f"{page_id_counter}.{keyword_index}"),
+                            "Keyword_id": f"{page_id_counter}.{keyword_index}",
                             "Keyword": keyword,
                             "Avg_Monthly_Searches": volume
                         })
@@ -167,7 +167,7 @@ def map_seo_pages_with_search_volume(json_data, search_volume_df):
                             volume = keyword_search_volume.get(keyword.lower(), 0)
                         
                         keywords_with_volume.append({
-                            "Keyword_id": float(f"{page_id_counter}.{keyword_index}"),
+                            "Keyword_id": f"{page_id_counter}.{keyword_index}",
                             "Keyword": keyword,
                             "Avg_Monthly_Searches": volume
                         })
@@ -176,7 +176,7 @@ def map_seo_pages_with_search_volume(json_data, search_volume_df):
         elif isinstance(keywords_data, dict):
             for keyword, volume in keywords_data.items():
                 keywords_with_volume.append({
-                    "Keyword_id": float(f"{page_id_counter}.{keyword_index}"),
+                    "Keyword_id": f"{page_id_counter}.{keyword_index}",
                     "Keyword": keyword,
                     "Avg_Monthly_Searches": volume
                 })
@@ -184,7 +184,7 @@ def map_seo_pages_with_search_volume(json_data, search_volume_df):
 
         # Create the new page structure
         processed_page = {
-            "Page_title_id": page_id_counter,
+            "Page_title_id": str(page_id_counter),
             "Page_Title": page_title,
             "Keywords": keywords_with_volume,
             "Intent": intent,
@@ -246,40 +246,94 @@ def filter_keywords_by_searches(keyword_ideas, exclude_values: List[int]):
 
 def flatten_ppc_data(json_data, df):
 
-    # ✅ Convert DataFrame columns to dictionaries for quick lookup
-    search_volume_map = df.set_index("Keyword")["Avg_Monthly_Searches"].to_dict()
-    bid_low_map = df.set_index("Keyword")["LowTopOfPageBid"].to_dict()
-    bid_high_map = df.set_index("Keyword")["HighTopOfPageBid"].to_dict()
-    # currency_map = df.set_index("Keyword")["Currency"].to_dict()
+    processed_data = []
 
-    flattened_data = []
+    # Create a mapping dictionary for fast lookup (case-insensitive)
+    keyword_search_volume = {k.lower(): v for k, v in 
+                             zip(df["Keyword"], 
+                                 df["Avg_Monthly_Searches"])}
 
-    for item in json_data:
-        for page in item.get("Pages", []):
-            ad_group = page.get("Ad Group", "")
-            keywords = page.get("Keywords", [])
-            ad_headlines = page.get("Ad Headline", [])
-            descriptions = page.get("Description", [])
+    # Handle different input formats
+    pages_to_process = []
+    if isinstance(json_data, list):
+        # If json_data is already a list of pages
+        if all(isinstance(item, dict) and "Ad Group" in item for item in json_data):
+            pages_to_process = json_data
+        # If json_data contains items with "Pages" key
+        else:
+            for item in json_data:
+                if isinstance(item, dict) and "Pages" in item and isinstance(item["Pages"], list):
+                    pages_to_process.extend(item["Pages"])
 
-            # ✅ Get max length among lists to ensure complete iteration
-            max_len = max(len(keywords), len(ad_headlines), len(descriptions))
+    page_id_counter = 1  # Start page_title_id from 1
 
-            for i in range(max_len):
-                keyword = keywords[i] if i < len(keywords) else None
+    for page in pages_to_process:
+        if not isinstance(page, dict):
+            continue
 
-                record = {
-                    "Ad_Group": ad_group,
-                    "Keywords": keyword,
-                    "Avg._Monthly _Searches": search_volume_map.get(keyword, None) if keyword else None,
-                    "Top_of_Page_Bid_Low": bid_low_map.get(keyword, None) if keyword else None,
-                    "Top_of_Page_Bid_High": bid_high_map.get(keyword, None) if keyword else None,
-                    "Ad_Headline": ad_headlines[i] if i < len(ad_headlines) else None,
-                    "Description": descriptions[i] if i < len(descriptions) else None,
-                    # "Currency": currency_map.get(keyword, None) if keyword else None,
-                }
-                flattened_data.append(record)
+        # Extract page data
+        ad_group = page.get("Ad Group", "")
+        ad_headlines = page.get("Ad Headline", [])
+        descriptions = page.get("Description", [])
+        
+        # Process keywords and add search volumes
+        keywords_with_volume = []
+        keywords_data = page.get("Keywords", [])
+        
+        keyword_index = 1  # reset keyword index for each page
+        
+        # Handle different input formats for keywords
+        if isinstance(keywords_data, list):
+            if all(isinstance(k, str) for k in keywords_data if k):
+                for keyword in keywords_data:
+                    if keyword:
+                        volume = keyword_search_volume.get(keyword.lower(), 0)
+                        keywords_with_volume.append({
+                            "Keyword_id": f"{page_id_counter}.{keyword_index}",  # Keep as string to preserve format
+                            "Keyword": keyword,
+                            "Avg_Monthly_Searches": volume
+                        })
+                        keyword_index += 1
 
-    return flattened_data
+            elif all(isinstance(k, dict) and "Keyword" in k for k in keywords_data if k):
+                for keyword_obj in keywords_data:
+                    if keyword_obj and "Keyword" in keyword_obj:
+                        keyword = keyword_obj["Keyword"]
+                        if "Avg_Monthly_Searches" in keyword_obj:
+                            volume = keyword_obj["Avg_Monthly_Searches"]
+                        else:
+                            volume = keyword_search_volume.get(keyword.lower(), 0)
+                        
+                        keywords_with_volume.append({
+                            "Keyword_id": f"{page_id_counter}.{keyword_index}",  # Keep as string to preserve format
+                            "Keyword": keyword,
+                            "Avg_Monthly_Searches": volume
+                        })
+                        keyword_index += 1
+
+        elif isinstance(keywords_data, dict):
+            for keyword, volume in keywords_data.items():
+                keywords_with_volume.append({
+                    "Keyword_id": f"{page_id_counter}.{keyword_index}",  # Keep as string to preserve format
+                    "Keyword": keyword,
+                    "Avg_Monthly_Searches": volume
+                })
+                keyword_index += 1
+
+        # Create the new page structure
+        processed_page = {
+            "Page_title_id": str(page_id_counter),
+            "Ad_Group": ad_group,
+            "Keywords": keywords_with_volume,
+            "Ad_Headlines": ad_headlines,
+            "Descriptions": descriptions
+        }
+
+        processed_data.append(processed_page)
+        page_id_counter += 1  # Increase page ID for next page
+
+    return processed_data
+
 
 
 def remove_branded_keywords(keywords_list, branded_keywords_list):

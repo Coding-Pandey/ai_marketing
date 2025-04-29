@@ -79,7 +79,8 @@ async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_
             return {"error": "No keywords provided"}
         
         # Convert keywords to DataFrame
-        df = pd.DataFrame(keywords)
+        df = pd.DataFrame([k.dict() for k in keywords])
+        print(df.head())
         print({"COLUMNS":df.columns, "len":len(df)})
 
         df1 = df[["Keyword"]]
@@ -92,7 +93,7 @@ async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_
         result, total_token = await ppc_main(data)
         ppc_data = flatten_ppc_data(result,df)
   
-        return ppc_data, total_token
+        return ppc_data
 
 
     except ValueError as e:
