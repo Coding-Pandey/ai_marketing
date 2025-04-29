@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from S3_bucket.S3_client import s3
 from fastapi import HTTPException
+from botocore.exceptions import ClientError
 
 S3_BUCKET_NAME = os.environ.get("BUCKET_NAME")
 user_folder = "User/"
@@ -29,12 +30,12 @@ def seo_cluster_delete_document(uuid: str, id: str) -> dict:
             Delete={"Objects": delete_keys}
         )
 
-        return {"message": "Documents deleted successfully"}
-    
-    except HTTPException as e:
-        raise e
+        return True
+
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete from S3: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
 

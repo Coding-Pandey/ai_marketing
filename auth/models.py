@@ -23,6 +23,7 @@ class User(Base):
     seo_cluster_records = relationship("SEOCluster", back_populates="user")
     ppc_cluster_records = relationship("PPCCluster", back_populates="user")
     seo_file_records = relationship("SEOFile", back_populates="user")
+    ppc_file_records = relationship("PPCFile", back_populates="user")
     
 
 
@@ -142,3 +143,14 @@ class SEOFile(Base):
     upload_time = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="seo_file_records")
+
+class PPCFile(Base):
+    __tablename__ = "ppc_file_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    file_name = Column(String)
+    uuid = Column(String)  
+    upload_time = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="ppc_file_records")

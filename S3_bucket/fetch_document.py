@@ -151,3 +151,32 @@ def fetch_seo_cluster_file(user_id: str, uuid: str) -> dict:
 
 # result = fetch_seo_cluster_file(user_id="3", uuid="543e82dd5632494b955be1f76b19247b")
 # print(result)
+
+def fetch_ppc_cluster_file(user_id: str, uuid: str) -> dict:
+    try:
+        category = "ppc_clustering_data"
+        user_prefix = f"User_{user_id}"
+        prefix = f"{user_prefix}/{category}/{uuid}"
+
+        response = s3.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix=prefix)
+
+        if "Contents" not in response or not response["Contents"]:
+            return {"documents": []}
+
+        documents = []
+
+        for obj in response["Contents"]:
+            key = obj["Key"]
+            if not key.endswith("/"): 
+                s3_object = s3.get_object(Bucket=S3_BUCKET_NAME, Key=key)
+                content = s3_object['Body'].read().decode('utf-8')
+                # documents.append({
+                #     "key": key,
+                #     "content": content
+                # })
+
+        return {"documents": content}
+
+    except ClientError as e:
+        raise HTTPException(status_code=404, detail=f"Failed to fetch document from S3: {str(e)}")
+
