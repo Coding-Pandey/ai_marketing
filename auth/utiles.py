@@ -44,7 +44,8 @@ def create_permissions_for_user(new_user, db):
                 elif api_name == "ppc_csv":
                     permission = PPCCSV(
                         user_id=new_user.id,
-                        total_files_count=call_limit,
+                        call_limit=call_limit,
+                        call_count=0,
                         file_count=0,
                         last_reset=datetime.utcnow()
                     )
