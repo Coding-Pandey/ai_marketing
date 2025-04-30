@@ -82,18 +82,14 @@ async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
     try:
         user_id = int(id[1])  # Extract user_id from the JWT token
         seo_files = db.query(SEOFile).filter(SEOFile.user_id == user_id).all()
-        file_count = len(seo_files)
-
         if not seo_files:
             raise HTTPException(status_code=404, detail="No files found for the user")
+        
+        file_count = len(seo_files)
+
 
         # Fetch the SEOCSV record for last_reset value
         seo_csv_record = db.query(SEOCSV).filter(SEOCSV.user_id == user_id).first()
-
-        last_reset = seo_csv_record.last_reset if seo_csv_record else None
-        # Add 30 days to last_reset if it exists
-        reset_plus_30 = last_reset + timedelta(days=30) if last_reset else None
-
 
         if seo_csv_record:
         
@@ -106,8 +102,7 @@ async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
             {
                 "file_name": seo_file.file_name,
                 "uuid": seo_file.uuid,
-                "upload_time": seo_file.upload_time,
-                "last_reset": reset_plus_30
+                "last_reset": seo_file.upload_time + timedelta(days=30) if seo_file.upload_time else None,
             }
             for seo_file in seo_files
         ]
@@ -122,16 +117,13 @@ async def ppc_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
     try:
         user_id = int(id[1])  # Extract user_id from the JWT token
         ppc_files = db.query(PPCFile).filter(PPCFile.user_id == user_id).all()
-        file_count = len(ppc_files)
-
         if not ppc_files:
             raise HTTPException(status_code=404, detail="No files found for the user")
+        
+        file_count = len(ppc_files)
 
-        # Fetch the PPCCSV record for last_reset value
         ppc_csv_record = db.query(PPCCSV).filter(PPCCSV.user_id == user_id).first()
 
-        last_reset = ppc_csv_record.last_reset if ppc_csv_record else None
-        reset_plus_30 = last_reset + timedelta(days=30) if last_reset else None
 
         if ppc_csv_record:
             # Update file_count and call_count
@@ -144,8 +136,7 @@ async def ppc_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
             {
                 "file_name": ppc_file.file_name,
                 "uuid": ppc_file.uuid,
-                "upload_time": ppc_file.upload_time,
-                "last_reset": reset_plus_30
+                "last_reset": ppc_file.upload_time + timedelta(days=30) if ppc_file.upload_time else None,
             }
             for ppc_file in ppc_files
         ]
@@ -323,12 +314,12 @@ async def csv_ppc_upload_file(json_data: dict = Body(...),
             detail=f"An unexpected error occurred: {str(e)}"
         )
     
-@router.post("/seo_cluster_fetch_data")
-async def seo_fetch_document(request: UUIDRequest, id: str = Depends(verify_jwt_token)):
+@router.get("/seo_cluster_fetch_data/{uuid}")
+async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token)):
 
     try:
         user_id = str(id[1])  # Extract user_id from the JWT token
-        uuid = request.uuid
+        uuid = str(uuid)  # Ensure uuid is a string
         data = fetch_seo_cluster_file(user_id, uuid)
         if not data:
             raise HTTPException(status_code=404, detail="No documents found for the user")
@@ -341,12 +332,11 @@ async def seo_fetch_document(request: UUIDRequest, id: str = Depends(verify_jwt_
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.post("/ppc_cluster_fetch_data")
-async def ppc_fetch_document(request: UUIDRequest, id: str = Depends(verify_jwt_token)):
-
+@router.get("/ppc_cluster_fetch_data/{uuid}")
+async def ppc_fetch_document(uuid: str, id: str = Depends(verify_jwt_token)):
     try:
-        user_id = str(id[1])  # Extract user_id from the JWT token
-        uuid = request.uuid
+        user_id = str(id[1]) 
+        uuid = str(uuid) 
         data = fetch_ppc_cluster_file(user_id, uuid)
         if not data:
             raise HTTPException(status_code=404, detail="No documents found for the user")

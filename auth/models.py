@@ -69,7 +69,8 @@ class PPCCSV(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    total_files_count = Column(Integer)
+    call_limit = Column(Integer)
+    call_count = Column(Integer, default=0)
     file_count = Column(Integer)
     last_reset = Column(DateTime, default=datetime.utcnow)
 
