@@ -318,6 +318,8 @@ async def csv_ppc_upload_file(json_data: dict = Body(...),
 async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     
     try:
+        if uuid is None:
+            raise HTTPException(status_code=200, detail="UUID is required")
         user_id = str(id[1])  # Extract user_id from the JWT token
         uuid = str(uuid)  # Ensure uuid is a string
         seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=uuid).first()
@@ -326,7 +328,7 @@ async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         
         data = fetch_seo_cluster_file(user_id, uuid)
         if not data:
-            raise HTTPException(status_code=404, detail="No documents found for the user")
+            raise HTTPException(status_code=200, detail="No documents found for the user")
         
         json_data = json.loads(data["documents"])
         
@@ -347,6 +349,8 @@ async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
 @router.get("/ppc_cluster_fetch_data/{uuid}")
 async def ppc_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     try:
+        if uuid is None:
+            raise HTTPException(status_code=200, detail="UUID is required")
         user_id = str(id[1]) 
         uuid = str(uuid) 
         ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=uuid).first()
@@ -354,7 +358,7 @@ async def ppc_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
             raise HTTPException(status_code=200, detail="File not found for this user")
         data = fetch_ppc_cluster_file(user_id, uuid)
         if not data:
-            raise HTTPException(status_code=404, detail="No documents found for the user")
+            raise HTTPException(status_code=200, detail="No documents found for the user")
         json_data = json.loads(data["documents"])
 
         json_data = {
