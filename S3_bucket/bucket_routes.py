@@ -6,8 +6,8 @@ from fastapi.responses import JSONResponse
 from fastapi import Body
 from typing import Annotated
 from utils import verify_jwt_token, check_api_limit
-from S3_bucket.utile import convert_into_csvdata, upload_seo_table
-from S3_bucket.delete_doc import seo_cluster_delete_document
+from S3_bucket.utile import convert_into_csvdata, upload_seo_table, upload_ppc_table
+from S3_bucket.delete_doc import seo_cluster_delete_document, ppc_cluster_delete_document
 from auth.models import SEOFile, SEOCSV, PPCFile, PPCCSV
 from auth.auth import get_db
 from botocore.exceptions import ClientError
@@ -294,7 +294,7 @@ async def csv_ppc_upload_file(json_data: dict = Body(...),
             )
         
         if s3_path:
-            upload_seo_table(str(unique_id), user_id, filename)
+            upload_ppc_table(str(unique_id), user_id, filename)
 
         return JSONResponse(
             status_code=200,
@@ -402,7 +402,7 @@ async def ppc_delete_document(request: UUIDRequest, id: str = Depends(verify_jwt
     try:
         user_id = str(id[1]) 
         uuid = request.uuid
-        success = seo_cluster_delete_document(uuid, user_id)
+        success = ppc_cluster_delete_document(uuid, user_id)
         if success:
         
             user_id = int(id[1]) 

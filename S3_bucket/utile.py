@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
-from auth.models import SEOFile
+from auth.models import SEOFile, PPCFile
 from auth.auth import get_db
 from fastapi import Request, HTTPException, Depends
 
@@ -46,6 +46,29 @@ def upload_seo_table( uuid: str, user_id: int, file_name: str):
     db = next(get_db()) 
     try:
         new_file = SEOFile(
+            user_id=user_id,
+            file_name=file_name,
+            uuid=uuid,
+            upload_time=datetime.utcnow()
+        )
+
+        
+        db.add(new_file)
+        db.commit()
+        db.refresh(new_file)
+
+        return new_file  # You can return the created object if needed
+
+    except Exception as e:
+        db.rollback()
+        raise Exception(f"Error storing SEO file in table: {str(e)}")
+    finally:
+        db.close() 
+    
+def upload_ppc_table( uuid: str, user_id: int, file_name: str):
+    db = next(get_db()) 
+    try:
+        new_file = PPCFile(
             user_id=user_id,
             file_name=file_name,
             uuid=uuid,

@@ -91,6 +91,7 @@ async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_
 
         # result = asyncio.run(ppc_main(data))
         result, total_token = await ppc_main(data)
+        print("Result:", result)
         ppc_data = flatten_ppc_data(result,df)
   
         return ppc_data
