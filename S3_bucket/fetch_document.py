@@ -145,7 +145,7 @@ def fetch_seo_cluster_file(user_id: str, uuid: str) -> dict:
         return {"documents": content}
 
     except ClientError as e:
-        raise HTTPException(status_code=404, detail=f"Failed to fetch document from S3: {str(e)}")
+        raise HTTPException(status_code=200, detail=f"Failed to fetch document from S3: {str(e)}")
 
 
 
@@ -178,5 +178,5 @@ def fetch_ppc_cluster_file(user_id: str, uuid: str) -> dict:
         return {"documents": content}
 
     except ClientError as e:
-        raise HTTPException(status_code=404, detail=f"Failed to fetch document from S3: {str(e)}")
+        raise HTTPException(status_code=200, detail=f"Failed to fetch document from S3: {str(e)}")
 
