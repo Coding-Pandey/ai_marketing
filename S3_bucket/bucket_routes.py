@@ -83,7 +83,7 @@ async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
         user_id = int(id[1])  # Extract user_id from the JWT token
         seo_files = db.query(SEOFile).filter(SEOFile.user_id == user_id).all()
         if not seo_files:
-            return HTTPException(status_code=200, detail="No files found for the user")
+            return []
         
         file_count = len(seo_files)
 
@@ -118,7 +118,7 @@ async def ppc_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
         user_id = int(id[1])  # Extract user_id from the JWT token
         ppc_files = db.query(PPCFile).filter(PPCFile.user_id == user_id).all()
         if not ppc_files:
-            return HTTPException(status_code=200, detail="No files found for the user")
+            return []
         
         file_count = len(ppc_files)
 
