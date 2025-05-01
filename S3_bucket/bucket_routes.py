@@ -83,7 +83,7 @@ async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
         user_id = int(id[1])  # Extract user_id from the JWT token
         seo_files = db.query(SEOFile).filter(SEOFile.user_id == user_id).all()
         if not seo_files:
-            raise HTTPException(status_code=200, detail="No files found for the user")
+            return HTTPException(status_code=200, detail="No files found for the user")
         
         file_count = len(seo_files)
 
@@ -118,7 +118,7 @@ async def ppc_csv_documents(db: Session = Depends(get_db), id: str = Depends(ver
         user_id = int(id[1])  # Extract user_id from the JWT token
         ppc_files = db.query(PPCFile).filter(PPCFile.user_id == user_id).all()
         if not ppc_files:
-            raise HTTPException(status_code=200, detail="No files found for the user")
+            return HTTPException(status_code=200, detail="No files found for the user")
         
         file_count = len(ppc_files)
 
@@ -315,67 +315,50 @@ async def csv_ppc_upload_file(json_data: dict = Body(...),
         )
     
 @router.get("/seo_cluster_fetch_data/{uuid}")
-async def seo_fetch_document(
-    uuid: str,
-    id: str = Depends(verify_jwt_token),
-    db: Session = Depends(get_db)
-):
+async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    
     try:
-        if not uuid or uuid.strip().lower() in ["", "null", "none"]:
-            return JSONResponse(
-                status_code=200,
-                content={"detail": "UUID is required"}
-            )
-
+        if uuid is None:
+            raise HTTPException(status_code=200, detail="UUID is required")
         user_id = str(id[1])  # Extract user_id from the JWT token
-
+        uuid = str(uuid)  # Ensure uuid is a string
         seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=uuid).first()
         if not seo_file:
-            return JSONResponse(
-                status_code=200,
-                content={"detail": "File not found for this user"}
-            )
-
+            raise HTTPException(status_code=200, detail="File not found for this user")
+        
         data = fetch_seo_cluster_file(user_id, uuid)
         if not data:
-            return JSONResponse(
-                status_code=200,
-                content={"detail": "No documents found for the user"}
-            )
-
+            raise HTTPException(status_code=200, detail="No documents found for the user")
+        
         json_data = json.loads(data["documents"])
+        
 
-        return {
+        json_data = {
             "id": uuid,
             "fileName": seo_file.file_name,
             "data": json_data
         }
-    except Exception as e:  
-        return HTTPException(status_code=200, detail=str(e))
+        return json_data
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 @router.get("/ppc_cluster_fetch_data/{uuid}")
 async def ppc_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     try:
-        if not uuid or uuid.strip().lower() in ["", "null", "none"]:
-            return JSONResponse(
-                status_code=200,
-                content={"detail": "UUID is required"}
-            )
+        if uuid is None:
+            raise HTTPException(status_code=200, detail="UUID is required")
         user_id = str(id[1]) 
         uuid = str(uuid) 
         ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=uuid).first()
         if not ppc_file:
-            return JSONResponse(
-                status_code=200,
-                content={"detail": "File not found for this user"}
-            )
+            raise HTTPException(status_code=200, detail="File not found for this user")
         data = fetch_ppc_cluster_file(user_id, uuid)
         if not data:
-            return JSONResponse(
-                status_code=200,
-                content={"detail": "No documents found for the user"}
-            )
+            raise HTTPException(status_code=200, detail="No documents found for the user")
         json_data = json.loads(data["documents"])
 
         json_data = {
@@ -385,8 +368,10 @@ async def ppc_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         }
         return json_data
 
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        return HTTPException(status_code=200, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 @router.delete("/seo_cluster_delete_document")
