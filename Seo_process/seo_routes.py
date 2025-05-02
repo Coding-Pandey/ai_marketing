@@ -106,7 +106,7 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
 
 
 @router.post("/seo_keyword_clustering")
-async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(check_api_limit("seo_cluster"))):
+async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(check_api_limit("seo_cluster")), db: Session = Depends(get_db)):
     try:
         if not keywords:
             return {"error": "No keywords provided"}
@@ -123,6 +123,10 @@ async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(chec
         print("Clustered data:", cluster_data) 
         # result = flatten_seo_data(cluster_data,df)
         result = map_seo_pages_with_search_volume(cluster_data, df)
+        if cluster_data and total_token:
+            # Update the user's call count and total tokens used in the database
+            user.seo_cluster.total_tokens += total_token
+            db.commit()
 
         return result 
     

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
+from auth.auth import get_db
 from typing import List
 import pandas as pd
 import io
@@ -72,7 +73,7 @@ def ppc_generate_keywords(request: KeywordRequest,user=Depends(check_api_limit("
 
 
 @router.post("/ppc_keyword_clustering")
-async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_api_limit("ppc_cluster"))):
+async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_api_limit("ppc_cluster")),  db: Session = Depends(get_db)):
     try:
 
         if not keywords:
@@ -93,6 +94,9 @@ async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_
         result, total_token = await ppc_main(data)
         print("Result:", result)
         ppc_data = flatten_ppc_data(result,df)
+        if result and total_token:
+            user.seo_cluster.total_tokens += total_token
+            db.commit()
   
         return ppc_data
 
