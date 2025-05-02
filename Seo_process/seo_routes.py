@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
 from typing import List
 from auth.auth import get_db
+from auth.models import SEOKeywords, SEOCluster, SocialMedia, SEOCSV, PPCCSV, SEOFile
 import json
 import pandas as pd
 import io
@@ -123,12 +124,24 @@ async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(chec
         print("Clustered data:", cluster_data) 
         # result = flatten_seo_data(cluster_data,df)
         result = map_seo_pages_with_search_volume(cluster_data, df)
+
         if cluster_data and total_token:
-            # Update the user's call count and total tokens used in the database
-            user.seo_cluster.total_tokens += total_token
+         
+            seo_cluster_record = db.query(SEOCluster).filter(SEOCluster.user_id == user.id).first()
+
+            if seo_cluster_record:
+                seo_cluster_record.total_tokens += total_token
+            else:
+                seo_cluster_record = SEOCluster(
+                    user_id=user.id,
+                    total_tokens=total_token,
+                    call_count=1
+                )
+                db.add(seo_cluster_record)
+
             db.commit()
 
-        return result 
+        return result
     
 
 

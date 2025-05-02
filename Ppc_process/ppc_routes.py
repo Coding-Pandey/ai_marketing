@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from auth.auth import get_db
+from auth.models import SEOCluster, SEOKeywords, PPCCluster
 from typing import List
 import pandas as pd
 import io
@@ -91,14 +92,27 @@ async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_
         print("Parsed data:", data)  
 
         # result = asyncio.run(ppc_main(data))
-        result, total_token = await ppc_main(data)
-        print("Result:", result)
-        ppc_data = flatten_ppc_data(result,df)
-        if result and total_token:
-            user.seo_cluster.total_tokens += total_token
+        cluster_data, total_token = await ppc_main(data)
+        print("Result:", cluster_data)
+        ppc_data = flatten_ppc_data(cluster_data,df)
+        if cluster_data and total_token:
+         
+            ppc_cluster_record = db.query(PPCCluster).filter(PPCCluster.user_id == user.id).first()
+
+            if ppc_cluster_record:
+                ppc_cluster_record.total_tokens += total_token
+            else:
+                ppc_cluster_record = PPCCluster(
+                    user_id=user.id,
+                    total_tokens=total_token,
+                    call_count=1
+                )
+                db.add(ppc_cluster_record)
+
             db.commit()
-  
+
         return ppc_data
+    
 
 
     except ValueError as e:
