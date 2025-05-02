@@ -210,7 +210,7 @@ async def csv_seo_upload_file(json_data: dict = Body(...),
             )
         
         if s3_path:
-            upload_seo_table(str(unique_id), user_id, filename)
+            upload_seo_table(str(unique_id), user_id, filename, file_content )
 
         return JSONResponse(
             status_code=200,
@@ -294,7 +294,7 @@ async def csv_ppc_upload_file(json_data: dict = Body(...),
             )
         
         if s3_path:
-            upload_ppc_table(str(unique_id), user_id, filename)
+            upload_ppc_table(str(unique_id), user_id, filename, file_content)
 
         return JSONResponse(
             status_code=200,
@@ -323,6 +323,8 @@ async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         user_id = str(id[1])  # Extract user_id from the JWT token
         uuid = str(uuid)  # Ensure uuid is a string
         seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=uuid).first()
+     
+        # print(f"json_data: {seo_file.json_data}")
         if not seo_file:
             raise HTTPException(status_code=200, detail="File not found for this user")
         

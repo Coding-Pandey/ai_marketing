@@ -3,6 +3,7 @@ from datetime import datetime
 from auth.models import SEOFile, PPCFile
 from auth.auth import get_db
 from fastapi import Request, HTTPException, Depends
+from typing import Union
 
 def convert_into_csvdata(json_data):
 
@@ -42,13 +43,14 @@ def convert_into_csvdata(json_data):
 
 
 
-def upload_seo_table( uuid: str, user_id: int, file_name: str):
+def upload_seo_table( uuid: str, user_id: int, file_name: str, json_data: Union[dict, list]):
     db = next(get_db()) 
     try:
         new_file = SEOFile(
             user_id=user_id,
             file_name=file_name,
             uuid=uuid,
+            json_data= json_data,
             upload_time=datetime.utcnow()
         )
 
@@ -65,13 +67,14 @@ def upload_seo_table( uuid: str, user_id: int, file_name: str):
     finally:
         db.close() 
     
-def upload_ppc_table( uuid: str, user_id: int, file_name: str):
+def upload_ppc_table( uuid: str, user_id: int, file_name: str, json_data: Union[dict, list]):
     db = next(get_db()) 
     try:
         new_file = PPCFile(
             user_id=user_id,
             file_name=file_name,
             uuid=uuid,
+            json_data= json_data,
             upload_time=datetime.utcnow()
         )
 
