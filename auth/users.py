@@ -119,10 +119,12 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                     }
                 }
             else:
-                # b. Assign new oAuthId to existing user
+               
                 user_by_email.oAuthId = user.oAuthId
                 db.commit()
                 db.refresh(user_by_email)
+                
+                dataa = create_permissions_for_user(user_by_email, db)  # Updated line
 
                 token = create_access_token({
                     "email": user_by_email.email,
@@ -154,6 +156,7 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                 oAuthId=user.oAuthId
             )
             db.add(new_user)
+            dataa = create_permissions_for_user(user_by_email, db)
             db.commit()
             db.refresh(new_user)
 
