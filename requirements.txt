@@ -30,5 +30,5 @@ pydantic[email]
 emoji
 authlib
 itsdangerous
-# psycopg2-binary
+psycopg2-binary
 
