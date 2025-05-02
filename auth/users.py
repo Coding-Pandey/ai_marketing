@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status,  Request
 from sqlalchemy.orm import Session
-from auth.schemas import UserCreate, UserOut, Token, User
+from auth.schemas import UserCreate, UserOut, Token, User, Usergoogle
 from auth.models import User, UserPermission
 from auth.auth import get_db, get_password_hash, authenticate_user, create_access_token
 from auth.deps import get_current_active_user, get_admin_user
@@ -81,11 +81,103 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
     return new_user
 
-@router.get("/google_login")
-async def login(request: Request):
-    redirect_uri = request.url_for("auth")
-    return await oauth.google.authorize_redirect(request, redirect_uri)
 
+@router.post("/google_login")
+async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
+    try:
+        if not user.email or not user.username or not user.oAuthId:
+            raise APIException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email, username, and oAuthId are required."
+            )
+
+        user_by_email = db.query(User).filter(User.email == user.email).first()
+        user_by_oauth = db.query(User).filter(User.oAuthId == user.oAuthId).first()
+
+        # Case 1: Email exists
+        if user_by_email:
+            # a. OAuth ID already assigned
+            if user_by_oauth:
+                if user_by_oauth.email != user.email:
+                    raise APIException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="OAuth ID already used by another account."
+                    )
+                # OAuth ID belongs to this user → return token
+                token = create_access_token({
+                    "email": user_by_email.email,
+                    "sub": user_by_email.username,
+                    "id": user_by_email.id
+                })
+                return {
+                    "access_token": token,
+                    "token_type": "bearer",
+                    "user": {
+                        "username": user_by_email.username,
+                        "id": user_by_email.id,
+                        "email": user_by_email.email
+                    }
+                }
+            else:
+                # b. Assign new oAuthId to existing user
+                user_by_email.oAuthId = user.oAuthId
+                db.commit()
+                db.refresh(user_by_email)
+
+                token = create_access_token({
+                    "email": user_by_email.email,
+                    "sub": user_by_email.username,
+                    "id": user_by_email.id
+                })
+                return {
+                    "access_token": token,
+                    "token_type": "bearer",
+                    "user": {
+                        "username": user_by_email.username,
+                        "id": user_by_email.id,
+                        "email": user_by_email.email
+                    }
+                }
+
+        # Case 2: New user
+        else:
+            if user_by_oauth:
+                raise APIException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="OAuth ID already used by another account."
+                )
+
+            new_user = User(
+                username=user.username,
+                email=user.email,
+                role=user.role,
+                oAuthId=user.oAuthId
+            )
+            db.add(new_user)
+            db.commit()
+            db.refresh(new_user)
+
+            token = create_access_token({
+                "email": new_user.email,
+                "sub": new_user.username,
+                "id": new_user.id
+            })
+            return {
+                "access_token": token,
+                "token_type": "bearer",
+                "user": {
+                    "username": new_user.username,
+                    "id": new_user.id,
+                    "email": new_user.email
+                }
+            }
+
+    except Exception as e:
+        raise APIException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal Server Error. {str(e)}"
+        )
+   
 # Auth callback
 @router.get("/auth")
 async def auth(request: Request):

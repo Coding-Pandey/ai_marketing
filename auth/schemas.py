@@ -6,6 +6,12 @@ class UserCreate(BaseModel):
     password: str
     role: str = "user" 
 
+class Usergoogle(BaseModel):
+    username: str
+    email: EmailStr
+    oAuthId: str
+    role: str = "user"
+
 class UserOut(BaseModel):
     id: int
     username: str

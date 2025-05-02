@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB 
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from auth.database import Base
@@ -7,10 +8,11 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    username = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=True)  
     role = Column(String, default="user")
+    oAuthId = Column(String, unique=True, nullable=True)
 
     # Relationship to permissions
     permissions = relationship("UserPermission", back_populates="user")
@@ -142,6 +144,7 @@ class SEOFile(Base):
     file_name = Column(String)
     uuid = Column(String)  
     upload_time = Column(DateTime, default=datetime.utcnow)
+    json_data = Column(JSONB)
 
     user = relationship("User", back_populates="seo_file_records")
 
@@ -153,5 +156,6 @@ class PPCFile(Base):
     file_name = Column(String)
     uuid = Column(String)  
     upload_time = Column(DateTime, default=datetime.utcnow)
+    json_data = Column(JSONB)
 
     user = relationship("User", back_populates="ppc_file_records")
