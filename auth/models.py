@@ -144,7 +144,7 @@ class SEOFile(Base):
     file_name = Column(String)
     uuid = Column(String)  
     upload_time = Column(DateTime, default=datetime.utcnow)
-    json_data = Column(JSONB)
+    # json_data = Column(JSONB)
 
     user = relationship("User", back_populates="seo_file_records")
 
@@ -156,6 +156,6 @@ class PPCFile(Base):
     file_name = Column(String)
     uuid = Column(String)  
     upload_time = Column(DateTime, default=datetime.utcnow)
-    json_data = Column(JSONB)
+    # json_data = Column(JSONB)
 
     user = relationship("User", back_populates="ppc_file_records")
