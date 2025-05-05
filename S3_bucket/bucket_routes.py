@@ -444,7 +444,7 @@ class PageUpdate(BaseModel):
 
 # Delete a keyword by Keyword_id
 @router.delete("/seo-files/{seo_file_uuid}/keywords/{keyword_id}")
-def delete_keyword(seo_file_uuid: str, keyword_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+def seo_delete_keyword(seo_file_uuid: str, keyword_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
     user_id = int(id[1])  # Extract user_id from the JWT token
     seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
     # seo_file = db.query(SEOFile).filter(SEOFile.uuid == seo_file_uuid).first()
@@ -508,7 +508,7 @@ def delete_keyword(seo_file_uuid: str, keyword_id: str, db: Session = Depends(ge
 
 # Delete a page by Page_title_id
 @router.delete("/seo-files/{seo_file_uuid}/pages/{page_title_id}")
-def delete_page(seo_file_uuid: str, page_title_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+def seo_delete_page(seo_file_uuid: str, page_title_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
     user_id = int(id[1])
     seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
     if not seo_file:
@@ -530,8 +530,10 @@ def delete_page(seo_file_uuid: str, page_title_id: str, db: Session = Depends(ge
 
 # Edit a page by Page_title_id
 @router.patch("/seo-files/{seo_file_uuid}/pages/{page_title_id}")
-def edit_page(seo_file_uuid: str, page_title_id: str, page_update: PageUpdate, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+def seo_edit_page(seo_file_uuid: str, page_title_id: str, page_update: PageUpdate, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+
     user_id = int(id[1])
+    
     # Extract user_id from the JWT token    
     # seo_file = db.query(SEOFile).filter(SEOFile.uuid == seo_file_uuid).first()
     seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
@@ -553,5 +555,193 @@ def edit_page(seo_file_uuid: str, page_title_id: str, page_update: PageUpdate, d
             except Exception as e:
                 db.rollback()
                 raise HTTPException(status_code=500, detail="Failed to save changes")
+          
+    raise HTTPException(status_code=404, detail="Page not found")
+
+
+
+@router.delete("/ppc-files/{ppc_file_uuid}/keywords/{keyword_id}")
+def ppc_delete_keyword(ppc_file_uuid: str, keyword_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+    user_id = int(id[1])  # Extract user_id from the JWT token
+    ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=ppc_file_uuid).first()
+    if not ppc_file:
+        raise HTTPException(status_code=404, detail="PPC file not found")
+    json_data = ppc_file.json_data
+    try:
+        page_title_id, _ = keyword_id.split(".")
+        print(page_title_id)
+        print(keyword_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid keyword_id format")
+    for page in json_data:
+        if page["Page_title_id"] == page_title_id:
+            keywords = page["Keywords"]
+            print(keywords)
+            for kw in keywords:
+                if kw["Keyword_id"] == keyword_id:
+                    keywords.remove(kw)
+                    ppc_file.json_data = json_data
+                    # print(ppc_file.json_data)
+                    flag_modified(ppc_file, "json_data")
+    
+                    try:
+                        db.commit()
+                        db.refresh(ppc_file)  # Refresh to confirm database state
+
+                        return {"message": "Keyword deleted"}
+                    except Exception as e:
+    
+                        db.rollback()
+                        raise HTTPException(status_code=500, detail="Failed to save changes")
+                    # return {"message": "Keyword deleted"}
+            raise HTTPException(status_code=404, detail="Keyword not found")
+    raise HTTPException(status_code=404, detail="Page not found")
+
+
+@router.delete("/ppc-files/{ppc_file_uuid}/pages/{page_title_id}")
+def ppc_delete_page(ppc_file_uuid: str, page_title_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+    user_id = int(id[1])
+    ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=ppc_file_uuid).first()
+    if not ppc_file:
+        raise HTTPException(status_code=404, detail="PPC file not found")
+    json_data = ppc_file.json_data
+    for page in json_data:
+        if page["Page_title_id"] == page_title_id:
+            json_data.remove(page)
+            ppc_file.json_data = json_data
+            flag_modified(ppc_file, "json_data")
+            try:
+                db.commit()
+                db.refresh(ppc_file) 
+                return {"message": "Page deleted"} 
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to save changes")
+    raise HTTPException(status_code=404, detail="Page not found")
+
+from typing import List, Optional, Union, Dict, Any
+from pydantic import BaseModel
+
+class HeadlineUpdate(BaseModel):
+    Headlines_id: Optional[str] = None
+    Ad_Headline: str
+
+
+class DescriptionUpdate(BaseModel):
+    Description_id: Optional[str] = None
+    Description: str
+
+
+# class KeywordUpdate(BaseModel):
+#     Keyword_id: Optional[str] = None
+#     Keyword: str
+#     Avg_Monthly_Searches: Optional[int] = None
+
+class ppcPageUpdate(BaseModel):
+    # Page_Title: Optional[str] = None
+    Ad_Group: Optional[str] = None
+    Ad_Headlines: Optional[List[Union[HeadlineUpdate]]] = None
+    Descriptions: Optional[List[Union[DescriptionUpdate]]] = None
+    # Keywords: Optional[List[Union[KeywordUpdate, str]]] = None
+
+
+@router.patch("/ppc-files/{ppc_file_uuid}/pages/{page_title_id}")
+def ppc_edit_page(ppc_file_uuid: str, page_title_id: str, page_update: ppcPageUpdate, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+
+    user_id = int(id[1])
+    # Extract user_id from the JWT token    
+    ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=ppc_file_uuid).first()
+    if not ppc_file:
+        raise HTTPException(status_code=404, detail="PPC file not found")
+    
+    json_data = ppc_file.json_data
+    for page in json_data:
+        if page["Page_title_id"] == page_title_id:
+            # Update Page_Title if provided
+            # if page_update.Page_Title is not None:
+            #     page["Page_Title"] = page_update.Page_Title
+            
+            # Update Ad_Group if provided
+            if page_update.Ad_Group is not None:
+                page["Ad_Group"] = page_update.Ad_Group
+            
+            # Update Ad_Headlines if provided
+            if page_update.Ad_Headlines is not None:
+                # Replace or update specific headlines
+                if isinstance(page_update.Ad_Headlines, list):
+                    updated_headlines = []
+                    for i, headline in enumerate(page_update.Ad_Headlines):
+                        if isinstance(headline, dict) and "Ad_Headline" in headline:
+                            # Create headline with ID if it doesn't exist
+                            headline_id = headline.get("Headlines_id", f"{page_title_id}.{i+1}")
+                            updated_headlines.append({
+                                "Headlines_id": headline_id,
+                                "Ad_Headline": headline["Ad_Headline"]
+                            })
+                        elif isinstance(headline, str):
+                            # Simple string headline, create with ID
+                            updated_headlines.append({
+                                "Headlines_id": f"{page_title_id}.{i+1}",
+                                "Ad_Headline": headline
+                            })
+                    page["Ad_Headlines"] = updated_headlines
+            
+            # Update Descriptions if provided
+            if page_update.Descriptions is not None:
+                # Replace or update specific descriptions
+                if isinstance(page_update.Descriptions, list):
+                    updated_descriptions = []
+                    for i, description in enumerate(page_update.Descriptions):
+                        if isinstance(description, dict) and "Description" in description:
+                            # Create description with ID if it doesn't exist
+                            description_id = description.get("Description_id", f"{page_title_id}.{i+1}")
+                            updated_descriptions.append({
+                                "Description_id": description_id,
+                                "Description": description["Description"]
+                            })
+                        elif isinstance(description, str):
+                            # Simple string description, create with ID
+                            updated_descriptions.append({
+                                "Description_id": f"{page_title_id}.{i+1}",
+                                "Description": description
+                            })
+                    page["Descriptions"] = updated_descriptions
+            
+            # Update Keywords if provided
+            if page_update.Keywords is not None:
+                # Handle keyword updates
+                if isinstance(page_update.Keywords, list):
+                    updated_keywords = []
+                    for i, keyword in enumerate(page_update.Keywords):
+                        if isinstance(keyword, dict) and "Keyword" in keyword:
+                            # Create keyword with ID if it doesn't exist
+                            keyword_id = keyword.get("Keyword_id", f"{page_title_id}.{i+1}")
+                            keyword_data = {
+                                "Keyword_id": keyword_id,
+                                "Keyword": keyword["Keyword"]
+                            }
+                            # Include search volume if provided
+                            if "Avg_Monthly_Searches" in keyword:
+                                keyword_data["Avg_Monthly_Searches"] = keyword["Avg_Monthly_Searches"]
+                            updated_keywords.append(keyword_data)
+                        elif isinstance(keyword, str):
+                            # Simple string keyword, create with ID
+                            updated_keywords.append({
+                                "Keyword_id": f"{page_title_id}.{i+1}",
+                                "Keyword": keyword,
+                                "Avg_Monthly_Searches": 0  # Default value, could be updated from a service
+                            })
+                    page["Keywords"] = updated_keywords
+            
+            # Save changes to database
+            ppc_file.json_data = json_data
+            flag_modified(ppc_file, "json_data")
+            try:
+                db.commit()
+                db.refresh(ppc_file)  # Refresh to confirm database state
+                return {"message": "Page updated successfully"}
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
           
     raise HTTPException(status_code=404, detail="Page not found")
