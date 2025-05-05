@@ -8,6 +8,7 @@ from typing import Annotated
 from utils import verify_jwt_token, check_api_limit
 from S3_bucket.utile import convert_into_csvdata, upload_seo_table, upload_ppc_table
 from S3_bucket.delete_doc import seo_cluster_delete_document, ppc_cluster_delete_document
+from sqlalchemy.orm.attributes import flag_modified
 from auth.models import SEOFile, SEOCSV, PPCFile, PPCCSV
 from auth.auth import get_db
 from botocore.exceptions import ClientError
@@ -18,6 +19,7 @@ import json
 router = APIRouter()
 from pydantic import BaseModel
 from datetime import timedelta
+from typing import Optional
 
 class UUIDRequest(BaseModel):
     uuid: str
@@ -338,7 +340,7 @@ async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         json_data = {
             "id": uuid,
             "fileName": seo_file.file_name,
-            "data": json_data
+            "data": seo_file.json_data
         }
         return json_data
 
@@ -366,7 +368,7 @@ async def ppc_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         json_data = {
             "id": uuid,
             "fileName": ppc_file.file_name,
-            "data": json_data
+            "data": ppc_file.json_data
         }
         return json_data
 
@@ -429,3 +431,127 @@ async def ppc_delete_document(request: UUIDRequest, id: str = Depends(verify_jwt
         raise HTTPException(status_code=500, detail=f"Failed to delete documents: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Pydantic models for update requests
+class KeywordUpdate(BaseModel):
+    Keyword: Optional[str]
+    # Avg_Monthly_Searches: Optional[int]
+
+class PageUpdate(BaseModel):
+    Page_Title: Optional[str]
+    # Suggested_URL_Structure: Optional[str]
+
+# Delete a keyword by Keyword_id
+@router.delete("/seo-files/{seo_file_uuid}/keywords/{keyword_id}")
+def delete_keyword(seo_file_uuid: str, keyword_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+    user_id = int(id[1])  # Extract user_id from the JWT token
+    seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
+    # seo_file = db.query(SEOFile).filter(SEOFile.uuid == seo_file_uuid).first()
+    if not seo_file:
+        raise HTTPException(status_code=404, detail="SEO file not found")
+    json_data = seo_file.json_data
+    try:
+        page_title_id, _ = keyword_id.split(".")
+        print(page_title_id)
+        print(keyword_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid keyword_id format")
+    for page in json_data:
+        if page["Page_title_id"] == page_title_id:
+            keywords = page["Keywords"]
+            print(keywords)
+            for kw in keywords:
+                if kw["Keyword_id"] == keyword_id:
+                    keywords.remove(kw)
+                    seo_file.json_data = json_data
+                    print(seo_file.json_data)
+                    flag_modified(seo_file, "json_data")
+    
+                    try:
+                        db.commit()
+                        db.refresh(seo_file)  # Refresh to confirm database state
+
+                        return {"message": "Keyword deleted"}
+                    except Exception as e:
+    
+                        db.rollback()
+                        raise HTTPException(status_code=500, detail="Failed to save changes")
+                    # return {"message": "Keyword deleted"}
+            raise HTTPException(status_code=404, detail="Keyword not found")
+    raise HTTPException(status_code=404, detail="Page not found")
+
+# Edit a keyword by Keyword_id
+# @router.patch("/seo-files/{seo_file_id}/keywords/{keyword_id}")
+# def edit_keyword(seo_file_id: int, keyword_id: str, keyword_update: KeywordUpdate, db: Session = Depends(get_db)):
+#     seo_file = db.query(SEOFile).filter(SEOFile.id == seo_file_id).first()
+#     if not seo_file:
+#         raise HTTPException(status_code=404, detail="SEO file not found")
+#     json_data = seo_file.json_data
+#     try:
+#         page_title_id, _ = keyword_id.split(".")
+#     except ValueError:
+#         raise HTTPException(status_code=400, detail="Invalid keyword_id format")
+#     for page in json_data:
+#         if page["Page_title_id"] == page_title_id:
+#             for kw in page["Keywords"]:
+#                 if kw["Keyword_id"] == keyword_id:
+#                     if keyword_update.Keyword is not None:
+#                         kw["Keyword"] = keyword_update.Keyword
+#                     # if keyword_update.Avg_Monthly_Searches is not None:
+#                     #     kw["Avg_Monthly_Searches"] = keyword_update.Avg_Monthly_Searches
+#                     seo_file.json_data = json_data
+#                     db.commit()
+#                     return {"message": "Keyword updated"}
+#             raise HTTPException(status_code=404, detail="Keyword not found")
+#     raise HTTPException(status_code=404, detail="Page not found")
+
+# Delete a page by Page_title_id
+@router.delete("/seo-files/{seo_file_uuid}/pages/{page_title_id}")
+def delete_page(seo_file_uuid: str, page_title_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+    user_id = int(id[1])
+    seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
+    if not seo_file:
+        raise HTTPException(status_code=404, detail="SEO file not found")
+    json_data = seo_file.json_data
+    for page in json_data:
+        if page["Page_title_id"] == page_title_id:
+            json_data.remove(page)
+            seo_file.json_data = json_data
+            flag_modified(seo_file, "json_data")
+            try:
+                db.commit()
+                db.refresh(seo_file) 
+                return {"message": "Page deleted"} # Refresh to confirm database state
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to save changes")
+    raise HTTPException(status_code=404, detail="Page not found")
+
+# Edit a page by Page_title_id
+@router.patch("/seo-files/{seo_file_uuid}/pages/{page_title_id}")
+def edit_page(seo_file_uuid: str, page_title_id: str, page_update: PageUpdate, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
+    user_id = int(id[1])
+    # Extract user_id from the JWT token    
+    # seo_file = db.query(SEOFile).filter(SEOFile.uuid == seo_file_uuid).first()
+    seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
+    if not seo_file:
+        raise HTTPException(status_code=404, detail="SEO file not found")
+    json_data = seo_file.json_data
+    for page in json_data:
+        if page["Page_title_id"] == page_title_id:
+            if page_update.Page_Title is not None:
+                page["Page_Title"] = page_update.Page_Title
+            # if page_update.Suggested_URL_Structure is not None:
+            #     page["Suggested_URL_Structure"] = page_update.Suggested_URL_Structure
+            seo_file.json_data = json_data
+            flag_modified(seo_file, "json_data")
+            try:
+                db.commit()
+                db.refresh(seo_file)  # Refresh to confirm database state
+                return {"message": "Page updated"}
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Failed to save changes")
+          
+    raise HTTPException(status_code=404, detail="Page not found")

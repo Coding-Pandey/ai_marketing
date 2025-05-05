@@ -245,7 +245,6 @@ def filter_keywords_by_searches(keyword_ideas, exclude_values: List[int]):
 
 
 def flatten_ppc_data(json_data, df):
-
     processed_data = []
 
     # Create a mapping dictionary for fast lookup (case-insensitive)
@@ -256,14 +255,15 @@ def flatten_ppc_data(json_data, df):
     # Handle different input formats
     pages_to_process = []
     if isinstance(json_data, list):
-        # If json_data is already a list of pages
-        if all(isinstance(item, dict) and "Ad Group" in item for item in json_data):
-            pages_to_process = json_data
-        # If json_data contains items with "Pages" key
-        else:
-            for item in json_data:
-                if isinstance(item, dict) and "Pages" in item and isinstance(item["Pages"], list):
+        # Process all items in the list
+        for item in json_data:
+            if isinstance(item, dict):
+                # If item has "Pages" key
+                if "Pages" in item and isinstance(item["Pages"], list):
                     pages_to_process.extend(item["Pages"])
+                # If item is already a page
+                elif "Ad Group" in item or "Ad_Group" in item:
+                    pages_to_process.append(item)
 
     page_id_counter = 1  # Start page_title_id from 1
 
@@ -271,16 +271,30 @@ def flatten_ppc_data(json_data, df):
         if not isinstance(page, dict):
             continue
 
-        # Extract page data
-        ad_group = page.get("Ad Group", "")
-        ad_headlines = page.get("Ad Headline", [])
-        descriptions = page.get("Description", [])
+        # Extract page data with corrected keys (handle both formats)
+        ad_group = page.get("Ad Group", page.get("Ad_Group", ""))
+        
+        # Handle both "Ad Headline" and "Ad_Headlines" keys
+        ad_headlines = []
+        if "Ad Headline" in page and isinstance(page["Ad Headline"], list):
+            ad_headlines = page["Ad Headline"]
+        elif "Ad Headlines" in page and isinstance(page["Ad Headlines"], list):
+            ad_headlines = page["Ad Headlines"]
+        elif "Ad_Headlines" in page and isinstance(page["Ad_Headlines"], list):
+            ad_headlines = page["Ad_Headlines"]
+            
+        # Handle both "Description" and "Descriptions" keys
+        descriptions = []
+        if "Description" in page and isinstance(page["Description"], list):
+            descriptions = page["Description"]
+        elif "Descriptions" in page and isinstance(page["Descriptions"], list):
+            descriptions = page["Descriptions"]
         
         # Process keywords and add search volumes
         keywords_with_volume = []
         keywords_data = page.get("Keywords", [])
         
-        keyword_index = 1  # reset keyword index for each page
+        keyword_index = 1  # Reset keyword index for each page
         
         # Handle different input formats for keywords
         if isinstance(keywords_data, list):
@@ -289,12 +303,11 @@ def flatten_ppc_data(json_data, df):
                     if keyword:
                         volume = keyword_search_volume.get(keyword.lower(), 0)
                         keywords_with_volume.append({
-                            "Keyword_id": f"{page_id_counter}.{keyword_index}",  # Keep as string to preserve format
+                            "Keyword_id": f"{page_id_counter}.{keyword_index}",
                             "Keyword": keyword,
                             "Avg_Monthly_Searches": volume
                         })
                         keyword_index += 1
-
             elif all(isinstance(k, dict) and "Keyword" in k for k in keywords_data if k):
                 for keyword_obj in keywords_data:
                     if keyword_obj and "Keyword" in keyword_obj:
@@ -303,30 +316,40 @@ def flatten_ppc_data(json_data, df):
                             volume = keyword_obj["Avg_Monthly_Searches"]
                         else:
                             volume = keyword_search_volume.get(keyword.lower(), 0)
-                        
                         keywords_with_volume.append({
-                            "Keyword_id": f"{page_id_counter}.{keyword_index}",  # Keep as string to preserve format
+                            "Keyword_id": f"{page_id_counter}.{keyword_index}",
                             "Keyword": keyword,
                             "Avg_Monthly_Searches": volume
                         })
                         keyword_index += 1
-
         elif isinstance(keywords_data, dict):
             for keyword, volume in keywords_data.items():
                 keywords_with_volume.append({
-                    "Keyword_id": f"{page_id_counter}.{keyword_index}",  # Keep as string to preserve format
+                    "Keyword_id": f"{page_id_counter}.{keyword_index}",
                     "Keyword": keyword,
                     "Avg_Monthly_Searches": volume
                 })
                 keyword_index += 1
+
+        # Transform Ad_Headlines into a list of dictionaries with IDs
+        headline_list = [
+            {"Headlines_id": f"{page_id_counter}.{i+1}", "Ad_Headline": headline}
+            for i, headline in enumerate(ad_headlines)
+        ]
+
+        # Transform Descriptions into a list of dictionaries with IDs
+        description_list = [
+            {"Description_id": f"{page_id_counter}.{i+1}", "Description": description}
+            for i, description in enumerate(descriptions)
+        ]
 
         # Create the new page structure
         processed_page = {
             "Page_title_id": str(page_id_counter),
             "Ad_Group": ad_group,
             "Keywords": keywords_with_volume,
-            "Ad_Headlines": ad_headlines,
-            "Descriptions": descriptions
+            "Ad_Headlines": headline_list,
+            "Descriptions": description_list
         }
 
         processed_data.append(processed_page)
