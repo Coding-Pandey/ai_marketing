@@ -49,8 +49,12 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
     db_user_email = db.query(User).filter(User.email == user.email).first()
 
+    # db_user_oAuthId = db.query(User).filter(User.oAuthId == user.oAuthId).first()
+
 
     if db_user_email:
+        # if db_user_email.oAuthId:
+        #     raise HTTPException(status_code=400, detail="Email already registered with OAuth ID")
         raise HTTPException(status_code=400, detail="Email already registered")
     
     if db_user:

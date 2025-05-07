@@ -36,3 +36,18 @@ class CsvData(BaseModel):
 class KeywordItem(BaseModel):
     Keyword: str
     Avg_Monthly_Searches: int    
+
+class UUIDRequest(BaseModel):
+    uuid: str
+    def validate(self):
+        if not self.uuid:
+            raise ValueError("UUID must be provided")
+        
+# Pydantic models for update requests
+class KeywordUpdate(BaseModel):
+    Keyword: Optional[str]
+    # Avg_Monthly_Searches: Optional[int]
+
+class PageUpdate(BaseModel):
+    Page_Title: Optional[str]
+    # Suggested_URL_Structure: Optional[str]        

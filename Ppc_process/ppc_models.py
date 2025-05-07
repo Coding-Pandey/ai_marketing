@@ -39,3 +39,35 @@ class KeywordItem(BaseModel):
     Competition: str = None
     LowTopOfPageBid: Optional[float] = None
     HighTopOfPageBid: Optional[float] = None
+
+
+from typing import List, Optional, Union, Dict, Any
+from pydantic import BaseModel
+
+class HeadlineUpdate(BaseModel):
+    Headlines_id: Optional[str] = None
+    Ad_Headline: str
+
+
+class DescriptionUpdate(BaseModel):
+    Description_id: Optional[str] = None
+    Description: str
+
+
+# class KeywordUpdate(BaseModel):
+#     Keyword_id: Optional[str] = None
+#     Keyword: str
+#     Avg_Monthly_Searches: Optional[int] = None
+
+class ppcPageUpdate(BaseModel):
+    # Page_Title: Optional[str] = None
+    Ad_Group: Optional[str] = None
+    Ad_Headlines: Optional[List[Union[HeadlineUpdate]]] = None
+    Descriptions: Optional[List[Union[DescriptionUpdate]]] = None
+    # Keywords: Optional[List[Union[KeywordUpdate, str]]] = None
+
+class UUIDRequest(BaseModel):
+    uuid: str
+    def validate(self):
+        if not self.uuid:
+            raise ValueError("UUID must be provided")
