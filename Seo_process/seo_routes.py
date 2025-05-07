@@ -423,8 +423,8 @@ async def seo_edit_page(seo_file_uuid: str, page_title_id: str, page_update: Pag
         if page["Page_title_id"] == page_title_id:
             if page_update.Page_Title is not None:
                 page["Page_Title"] = page_update.Page_Title
-            # if page_update.Suggested_URL_Structure is not None:
-            #     page["Suggested_URL_Structure"] = page_update.Suggested_URL_Structure
+            if page_update.Suggested_URL_Structure is not None:
+                page["Suggested_URL_Structure"] = page_update.Suggested_URL_Structure
             seo_file.json_data = json_data
             flag_modified(seo_file, "json_data")
             try:
