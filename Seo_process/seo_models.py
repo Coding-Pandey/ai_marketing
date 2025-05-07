@@ -50,4 +50,4 @@ class KeywordUpdate(BaseModel):
 
 class PageUpdate(BaseModel):
     Page_Title: Optional[str]
-    # Suggested_URL_Structure: Optional[str]        
+    Suggested_URL_Structure: Optional[str]        
