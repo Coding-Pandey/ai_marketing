@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from auth.auth import get_db
 from auth.models import  PPCCluster, PPCFile, PPCCSV
@@ -381,84 +382,53 @@ def ppc_edit_page(ppc_file_uuid: str, page_title_id: str, page_update: ppcPageUp
         raise HTTPException(status_code=404, detail="PPC file not found")
     
     json_data = ppc_file.json_data
+    page_found = False
+    
     for page in json_data:
         if page["Page_title_id"] == page_title_id:
-            # Update Page_Title if provided
-            # if page_update.Page_Title is not None:
-            #     page["Page_Title"] = page_update.Page_Title
-            
+            page_found = True
             # Update Ad_Group if provided
             if page_update.Ad_Group is not None:
                 page["Ad_Group"] = page_update.Ad_Group
             
-            # Update Ad_Headlines if provided
-            if page_update.Ad_Headlines is not None:
-                # Replace or update specific headlines
-                if isinstance(page_update.Ad_Headlines, list):
-                    updated_headlines = []
-                    for i, headline in enumerate(page_update.Ad_Headlines):
-                        if isinstance(headline, dict) and "Ad_Headline" in headline:
-                            # Create headline with ID if it doesn't exist
-                            headline_id = headline.get("Headlines_id", f"{page_title_id}.{i+1}")
-                            updated_headlines.append({
-                                "Headlines_id": headline_id,
-                                "Ad_Headline": headline["Ad_Headline"]
-                            })
-                        elif isinstance(headline, str):
-                            # Simple string headline, create with ID
-                            updated_headlines.append({
-                                "Headlines_id": f"{page_title_id}.{i+1}",
-                                "Ad_Headline": headline
-                            })
-                    page["Ad_Headlines"] = updated_headlines
-            
-            # Update Descriptions if provided
-            if page_update.Descriptions is not None:
-                # Replace or update specific descriptions
-                if isinstance(page_update.Descriptions, list):
-                    updated_descriptions = []
-                    for i, description in enumerate(page_update.Descriptions):
-                        if isinstance(description, dict) and "Description" in description:
-                            # Create description with ID if it doesn't exist
-                            description_id = description.get("Description_id", f"{page_title_id}.{i+1}")
-                            updated_descriptions.append({
-                                "Description_id": description_id,
-                                "Description": description["Description"]
-                            })
-                        elif isinstance(description, str):
-                            # Simple string description, create with ID
-                            updated_descriptions.append({
-                                "Description_id": f"{page_title_id}.{i+1}",
-                                "Description": description
-                            })
-                    page["Descriptions"] = updated_descriptions
-            
-            # Update Keywords if provided
-            # if page_update.Keywords is not None:
-            #     # Handle keyword updates
-            #     if isinstance(page_update.Keywords, list):
-            #         updated_keywords = []
-            #         for i, keyword in enumerate(page_update.Keywords):
-            #             if isinstance(keyword, dict) and "Keyword" in keyword:
-            #                 # Create keyword with ID if it doesn't exist
-            #                 keyword_id = keyword.get("Keyword_id", f"{page_title_id}.{i+1}")
-            #                 keyword_data = {
-            #                     "Keyword_id": keyword_id,
-            #                     "Keyword": keyword["Keyword"]
-            #                 }
-            #                 # Include search volume if provided
-            #                 if "Avg_Monthly_Searches" in keyword:
-            #                     keyword_data["Avg_Monthly_Searches"] = keyword["Avg_Monthly_Searches"]
-            #                 updated_keywords.append(keyword_data)
-            #             elif isinstance(keyword, str):
-            #                 # Simple string keyword, create with ID
-            #                 updated_keywords.append({
-            #                     "Keyword_id": f"{page_title_id}.{i+1}",
-            #                     "Keyword": keyword,
-            #                     "Avg_Monthly_Searches": 0  # Default value, could be updated from a service
-            #                 })
-            #         page["Keywords"] = updated_keywords
-            
+            if page_update.Descriptions:
+                for desc_update in page_update.Descriptions:
+                    if isinstance(desc_update, str):
+                        continue  # skip if it's a string and not an object
+                    found = False
+                    for ad_group in json_data if isinstance(json_data, list) else [json_data]:
+                        for description in ad_group.get("Descriptions", []):
+                            if description.get("Description_id") == desc_update.Description_id:
+                                description["Description"] = desc_update.Description
+                                found = True
+                                break
+                        if found:
+                            break
+                    if not found:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Description with ID {desc_update.Description_id} not found"
+                        )
+        
+            if page_update.Ad_Headlines:
+                for headline_update in page_update.Ad_Headlines:
+                    if isinstance(headline_update, str):
+                        continue
+                    found = False
+                    for ad_group in json_data if isinstance(json_data, list) else [json_data]:
+                        for headline in ad_group.get("Ad_Headlines", []):
+                            if headline.get("Headlines_id") == headline_update.Headlines_id:
+                                headline["Ad_Headline"] = headline_update.Ad_Headline
+                                found = True
+                                break
+                        if found:
+                            break
+                    if not found:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Headline with ID {headline_update.Headlines_id} not found"
+                        )
+                
             # Save changes to database
             ppc_file.json_data = json_data
             flag_modified(ppc_file, "json_data")
@@ -469,5 +439,6 @@ def ppc_edit_page(ppc_file_uuid: str, page_title_id: str, page_update: ppcPageUp
             except Exception as e:
                 db.rollback()
                 raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
-          
-    raise HTTPException(status_code=404, detail="Page not found")
+    
+    if not page_found:
+        raise HTTPException(status_code=404, detail="Page not found")

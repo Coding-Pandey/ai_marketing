@@ -54,17 +54,12 @@ class DescriptionUpdate(BaseModel):
     Description: str
 
 
-# class KeywordUpdate(BaseModel):
-#     Keyword_id: Optional[str] = None
-#     Keyword: str
-#     Avg_Monthly_Searches: Optional[int] = None
 
 class ppcPageUpdate(BaseModel):
-    # Page_Title: Optional[str] = None
     Ad_Group: Optional[str] = None
     Ad_Headlines: Optional[List[Union[HeadlineUpdate, str]]] = None
     Descriptions: Optional[List[Union[DescriptionUpdate,str]]] = None
-    # Keywords: Optional[List[Union[KeywordUpdate, str]]] = None
+
 
 class UUIDRequest(BaseModel):
     uuid: str
