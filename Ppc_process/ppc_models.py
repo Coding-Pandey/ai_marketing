@@ -62,8 +62,8 @@ class DescriptionUpdate(BaseModel):
 class ppcPageUpdate(BaseModel):
     # Page_Title: Optional[str] = None
     Ad_Group: Optional[str] = None
-    Ad_Headlines: Optional[List[Union[HeadlineUpdate]]] = None
-    Descriptions: Optional[List[Union[DescriptionUpdate]]] = None
+    Ad_Headlines: Optional[List[Union[HeadlineUpdate, str]]] = None
+    Descriptions: Optional[List[Union[DescriptionUpdate,str]]] = None
     # Keywords: Optional[List[Union[KeywordUpdate, str]]] = None
 
 class UUIDRequest(BaseModel):

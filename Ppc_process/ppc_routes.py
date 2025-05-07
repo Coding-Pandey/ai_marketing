@@ -434,30 +434,30 @@ def ppc_edit_page(ppc_file_uuid: str, page_title_id: str, page_update: ppcPageUp
                     page["Descriptions"] = updated_descriptions
             
             # Update Keywords if provided
-            if page_update.Keywords is not None:
-                # Handle keyword updates
-                if isinstance(page_update.Keywords, list):
-                    updated_keywords = []
-                    for i, keyword in enumerate(page_update.Keywords):
-                        if isinstance(keyword, dict) and "Keyword" in keyword:
-                            # Create keyword with ID if it doesn't exist
-                            keyword_id = keyword.get("Keyword_id", f"{page_title_id}.{i+1}")
-                            keyword_data = {
-                                "Keyword_id": keyword_id,
-                                "Keyword": keyword["Keyword"]
-                            }
-                            # Include search volume if provided
-                            if "Avg_Monthly_Searches" in keyword:
-                                keyword_data["Avg_Monthly_Searches"] = keyword["Avg_Monthly_Searches"]
-                            updated_keywords.append(keyword_data)
-                        elif isinstance(keyword, str):
-                            # Simple string keyword, create with ID
-                            updated_keywords.append({
-                                "Keyword_id": f"{page_title_id}.{i+1}",
-                                "Keyword": keyword,
-                                "Avg_Monthly_Searches": 0  # Default value, could be updated from a service
-                            })
-                    page["Keywords"] = updated_keywords
+            # if page_update.Keywords is not None:
+            #     # Handle keyword updates
+            #     if isinstance(page_update.Keywords, list):
+            #         updated_keywords = []
+            #         for i, keyword in enumerate(page_update.Keywords):
+            #             if isinstance(keyword, dict) and "Keyword" in keyword:
+            #                 # Create keyword with ID if it doesn't exist
+            #                 keyword_id = keyword.get("Keyword_id", f"{page_title_id}.{i+1}")
+            #                 keyword_data = {
+            #                     "Keyword_id": keyword_id,
+            #                     "Keyword": keyword["Keyword"]
+            #                 }
+            #                 # Include search volume if provided
+            #                 if "Avg_Monthly_Searches" in keyword:
+            #                     keyword_data["Avg_Monthly_Searches"] = keyword["Avg_Monthly_Searches"]
+            #                 updated_keywords.append(keyword_data)
+            #             elif isinstance(keyword, str):
+            #                 # Simple string keyword, create with ID
+            #                 updated_keywords.append({
+            #                     "Keyword_id": f"{page_title_id}.{i+1}",
+            #                     "Keyword": keyword,
+            #                     "Avg_Monthly_Searches": 0  # Default value, could be updated from a service
+            #                 })
+            #         page["Keywords"] = updated_keywords
             
             # Save changes to database
             ppc_file.json_data = json_data

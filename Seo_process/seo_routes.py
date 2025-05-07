@@ -436,3 +436,4 @@ async def seo_edit_page(seo_file_uuid: str, page_title_id: str, page_update: Pag
                 raise HTTPException(status_code=500, detail="Failed to save changes")
           
     raise HTTPException(status_code=404, detail="Page not found")
+
