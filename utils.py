@@ -37,7 +37,7 @@ def remove_keywords(data):
     keywords_to_exclude = {item["Keywords"].lower() for item in keywords_to_remove}
 
     # Remove matching keywords but retain the original casing
-    filtered_data = [item for item in data if item["Keyword"].lower() not in keywords_to_exclude]
+    filtered_data = [item for item in data if item.Keyword.lower() not in keywords_to_exclude]
 
     return filtered_data
 
@@ -70,10 +70,9 @@ def add_keywords_to_json(new_keywords):
             
 def filter_non_branded_keywords(keyword_list):
     """Removes keywords that are recognized as brands (ORG or PRODUCT) by spaCy."""
-    
     return [
         item for item in keyword_list
-        if not any(ent.label_ in ["ORG", "PRODUCT"] for ent in nlp(item["Keyword"]).ents)
+        if not any(ent.label_ in ["ORG", "PRODUCT"] for ent in nlp(item.Keyword).ents)
     ]
 
 def flatten_seo_data(json_data, search_volume_df):
@@ -368,7 +367,7 @@ def remove_branded_keywords(keywords_list, branded_keywords_list):
     
     # Filter out branded keywords
     for keyword_item in keywords_list:
-        keyword_lower = keyword_item['Keyword'].lower()
+        keyword_lower = keyword_item.Keyword.lower()
         
         # Check if the keyword contains any branded keyword
         is_branded = any(brand in keyword_lower for brand in branded_keywords_lower)

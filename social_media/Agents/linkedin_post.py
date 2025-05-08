@@ -82,13 +82,13 @@ def linkedIn_agent(items, json_data, previous_summaries=None):
         return None, ""
 
 
-def linkedIn_agent_call( file,file_name,json_data, num_iterations=5, hash_tag=False, emoji=False):
+def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji=False):
     all_data = []
     previous_summaries = []
 
     
     try:
-        text = convert_doc_to_text(file,file_name)
+        text = text
         print(text)
     except FileNotFoundError as e:
         return f"File not found: {str(e)}"

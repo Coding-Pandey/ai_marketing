@@ -17,6 +17,8 @@ class KeywordRequest(BaseModel):
             raise ValueError("At least one of 'keywords' or 'description' must be provided")
         if self.location_ids is None or self.language_id is None:
             raise ValueError("Both 'location_ids' and 'language_id' must be provided")
+        
+
 
 class SuggestionKeywordRequest(BaseModel):
     keywords: Optional[str] = None
@@ -51,3 +53,12 @@ class KeywordUpdate(BaseModel):
 class PageUpdate(BaseModel):
     Page_Title: Optional[str]
     Suggested_URL_Structure: Optional[str]        
+
+
+class RemoveKeyword(BaseModel):
+    branded_words: Optional[bool] = False
+    branded_keyword: Optional[List[str]] = []
+
+class KeywordClusterRequest(BaseModel):
+    keywords: List[KeywordItem]
+    delete_word: Optional[RemoveKeyword] = None    

@@ -10,7 +10,7 @@ from social_media.Agents.twitter_post import twitter_agent_call
 from S3_bucket.fetch_document import download_document
 import json
 import asyncio
-
+from social_media.utils import convert_doc_to_text
 router = APIRouter()
 
 # Soical media post
@@ -36,16 +36,16 @@ async def social_media_post(
         summarized_data = Document_summerizer(text)
 
         file_contents = await file.read()
-
+        text = convert_doc_to_text(file_contents,file.file_name)
         tasks = []
         results = {}
 
         if linkedIn_post:
-            tasks.append(linkedIn_agent_call(file=file_contents, file_name=file.filename, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
+            tasks.append(linkedIn_agent_call(text=text, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
         if facebook_post:
-            tasks.append(facebook_agent_call(file=file_contents, file_name=file.filename, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
+            tasks.append(facebook_agent_call(text=text, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
         if twitter_post:
-            tasks.append(twitter_agent_call(file=file_contents, file_name=file.filename, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
+            tasks.append(twitter_agent_call(text= text, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
 
         responses = await asyncio.gather(*tasks)
 

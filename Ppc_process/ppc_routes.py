@@ -7,7 +7,7 @@ from typing import List
 import pandas as pd
 import io
 from Seo_process.Agents.Keyword_agent import query_keywords_description
-from .ppc_models import KeywordRequest, KeywordItem, ppcPageUpdate, UUIDRequest
+from .ppc_models import KeywordRequest, KeywordItem, ppcPageUpdate, UUIDRequest, KeywordClusterRequest
 from Seo_process.prompts.keywords_prompt import prompt_keyword
 from utils import (  
     extract_keywords,
@@ -15,7 +15,9 @@ from utils import (
     filter_non_branded_keywords,
     remove_branded_keywords,
     flatten_ppc_data,
-    check_api_limit
+    check_api_limit,
+    remove_keywords,
+    add_keywords_to_json
 )
 
 from Ppc_process.Agents.structure_agent import ppc_main
@@ -73,17 +75,17 @@ def ppc_generate_keywords(request: KeywordRequest,user=Depends(check_api_limit("
         if not search_result or not isinstance(search_result, list):
             raise HTTPException(status_code=500, detail="Invalid response from Google Ads API.")
 
-        print(search_result)
-        print(request.branded_keyword)
-        if request.exclude_values:
-            search_result = filter_keywords_by_searches(search_result, request.exclude_values)
+        # print(search_result)
+        # print(request.branded_keyword)
+        # if request.exclude_values:
+        #     search_result = filter_keywords_by_searches(search_result, request.exclude_values)
 
-        if request.branded_words:
-            search_result = filter_non_branded_keywords(search_result)
-            print(search_result)    
+        # if request.branded_words:
+        #     search_result = filter_non_branded_keywords(search_result)
+        #     print(search_result)    
 
-        if request.branded_keyword:
-            search_result = remove_branded_keywords(search_result,request.branded_keyword,)    
+        # if request.branded_keyword:
+        #     search_result = remove_branded_keywords(search_result,request.branded_keyword,)    
 
         return search_result
         
@@ -92,11 +94,23 @@ def ppc_generate_keywords(request: KeywordRequest,user=Depends(check_api_limit("
     
 
 @router.post("/ppc_keyword_clustering")
-async def ppc_keyword_clustering(keywords: List[KeywordItem],user=Depends(check_api_limit("ppc_cluster")),  db: Session = Depends(get_db)):
+async def ppc_keyword_clustering(request: KeywordClusterRequest,user=Depends(check_api_limit("ppc_cluster")),  db: Session = Depends(get_db)):
     try:
+
+        keywords = request.keywords
+        delete_word = request.delete_word
 
         if not keywords:
             return {"error": "No keywords provided"}
+        
+        if delete_word and delete_word.branded_words:
+            keywords = filter_non_branded_keywords(keywords)
+            keywords = remove_keywords(keywords)
+
+        if delete_word and delete_word.branded_keyword:
+            # print("hello",request.branded_keyword)
+            keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
+            add_keywords_to_json(delete_word.branded_keyword)  
         
         # Convert keywords to DataFrame
         df = pd.DataFrame([k.dict() for k in keywords])

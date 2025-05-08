@@ -66,3 +66,12 @@ class UUIDRequest(BaseModel):
     def validate(self):
         if not self.uuid:
             raise ValueError("UUID must be provided")
+        
+
+class RemoveKeyword(BaseModel):
+    branded_words: Optional[bool] = False
+    branded_keyword: Optional[List[str]] = []
+
+class KeywordClusterRequest(BaseModel):
+    keywords: List[KeywordItem]
+    delete_word: Optional[RemoveKeyword] = None            

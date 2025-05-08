@@ -159,3 +159,13 @@ class PPCFile(Base):
     json_data = Column(JSONB)
 
     user = relationship("User", back_populates="ppc_file_records")
+
+class SEOCluster(Base):    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    file_name = Column(String)
+    uuid = Column(String)  
+    upload_time = Column(DateTime, default=datetime.utcnow)
+    linkedIn_post = Column(JSONB)
+    facebook_post = Column(JSONB)
+    twitter_post = Column(JSONB)

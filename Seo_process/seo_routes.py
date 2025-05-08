@@ -1,12 +1,12 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Body
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from auth.auth import get_db
 from auth.models import SEOCluster ,SEOCSV, SEOFile
 import json
 import pandas as pd
 import io
-from .seo_models import KeywordRequest, SuggestionKeywordRequest, KeywordItem, UUIDRequest, PageUpdate
+from .seo_models import KeywordRequest, SuggestionKeywordRequest, KeywordItem, UUIDRequest, PageUpdate, RemoveKeyword, KeywordClusterRequest
 from utils import (  
     extract_keywords,
     filter_keywords_by_searches,
@@ -118,11 +118,24 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
 
 
 @router.post("/seo_keyword_clustering")
-async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(check_api_limit("seo_cluster")), db: Session = Depends(get_db)):
+async def seo_keyword_clustering( request: KeywordClusterRequest, user=Depends(check_api_limit("seo_cluster")), db: Session = Depends(get_db)):
     try:
+        keywords = request.keywords
+        delete_word = request.delete_word
+
         if not keywords:
             return {"error": "No keywords provided"}
+        
+        if delete_word and delete_word.branded_words:
+            keywords = filter_non_branded_keywords(keywords)
+            keywords = remove_keywords(keywords)
+
+        if delete_word and delete_word.branded_keyword:
+            # print("hello",request.branded_keyword)
+            keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
+            add_keywords_to_json(delete_word.branded_keyword)   
         # Read file contents and convert to DataFrame
+        print("hello")
         df = pd.DataFrame([k.dict() for k in keywords]) 
         print({"COLUMNS":df.columns, "len":len(df)})
 
@@ -135,6 +148,8 @@ async def seo_keyword_clustering( keywords: List[KeywordItem], user=Depends(chec
         print("Clustered data:", cluster_data) 
         # result = flatten_seo_data(cluster_data,df)
         result = map_seo_pages_with_search_volume(cluster_data, df)
+
+        
 
         if cluster_data and total_token:
          
