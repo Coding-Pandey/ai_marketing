@@ -16,7 +16,8 @@ router = APIRouter()
 # Soical media post
 @router.post("/social_media_post")
 async def social_media_post(
-    file: UploadFile = File(...),
+    file: Optional[UploadFile] = File(None),
+    text_data: Optional[str] = Form(None),
     json_data: Optional[str] = Form(None),
     linkedIn_post: Optional[bool] = Form(True),
     facebook_post: Optional[bool] = Form(True),
@@ -25,17 +26,19 @@ async def social_media_post(
     emoji: Optional[bool] = Form(False)
 ):
     try:
-        if not file:
-            return {"error": "No file uploaded"}
+        if not file and not text_data:
+            raise HTTPException(status_code=400, detail="Either file or text_data must be provided")
 
-        if not file.filename.endswith((".docx", ".doc")):
-            return {"error": "Invalid file format. Please upload a Word document (.docx or .doc)"}
-
+        if file and not file.filename.endswith((".docx", ".doc")):
+            raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx or .doc file")
+        
+    
         dict_data = json.loads(json_data) if json_data else {}
         text = download_document(dict_data.get("data", ""))
         summarized_data = Document_summerizer(text)
 
-        file_contents = await file.read()
+        file_contents = await file.read() if file else text_data.encode()
+
         text = convert_doc_to_text(file_contents,file.file_name)
         tasks = []
         results = {}
