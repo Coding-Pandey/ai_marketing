@@ -115,7 +115,7 @@ def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji
             posts = output_json["Posts"]
             formatted_data = {
                 "LinkedIn": [f"{posts['LinkedIn']['title']}\n\n{posts['LinkedIn']['content']}"],
-                "Image Headline": [posts["LinkedIn"]["Image Headline"]],
+                "Image_Headline": [posts["LinkedIn"]["Image Headline"]],
                 "Subheadline": [posts["LinkedIn"]["Subheadline"]]
             }
 

@@ -26,7 +26,7 @@ class User(Base):
     ppc_cluster_records = relationship("PPCCluster", back_populates="user")
     seo_file_records = relationship("SEOFile", back_populates="user")
     ppc_file_records = relationship("PPCFile", back_populates="user")
-    
+    SocialMedia_file_records = relationship("SocialMediaFile", back_populates="user")
 
 
 
@@ -160,12 +160,16 @@ class PPCFile(Base):
 
     user = relationship("User", back_populates="ppc_file_records")
 
-# class SocialMediaFile(Base):    
-#     id = Column(Integer, primary_key=True, index=True)
-#     user_id = Column(Integer, ForeignKey("users.id"))
-#     file_name = Column(String)
-#     uuid = Column(String)  
-#     upload_time = Column(DateTime, default=datetime.utcnow)
-#     linkedIn_post = Column(JSONB)
-#     facebook_post = Column(JSONB)
-#     twitter_post = Column(JSONB)
+class SocialMediaFile(Base):    
+    __tablename__ = "socialmedia_file_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    file_name = Column(String)
+    uuid = Column(String)  
+    upload_time = Column(DateTime, default=datetime.utcnow)
+    linkedIn_post = Column(JSONB)
+    facebook_post = Column(JSONB)
+    twitter_post = Column(JSONB)
+
+    user = relationship("User", back_populates="SocialMedia_file_records")

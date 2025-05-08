@@ -77,18 +77,18 @@ def seo_generate_keywords(request: KeywordRequest, user=Depends(check_api_limit(
 
         # print(search_result)
         # print(request.branded_keyword)
-        if request.exclude_values:
-            search_result = filter_keywords_by_searches(search_result, request.exclude_values)
+        # if request.exclude_values:
+        #     search_result = filter_keywords_by_searches(search_result, request.exclude_values)
         
-        if request.branded_words:
-            search_result = filter_non_branded_keywords(search_result)
-            search_result = remove_keywords(search_result)
-            # print(search_result)
+        # if request.branded_words:
+        #     search_result = filter_non_branded_keywords(search_result)
+        #     search_result = remove_keywords(search_result)
+        #     # print(search_result)
 
-        if request.branded_keyword:
-            # print("hello",request.branded_keyword)
-            search_result = remove_branded_keywords(search_result,request.branded_keyword)
-            add_keywords_to_json(request.branded_keyword)
+        # if request.branded_keyword:
+        #     # print("hello",request.branded_keyword)
+        #     search_result = remove_branded_keywords(search_result,request.branded_keyword)
+        #     add_keywords_to_json(request.branded_keyword)
 
 
         return search_result
@@ -118,17 +118,20 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
 
 
 @router.post("/seo_keyword_clustering")
-async def seo_keyword_clustering( request: KeywordClusterRequest, user=Depends(check_api_limit("seo_cluster")), db: Session = Depends(get_db)):
+async def seo_keyword_clustering(request: KeywordClusterRequest, user=Depends(check_api_limit("seo_cluster")), db: Session = Depends(get_db)):
     try:
         keywords = request.keywords
         delete_word = request.delete_word
 
         if not keywords:
             return {"error": "No keywords provided"}
+        print(keywords)
         
         if delete_word and delete_word.branded_words:
             keywords = filter_non_branded_keywords(keywords)
+            print(f"filter_non_branded_keywords: {keywords}")
             keywords = remove_keywords(keywords)
+            print(f"remove_keywords: {keywords}")
 
         if delete_word and delete_word.branded_keyword:
             # print("hello",request.branded_keyword)

@@ -73,9 +73,11 @@ class Cluster:
             raise Exception(f"Error getting embeddings from OpenAI: {str(e)}")
 
     def reduce_dimensions(self, embeddings: np.ndarray) -> np.ndarray:
+        n_samples = embeddings.shape[0]
+        safe_n_neighbors = min(self.config.umap_n_neighbors, n_samples - 1)
         reducer = umap.UMAP(
             n_components=self.config.umap_n_components,
-            n_neighbors=self.config.umap_n_neighbors,
+            n_neighbors=safe_n_neighbors,
             min_dist=self.config.umap_min_dist,
             random_state=self.config.random_state
         )
@@ -198,6 +200,9 @@ class Cluster:
                 self.config.max_clusters = 30
                 print(f"Large dataset detected: min_clusters={self.config.min_clusters}, max_clusters={self.config.max_clusters}")
             
+            # Validate sample size
+            if n_samples < 10:
+                raise ValueError("Need at least 10 samples for clustering")
             # Process clustering with OpenAI embeddings
             embeddings = self.embed_texts(df[metadata_column].values)
             print(f"Generated embeddings with shape: {embeddings.shape}")
@@ -205,9 +210,6 @@ class Cluster:
             reduced_embeddings = self.reduce_dimensions(embeddings)
             print(f"Reduced embeddings with shape: {reduced_embeddings.shape}")
             
-            # Validate sample size
-            if n_samples < 10:
-                raise ValueError("Need at least 10 samples for clustering")
 
             optimal_clusters = self.find_optimal_clusters_silhouette(reduced_embeddings)
             print(f"Optimal cluster count: {optimal_clusters}")
