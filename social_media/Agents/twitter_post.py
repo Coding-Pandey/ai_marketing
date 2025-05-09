@@ -117,6 +117,8 @@ def twitter_agent_call(text, json_data, num_iterations=5, hash_tag=False, emoji=
 
             all_data.append(formatted_data)
 
+            post_index += 1
+
             print(f"Successfully processed iteration {i+1}")
         except json.JSONDecodeError as e:
             print(f"JSON decoding error in iteration {i+1}: {str(e)}")

@@ -72,19 +72,21 @@ def clean_post(text, remove_emojis=True, remove_hashtags=True):
     return text.strip()
 
 
-def clean_post_list(data_list, remove_emojis=True, remove_hashtags=True):
+def clean_post_list(data_list, remove_emojis=True, remove_hashtags=True): 
     cleaned = []
     for item in data_list:
         new_item = {}
-        for key, val_list in item.items():
-            new_item[key] = [
-                clean_post(
-                    text,
-                    remove_emojis=remove_emojis,
-                    remove_hashtags=remove_hashtags,
-                ) if isinstance(text, str) else text
-                for text in val_list
-            ]
+        for key, val in item.items():
+            if isinstance(val, list) and all(isinstance(v, str) for v in val):
+                new_item[key] = [
+                    clean_post(
+                        text,
+                        remove_emojis=remove_emojis,
+                        remove_hashtags=remove_hashtags,
+                    ) for text in val
+                ]
+            else:
+                new_item[key] = val  # leave non-list or non-str values untouched
         cleaned.append(new_item)
     return cleaned
 
