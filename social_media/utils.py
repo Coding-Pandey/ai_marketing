@@ -4,6 +4,10 @@ from docx import Document
 from io import BytesIO
 from docx import Document
 import tempfile
+from auth.auth import get_db
+from auth.models import SocialMediaFile
+from datetime import datetime, timedelta
+from typing import Union
 # def extract_text_from_docx(file_path):
 #     """Extracts text from a .docx file."""
 #     doc = Document(file_path)
@@ -83,3 +87,30 @@ def clean_post_list(data_list, remove_emojis=True, remove_hashtags=True):
             ]
         cleaned.append(new_item)
     return cleaned
+
+
+def upload_socialmedia_table( uuid: str, user_id: int, file_name: str, linkedIn: Union[dict, list], facebook_post: Union[dict, list], twitter_post: Union[dict, list]):
+    db = next(get_db()) 
+    try:
+        new_file = SocialMediaFile(
+            user_id=user_id,
+            file_name=file_name,
+            uuid=uuid,
+            linkedIn_post = linkedIn,
+            facebook_post = facebook_post,
+            twitter_post  = twitter_post,
+            upload_time=datetime.utcnow()
+        )
+
+        
+        db.add(new_file)
+        db.commit()
+        db.refresh(new_file)
+
+        return new_file  # You can return the created object if needed
+
+    except Exception as e:
+        db.rollback()
+        raise Exception(f"Error storing SEO file in table: {str(e)}")
+    finally:
+        db.close() 

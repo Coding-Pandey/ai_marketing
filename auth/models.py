@@ -131,6 +131,7 @@ class SocialMedia(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     call_limit = Column(Integer, default=10)
     call_count = Column(Integer, default=0)
+    file_count = Column(Integer)
     total_tokens = Column(Integer, default=0)
     last_reset = Column(DateTime, default=datetime.utcnow)
 

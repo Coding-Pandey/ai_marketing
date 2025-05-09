@@ -96,6 +96,7 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
     except FileNotFoundError as e:
         return f"File not found: {str(e)}"
     # text = file
+    post_index = 1
     for i in range(num_iterations):
         print(f"Iteration {i+1}/{num_iterations}")
         
@@ -112,6 +113,8 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
             
         try:
             print(f"Raw output: {output[:100]}...") 
+            page_id_counter = 1
+            facebook_id = f"{page_id_counter}.{post_index}"
        
             # output_json = json.loads(output)
             # print(f"Parsed output type: {type(output_json)}")
@@ -119,12 +122,14 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
             
             # posts = output_json["Posts"]
             formatted_data = {
+                "Facebook_id":facebook_id,
                 "Facebook": [output],
             }
 
             previous_summaries.append(summary)
 
             all_data.append(formatted_data)
+            post_index += 1
 
             print(f"Successfully processed iteration {i+1}")
         except json.JSONDecodeError as e:

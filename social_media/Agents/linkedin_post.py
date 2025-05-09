@@ -93,6 +93,7 @@ def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji
     except FileNotFoundError as e:
         return f"File not found: {str(e)}"
     # text = file
+    post_index = 1
     for i in range(num_iterations):
         print(f"Iteration {i+1}/{num_iterations}")
         
@@ -111,17 +112,19 @@ def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji
             output_json = json.loads(output)
             print(f"Parsed output type: {type(output_json)}")
             # print(f"Parsed output content: {output_json}")
-            
+            page_id_counter = 1
+            linkedin_id = f"{page_id_counter}.{post_index}"
             posts = output_json["Posts"]
             formatted_data = {
+                "LinkedIn_id": linkedin_id,
                 "LinkedIn": [f"{posts['LinkedIn']['title']}\n\n{posts['LinkedIn']['content']}"],
                 "Image_Headline": [posts["LinkedIn"]["Image Headline"]],
                 "Subheadline": [posts["LinkedIn"]["Subheadline"]]
             }
 
             previous_summaries.append(summary)
-
             all_data.append(formatted_data)
+            post_index += 1
 
             print(f"Successfully processed iteration {i+1}")
         except json.JSONDecodeError as e:
