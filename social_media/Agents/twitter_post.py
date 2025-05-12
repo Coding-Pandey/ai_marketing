@@ -51,6 +51,7 @@ def twitter_agent(items, json_data, previous_summaries=None):
         )
 
         response_content = response.choices[0].message.content
+        total_token = response.usage.total_tokens
         print(response_content)
 
         
@@ -67,7 +68,7 @@ def twitter_agent(items, json_data, previous_summaries=None):
         summary = twitter_data.get("Summary", "")
         
         twitter_content = twitter_data.get("content", "")
-        return twitter_content, summary
+        return twitter_content, summary, total_token
 
     except KeyError as e:
         print(f"Key error: {e}. The expected key was not found in the response.")
@@ -92,10 +93,11 @@ def twitter_agent_call(text, json_data, num_iterations=5, hash_tag=False, emoji=
         return f"File not found: {str(e)}"
     # text = file
     post_index = 1
+    tokens = 0
     for i in range(num_iterations):
         print(f"Iteration {i+1}/{num_iterations}")
         
-        output, summary= twitter_agent(
+        output, summary, token= twitter_agent(
             text, 
             json_data, 
             previous_summaries
@@ -118,6 +120,7 @@ def twitter_agent_call(text, json_data, num_iterations=5, hash_tag=False, emoji=
             all_data.append(formatted_data)
 
             post_index += 1
+            tokens += token
 
             print(f"Successfully processed iteration {i+1}")
         except json.JSONDecodeError as e:
@@ -130,9 +133,9 @@ def twitter_agent_call(text, json_data, num_iterations=5, hash_tag=False, emoji=
             print(f"Error formatting data in iteration {i+1}: {str(e)}")
 
     if hash_tag == False and emoji == False:
-        return all_data
+        return all_data, tokens
 
     clean_data = clean_post_list(all_data, remove_emojis=emoji, remove_hashtags=hash_tag)
 
-    return clean_data
+    return clean_data, tokens
 

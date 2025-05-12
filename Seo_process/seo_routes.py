@@ -118,7 +118,10 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
 
 
 @router.post("/seo_keyword_clustering")
-async def seo_keyword_clustering(request: KeywordClusterRequest, user=Depends(check_api_limit("seo_cluster")), db: Session = Depends(get_db)):
+async def seo_keyword_clustering(request: KeywordClusterRequest,
+                                user= Depends(check_api_limit("seo_cluster")),
+                                db: Session = Depends(get_db)
+                                ):
     try:
         keywords = request.keywords
         delete_word = request.delete_word
@@ -163,8 +166,7 @@ async def seo_keyword_clustering(request: KeywordClusterRequest, user=Depends(ch
             else:
                 seo_cluster_record = SEOCluster(
                     user_id=user.id,
-                    total_tokens=total_token,
-                    call_count=1
+                    total_tokens=total_token
                 )
                 db.add(seo_cluster_record)
 
@@ -179,7 +181,6 @@ async def seo_keyword_clustering(request: KeywordClusterRequest, user=Depends(ch
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))   
     
-
 
 @router.get("/seo_Clusterfiles_list")
 async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):

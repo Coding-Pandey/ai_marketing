@@ -33,7 +33,10 @@ async def social_media_post(
     facebook_post: Optional[bool] = Form(True),
     twitter_post: Optional[bool] = Form(True),
     hash_tag: Optional[bool] = Form(False),
-    emoji: Optional[bool] = Form(False)
+    emoji: Optional[bool] = Form(False),
+    user = Depends(check_api_limit("seo_cluster")),
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
 ):
     try:
         if not file and not text_data:
@@ -41,30 +44,15 @@ async def social_media_post(
 
         if file and not file.filename.endswith((".docx", ".doc")):
             raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx or .doc file")
-        
-    
-        # dict_data = json.loads(json_data) if json_data else {}
-        # text = download_document(dict_data.get("data", ""))
-        # summarized_data = Document_summerizer(text)
+
         summarized_data = {}
 
         file_contents = await file.read() if file else text_data.encode()
+        text = convert_doc_to_text(file_contents, file.filename if file else "uploaded_text")
 
-        text = convert_doc_to_text(file_contents,file.filename)
-        tasks = []
-        results = {}
-
-        # if linkedIn_post:
-        #     tasks.append(linkedIn_agent_call(text=text, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
-        # if facebook_post:
-        #     tasks.append(facebook_agent_call(text=text, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
-        # if twitter_post:
-        #     tasks.append(twitter_agent_call(text= text, json_data=summarized_data, num_iterations=5, hash_tag=hash_tag, emoji=emoji))
-
-        # responses = await asyncio.gather(*tasks)
         loop = asyncio.get_running_loop()
+        tasks = []
 
-        # Add tasks using run_in_executor
         if linkedIn_post:
             tasks.append(loop.run_in_executor(None, linkedIn_agent_call, text, summarized_data, 5, hash_tag, emoji))
         if facebook_post:
@@ -72,30 +60,59 @@ async def social_media_post(
         if twitter_post:
             tasks.append(loop.run_in_executor(None, twitter_agent_call, text, summarized_data, 5, hash_tag, emoji))
 
-        # Run tasks concurrently and await results
         responses = await asyncio.gather(*tasks)
-
-        # Map results back based on order of execution
+        results = {}
+        total_tokens = 0
         index = 0
-        if linkedIn_post:
-            results["linkedin_posts"] = responses[index]
-            index += 1
-        if facebook_post:
-            results["facebook_posts"] = responses[index]
-            index += 1
-        if twitter_post:
-            results["twitter_posts"] = responses[index]
 
-        print(results)    
+        if linkedIn_post:
+            linkedin_data, linkedin_tokens = responses[index]
+            results["linkedin_posts"] = linkedin_data
+            total_tokens += linkedin_tokens
+            index += 1
+
+        if facebook_post:
+            facebook_data, facebook_tokens = responses[index]
+            results["facebook_posts"] = facebook_data
+            total_tokens += facebook_tokens
+            index += 1
+
+        if twitter_post:
+            twitter_data, twitter_tokens = responses[index]
+            results["twitter_posts"] = twitter_data
+            total_tokens += twitter_tokens
+
+        print(results)
+
+        # Update token usage and/or call count
+        social_media_record = db.query(SocialMedia).filter(SocialMedia.user_id == user.id).first()
+        if social_media_record:
+            if total_tokens > 0:
+                social_media_record.total_tokens += total_tokens
+            if not results:
+                social_media_record.call_count = max(social_media_record.call_count - 1, 0)
+            db.commit()
 
         return results
-  
+
     except ValueError as e:
-        traceback.print_exc() 
+        traceback.print_exc()
+        # Decrement call_count on exception
+        social_media_record = db.query(SocialMedia).filter(SocialMedia.user_id == user.id).first()
+        if social_media_record:
+            social_media_record.call_count = max(social_media_record.call_count - 1, 0)
+            db.commit()
         raise HTTPException(status_code=400, detail=str(e))
+
     except Exception as e:
-        traceback.print_exc() 
+        traceback.print_exc()
+        # Decrement call_count on exception
+        social_media_record = db.query(SocialMedia).filter(SocialMedia.user_id == user.id).first()
+        if social_media_record:
+            social_media_record.call_count = max(social_media_record.call_count - 1, 0)
+            db.commit()
         raise HTTPException(status_code=500, detail=str(e))
+
     
 
 @router.post("/socialmedia_uploaddata")  
@@ -225,40 +242,125 @@ async def socialmedia_delete_document(request: UUIDRequest, id: str = Depends(ve
         db.close()  
 
 
-# @router.delete("/seo-files/{seo_file_uuid}/keywords/{keyword_id}")
-# async def seo_delete_keyword(seo_file_uuid: str, keyword_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
-#     user_id = int(id[1])  # Extract user_id from the JWT token
-#     seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
-#     # seo_file = db.query(SEOFile).filter(SEOFile.uuid == seo_file_uuid).first()
-#     if not seo_file:
-#         raise HTTPException(status_code=404, detail="SEO file not found")
-#     json_data = seo_file.json_data
-#     try:
-#         page_title_id, _ = keyword_id.split(".")
-#         print(page_title_id)
-#         print(keyword_id)
-#     except ValueError:
-#         raise HTTPException(status_code=400, detail="Invalid keyword_id format")
-#     for page in json_data:
-#         if page["Page_title_id"] == page_title_id:
-#             keywords = page["Keywords"]
-#             print(keywords)
-#             for kw in keywords:
-#                 if kw["Keyword_id"] == keyword_id:
-#                     keywords.remove(kw)
-#                     seo_file.json_data = json_data
-#                     print(seo_file.json_data)
-#                     flag_modified(seo_file, "json_data")
-    
-#                     try:
-#                         db.commit()
-#                         db.refresh(seo_file)  # Refresh to confirm database state
+@router.delete("/socialmedia_linkedin/{uuid}/keywords/{LinkedIn_id}")
+async def socialmedia_delete_linkedin(
+    uuid: str,
+    LinkedIn_id: str,
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
+    user_id = int(id[1])
+    seo_file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
 
-#                         return {"message": "Keyword deleted"}
-#                     except Exception as e:
+    if not seo_file:
+        raise HTTPException(status_code=404, detail="Social media file not found")
+
+    posts = seo_file.linkedIn_post 
+    updated_posts = [p for p in posts if p.get("LinkedIn_id") != LinkedIn_id]
+
+    if len(updated_posts) == len(posts):
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    seo_file.linkedIn_post = updated_posts
+    flag_modified(seo_file, "linkedIn_post")
+
+    try:
+        db.commit()
+        db.refresh(seo_file)
+        return {"message": f"Post with LinkedIn_id {LinkedIn_id} deleted."}
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save changes")
+
+
+@router.delete("/socialmedia_facebook/{uuid}/keywords/{facebook_id}")
+async def Socialmedia_delete_facebook(
+    uuid: str,
+    facebook_id: str,
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
+    user_id = int(id[1])
+    seo_file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+
+    if not seo_file:
+        raise HTTPException(status_code=404, detail="Social media file not found")
+
+    posts = seo_file.facebook_post 
+    updated_posts = [p for p in posts if p.get("facebook_id") != facebook_id]
+
+    if len(updated_posts) == len(posts):
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    seo_file.linkedIn_post = updated_posts
+    flag_modified(seo_file, "linkedIn_post")
+
+    try:
+        db.commit()
+        db.refresh(seo_file)
+        return {"message": f"Post with facebook_id {facebook_id} deleted."}
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save changes")
+
+
+@router.delete("/socialmedia_twitter/{uuid}/keywords/{twitter_id}")
+async def Socialmedia_delete_twitter(
+    uuid: str,
+    twitter_id: str,
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
+    user_id = int(id[1])
+    seo_file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+
+    if not seo_file:
+        raise HTTPException(status_code=404, detail="Social media file not found")
+
+    posts = seo_file.twitter_post
+    updated_posts = [p for p in posts if p.get("twitter_id") != twitter_id]
+
+    if len(updated_posts) == len(posts):
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    seo_file.linkedIn_post = updated_posts
+    flag_modified(seo_file, "linkedIn_post")
+
+    try:
+        db.commit()
+        db.refresh(seo_file)
+        return {"message": f"Post with twitter_id {twitter_id} deleted."}
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save changes")
+
+# @router.patch("/socialmedia_linkedin/{uuid}/pages/{LinkedIn_id}")
+# async def socialmedia_edit_linkedin(
+#     uuid: str, 
+#     LinkedIn_id: str,
+#     db: Session = Depends(get_db), 
+#     id: str = Depends(verify_jwt_token)):
+
+#     user_id = int(id[1])
     
-#                         db.rollback()
-#                         raise HTTPException(status_code=500, detail="Failed to save changes")
-#                     # return {"message": "Keyword deleted"}
-#             raise HTTPException(status_code=404, detail="Keyword not found")
+#     seo_file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+#     if not seo_file:
+#         raise HTTPException(status_code=404, detail="Linkedin file not found")
+#     json_data = seo_file.linkedIn_post
+#     for page in json_data:
+#         if page["linkedIn_id"] == LinkedIn_id:
+#             if page_update.Page_Title is not None:
+#                 page["Page_Title"] = page_update.Page_Title
+            
+#             seo_file.linkedIn_post = json_data
+#             flag_modified(seo_file, "json_data")
+#             try:
+#                 db.commit()
+#                 db.refresh(seo_file)  # Refresh to confirm database state
+#                 return {"message": "Page updated"}
+#             except Exception as e:
+#                 db.rollback()
+#                 raise HTTPException(status_code=500, detail="Failed to save changes")
+          
 #     raise HTTPException(status_code=404, detail="Page not found")
+

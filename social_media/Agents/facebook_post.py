@@ -56,6 +56,7 @@ def facebook_agent(items, json_data, previous_summaries=None):
         )
 
         response_content = response.choices[0].message.content
+        total_token = response.usage.total_tokens
         print(response_content)
 
         
@@ -72,7 +73,7 @@ def facebook_agent(items, json_data, previous_summaries=None):
         summary = facebook_data.get("Summary", "")
         
         facebook_content = facebook_data.get("content", "")
-        return facebook_content, summary
+        return facebook_content, summary, total_token
 
     except KeyError as e:
         print(f"Key error: {e}. The expected key was not found in the response.")
@@ -97,10 +98,11 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
         return f"File not found: {str(e)}"
     # text = file
     post_index = 1
+    token = 0
     for i in range(num_iterations):
         print(f"Iteration {i+1}/{num_iterations}")
         
-        output, summary= facebook_agent(
+        output, summary, tokens= facebook_agent(
             text, 
             json_data, 
             previous_summaries,
@@ -130,6 +132,7 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
 
             all_data.append(formatted_data)
             post_index += 1
+            token += tokens
 
             print(f"Successfully processed iteration {i+1}")
         except json.JSONDecodeError as e:
@@ -142,11 +145,11 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
             print(f"Error formatting data in iteration {i+1}: {str(e)}")
 
     if hash_tag == False and emoji == False:
-        return all_data
+        return all_data, token
 
     clean_data = clean_post_list(all_data, remove_emojis=emoji, remove_hashtags=hash_tag)
 
-    return clean_data
+    return clean_data, token
 
 
 

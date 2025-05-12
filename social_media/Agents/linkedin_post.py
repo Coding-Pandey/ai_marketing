@@ -54,6 +54,8 @@ def linkedIn_agent(items, json_data, previous_summaries=None):
         )
 
         response_content = response.choices[0].message.content
+
+        total_token = response.usage.total_tokens
         print(response_content)
 
         
@@ -69,7 +71,7 @@ def linkedIn_agent(items, json_data, previous_summaries=None):
         linkedin_data = posts.get("LinkedIn", {})      
         summary = linkedin_data.get("Summary", "")
 
-        return response_content, summary
+        return response_content, summary, total_token
 
     except KeyError as e:
         print(f"Key error: {e}. The expected key was not found in the response.")
@@ -94,10 +96,11 @@ def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji
         return f"File not found: {str(e)}"
     # text = file
     post_index = 1
+    token = 0
     for i in range(num_iterations):
         print(f"Iteration {i+1}/{num_iterations}")
         
-        output, summary= linkedIn_agent(
+        output, summary, tokens= linkedIn_agent(
             text, 
             json_data, 
             previous_summaries
@@ -125,6 +128,7 @@ def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji
             previous_summaries.append(summary)
             all_data.append(formatted_data)
             post_index += 1
+            token += tokens
 
             print(f"Successfully processed iteration {i+1}")
         except json.JSONDecodeError as e:
@@ -137,10 +141,10 @@ def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji
             print(f"Error formatting data in iteration {i+1}: {str(e)}")
 
     if hash_tag == False and emoji == False:
-        return all_data
+        return all_data , token
 
     clean_data = clean_post_list(all_data, remove_emojis=emoji, remove_hashtags=hash_tag)
 
-    return clean_data
+    return clean_data , token
 
 
