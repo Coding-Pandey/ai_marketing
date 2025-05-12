@@ -1,4 +1,4 @@
-from auth.models import SEOCSV, PPCCSV, SEOKeywords, PPCKeywords, SEOCluster, PPCCluster, SocialMedia, SEOFile
+from auth.models import SEOCSV, PPCCSV, SEOKeywords, PPCKeywords, SEOCluster, PPCCluster, SocialMedia, SEOFile, SocialMediaFile
 from auth.permission import get_default_permissions
 from datetime import datetime, timedelta
 from fastapi import  HTTPException
@@ -88,6 +88,13 @@ def create_permissions_for_user(new_user, db):
                 #         last_reset=datetime.utcnow()
                 #     )
                 #     db.add(permission)
+                elif api_name == "social_media_file":
+                    permission = SocialMediaFile(
+                        user_id=new_user.id,
+                        schedule_post_limit=call_limit
+                    )
+                    db.add(permission)
+
             except Exception as e:
                         # Handle errors for each specific API insertion
                         db.rollback()  # Rollback the transaction if error occurs

@@ -27,6 +27,7 @@ from auth.models import SocialMediaFile, SocialMedia
 @router.post("/social_media_post")
 async def social_media_post(
     file: Optional[UploadFile] = File(None),
+    fileName : Optional[str] = Form(None),
     text_data: Optional[str] = Form(None),
     json_data: Optional[str] = Form(None),
     linkedIn_post: Optional[bool] = Form(True),
@@ -34,6 +35,8 @@ async def social_media_post(
     twitter_post: Optional[bool] = Form(True),
     hash_tag: Optional[bool] = Form(False),
     emoji: Optional[bool] = Form(False),
+    objectives: Optional[str] = Form(None),
+    audience : Optional[str] = Form(None),
     user = Depends(check_api_limit("seo_cluster")),
     db: Session = Depends(get_db),
     id: str = Depends(verify_jwt_token)
@@ -126,16 +129,16 @@ async def socialmedia_upload_data(json_data: dict = Body(...),
         # Read file content
         file_content = json_data.get("data", [])
 
-        linkedin_data = file_content.get("linkedin", [])
-        facebook_data = file_content.get("facebook", [])
-        twitter_data = file_content.get("twitter", [])
-
         if not file_content:
             raise HTTPException(
                 status_code=400,
                 detail="No data provided"
             )
         
+        linkedin_data = file_content.get("linkedin_posts", [])
+        facebook_data = file_content.get("facebook_posts", [])
+        twitter_data = file_content.get("twitter_posts", [])
+
         unique_id = uuid.uuid4().hex 
         filename = json_data.get("fileName", None)
 

@@ -499,7 +499,9 @@ def check_api_limit(api_name: str):
         elif api_name == "ppc_cluster":
             permission = db.query(PPCCluster).filter_by(user_id=user.id).first()
         elif api_name == "social_media":
-            permission = db.query(SocialMedia).filter_by(user_id=user.id).first()     
+            permission = db.query(SocialMedia).filter_by(user_id=user.id).first()   
+        elif api_name == "social_media_file":
+            permission = db.query().filter_by(user_id= user.id).first()      
         # Add more checks for other APIs here as needed
         
         else:

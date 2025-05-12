@@ -27,6 +27,9 @@ class User(Base):
     seo_file_records = relationship("SEOFile", back_populates="user")
     ppc_file_records = relationship("PPCFile", back_populates="user")
     SocialMedia_file_records = relationship("SocialMediaFile", back_populates="user")
+    linkedin_posts = relationship("LinkedinPost", back_populates="user")
+    facebook_posts = relationship("FacebookPost", back_populates="user")
+    twitter_posts = relationship("TwitterPost", back_populates="user")
 
 
 
@@ -169,8 +172,61 @@ class SocialMediaFile(Base):
     file_name = Column(String)
     uuid = Column(String)  
     upload_time = Column(DateTime, default=datetime.utcnow)
+    schedule_post_limit = Column(Integer, default=15)
+    schedule_post_count = Column(Integer, default= 0)
     linkedIn_post = Column(JSONB)
     facebook_post = Column(JSONB)
     twitter_post = Column(JSONB)
 
     user = relationship("User", back_populates="SocialMedia_file_records")
+    linkedin_posts = relationship("LinkedinPost", back_populates="file")#), cascade="all, delete-orphan")
+    facebook_posts = relationship("FacebookPost", back_populates="file")#, cascade="all, delete-orphan")
+    twitter_posts = relationship("TwitterPost", back_populates="file")#, cascade="all, delete-orphan")
+
+class LinkedinPost(Base):
+    __tablename__ = "linkedin_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    schedule_time = Column(DateTime, default=datetime.utcnow)
+    content = Column(JSONB)
+    image_id = Column(String, nullable=True)
+    post_id = Column(String) 
+    copy_uuid = Column(String) 
+
+    file = relationship("SocialMediaFile", back_populates="linkedin_posts")
+    user = relationship("User", back_populates="linkedin_posts")
+
+
+class FacebookPost(Base):
+    __tablename__ = "facebook_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    schedule_time = Column(DateTime, default=datetime.utcnow)
+    content = Column(JSONB)
+    image_id = Column(String, nullable=True)
+    post_id = Column(String) 
+    copy_uuid = Column(String) 
+
+    file = relationship("SocialMediaFile", back_populates="facebook_posts")
+    user = relationship("User", back_populates="facebook_posts")
+
+
+class TwitterPost(Base):
+    __tablename__ = "twitter_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    schedule_time = Column(DateTime, default=datetime.utcnow)
+    content = Column(JSONB)
+    image_id = Column(String, nullable=True)
+    post_id = Column(String) 
+    copy_uuid = Column(String) 
+
+    file = relationship("SocialMediaFile", back_populates="twitter_posts")
+    user = relationship("User", back_populates="twitter_posts")
+    
