@@ -14,3 +14,6 @@ class UUIDRequest(BaseModel):
     def validate(self):
         if not self.uuid:
             raise ValueError("UUID must be provided")
+        
+class PostUpdate(BaseModel):
+    content: Optional[list] = None        

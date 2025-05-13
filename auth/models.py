@@ -198,7 +198,6 @@ class LinkedinPost(Base):
     linkedinfile = relationship("SocialMediaFile", back_populates="linkedin_posts")
     user = relationship("User", back_populates="linkedin_posts")
 
-
 class FacebookPost(Base):
     __tablename__ = "facebook_posts"
 
@@ -213,7 +212,6 @@ class FacebookPost(Base):
 
     facebookfile = relationship("SocialMediaFile", back_populates="facebook_posts")
     user = relationship("User", back_populates="facebook_posts")
-
 
 class TwitterPost(Base):
     __tablename__ = "twitter_posts"

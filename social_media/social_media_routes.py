@@ -11,7 +11,7 @@ from social_media.Agents.linkedin_post import linkedIn_agent_call
 from social_media.Agents.facebook_post import facebook_agent_call
 from social_media.Agents.twitter_post import twitter_agent_call
 from social_media.utils import upload_socialmedia_table
-from social_media_models import UUIDRequest
+from social_media_models import UUIDRequest, PostUpdate
 from S3_bucket.fetch_document import download_document
 from fastapi.responses import JSONResponse
 import json
@@ -37,7 +37,7 @@ async def social_media_post(
     emoji: Optional[bool] = Form(False),
     objectives: Optional[str] = Form(None),
     audience : Optional[str] = Form(None),
-    user = Depends(check_api_limit("seo_cluster")),
+    user = Depends(check_api_limit("social_media")),
     db: Session = Depends(get_db),
     id: str = Depends(verify_jwt_token)
 ):
@@ -116,16 +116,13 @@ async def social_media_post(
             db.commit()
         raise HTTPException(status_code=500, detail=str(e))
 
-    
-
 @router.post("/socialmedia_uploaddata")  
 async def socialmedia_upload_data(json_data: dict = Body(...),
-                              
     id: str = Depends(verify_jwt_token),
-    user=Depends(check_api_limit("social_media"))):
+    # user = Depends(check_api_limit("social_media"))
+    ):
       
     try:
-        
         # Read file content
         file_content = json_data.get("data", [])
 
@@ -135,9 +132,17 @@ async def socialmedia_upload_data(json_data: dict = Body(...),
                 detail="No data provided"
             )
         
-        linkedin_data = file_content.get("linkedin_posts", [])
-        facebook_data = file_content.get("facebook_posts", [])
-        twitter_data = file_content.get("twitter_posts", [])
+        if len(file_content) != 1 or not isinstance(file_content[0], dict):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid data format"
+            )
+        
+        data_dict = file_content[0]
+        
+        linkedin_data = data_dict.get("linkedin_posts", [])
+        facebook_data = data_dict.get("facebook_posts", [])
+        twitter_data = data_dict.get("twitter_posts", [])
 
         unique_id = uuid.uuid4().hex 
         filename = json_data.get("fileName", None)
@@ -245,7 +250,7 @@ async def socialmedia_delete_document(request: UUIDRequest, id: str = Depends(ve
         db.close()  
 
 
-@router.delete("/socialmedia_linkedin/{uuid}/keywords/{LinkedIn_id}")
+@router.delete("/socialmedia_linkedin/{uuid}/post/{LinkedIn_id}")
 async def socialmedia_delete_linkedin(
     uuid: str,
     LinkedIn_id: str,
@@ -275,8 +280,7 @@ async def socialmedia_delete_linkedin(
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to save changes")
 
-
-@router.delete("/socialmedia_facebook/{uuid}/keywords/{facebook_id}")
+@router.delete("/socialmedia_facebook/{uuid}/post/{facebook_id}")
 async def Socialmedia_delete_facebook(
     uuid: str,
     facebook_id: str,
@@ -306,8 +310,7 @@ async def Socialmedia_delete_facebook(
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to save changes")
 
-
-@router.delete("/socialmedia_twitter/{uuid}/keywords/{twitter_id}")
+@router.delete("/socialmedia_twitter/{uuid}/post/{twitter_id}")
 async def Socialmedia_delete_twitter(
     uuid: str,
     twitter_id: str,
@@ -337,33 +340,126 @@ async def Socialmedia_delete_twitter(
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to save changes")
 
-# @router.patch("/socialmedia_linkedin/{uuid}/pages/{LinkedIn_id}")
-# async def socialmedia_edit_linkedin(
-#     uuid: str, 
-#     LinkedIn_id: str,
-#     db: Session = Depends(get_db), 
-#     id: str = Depends(verify_jwt_token)):
+@router.patch("/socialmedia_linkedin/{uuid}/post/{LinkedIn_id}")
+async def socialmedia_edit_linkedin(
+    uuid: str, 
+    LinkedIn_id: str,
+    page_update: PostUpdate,
+    db: Session = Depends(get_db), 
+    id: str = Depends(verify_jwt_token)):
 
-#     user_id = int(id[1])
+    user_id = int(id[1])
     
-#     seo_file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
-#     if not seo_file:
-#         raise HTTPException(status_code=404, detail="Linkedin file not found")
-#     json_data = seo_file.linkedIn_post
-#     for page in json_data:
-#         if page["linkedIn_id"] == LinkedIn_id:
-#             if page_update.Page_Title is not None:
-#                 page["Page_Title"] = page_update.Page_Title
-            
-#             seo_file.linkedIn_post = json_data
-#             flag_modified(seo_file, "json_data")
-#             try:
-#                 db.commit()
-#                 db.refresh(seo_file)  # Refresh to confirm database state
-#                 return {"message": "Page updated"}
-#             except Exception as e:
-#                 db.rollback()
-#                 raise HTTPException(status_code=500, detail="Failed to save changes")
-          
-#     raise HTTPException(status_code=404, detail="Page not found")
+    file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+    if not file:
+        raise HTTPException(status_code=404, detail="LinkedIn file not found")
+    
+    json_data = file.linkedIn_post
 
+    if not json_data:
+        raise HTTPException(status_code=404, detail="No LinkedIn posts found")
+
+    found = False
+    for page in json_data:
+        if page.get("linkedIn_id") == LinkedIn_id:
+            if page_update.content is not None:
+                page["LinkedIn"] = page_update.content
+            found = True
+            break
+
+    if not found:
+        raise HTTPException(status_code=404, detail="post not found")
+
+    file.linkedIn_post = json_data
+    flag_modified(file, "linkedIn_post")
+
+    try:
+        db.commit()
+        db.refresh(file)
+        return {"message": "Page updated successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
+
+@router.patch("/socialmedia_facebook/{uuid}/post/{Facebook_id}")
+async def socialmedia_edit_facebook(
+    uuid: str, 
+    Facebook_id: str,
+    page_update: PostUpdate,
+    db: Session = Depends(get_db), 
+    id: str = Depends(verify_jwt_token)):
+
+    user_id = int(id[1])
+    
+    file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+    if not file:
+        raise HTTPException(status_code=404, detail="facebook file not found")
+    
+    json_data = file.facebook_post
+
+    if not json_data:
+        raise HTTPException(status_code=404, detail="No facebook posts found")
+
+    found = False
+    for page in json_data:
+        if page.get("Facebook_id") == Facebook_id:
+            if page_update.content is not None:
+                page["Facebook"] = page_update.content
+            found = True
+            break
+
+    if not found:
+        raise HTTPException(status_code=404, detail="post not found")
+
+    file.facebook_post = json_data
+    flag_modified(file, "Facebook_post")
+
+    try:
+        db.commit()
+        db.refresh(file)
+        return {"message": "post updated successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
+    
+@router.patch("/socialmedia_twitter/{uuid}/post/{Twitter_id}")
+async def socialmedia_edit_twitter(
+    uuid: str, 
+    Twitter_id: str,
+    page_update: PostUpdate,
+    db: Session = Depends(get_db), 
+    id: str = Depends(verify_jwt_token)):
+
+    user_id = int(id[1])
+    
+    file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+    if not file:
+        raise HTTPException(status_code=404, detail="twitter file not found")
+    
+    json_data = file.twitter_post
+
+    if not json_data:
+        raise HTTPException(status_code=404, detail="No twitter posts found")
+
+    found = False
+    for page in json_data:
+        if page.get("Twitter_id") == Twitter_id:
+            if page_update.content is not None:
+                page["Twitter"] = page_update.content
+            found = True
+            break
+
+    if not found:
+        raise HTTPException(status_code=404, detail="post not found")
+
+    file.twitter_post = json_data
+    flag_modified(file, "Facebook_post")
+
+    try:
+        db.commit()
+        db.refresh(file)
+        return {"message": "post updated successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")    
+    

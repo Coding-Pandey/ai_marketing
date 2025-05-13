@@ -101,7 +101,7 @@ def upload_socialmedia_table( uuid: str, user_id: int, file_name: str, linkedIn:
             linkedIn_post = linkedIn,
             facebook_post = facebook_post,
             twitter_post  = twitter_post,
-            upload_time=datetime.utcnow()
+            last_reset=datetime.utcnow()
         )
 
         
@@ -109,10 +109,20 @@ def upload_socialmedia_table( uuid: str, user_id: int, file_name: str, linkedIn:
         db.commit()
         db.refresh(new_file)
 
-        return new_file  # You can return the created object if needed
+        return {
+            "id": new_file.id,  # Assuming an id field exists
+            "user_id": new_file.user_id,
+            "file_name": new_file.file_name,
+            "uuid": new_file.uuid,
+            "linkedIn_post": new_file.linkedIn_post,
+            "facebook_post": new_file.facebook_post,
+            "twitter_post": new_file.twitter_post,
+            "last_reset": new_file.last_reset.isoformat() if new_file.last_reset else None
+        }  # You can return the created object if needed
 
     except Exception as e:
         db.rollback()
+        print(str(e))
         raise Exception(f"Error storing SEO file in table: {str(e)}")
     finally:
         db.close() 
