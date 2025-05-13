@@ -249,6 +249,43 @@ async def socialmedia_delete_document(request: UUIDRequest, id: str = Depends(ve
     finally:
         db.close()  
 
+@router.get("/socialmedia_post_data/{uuid}")
+async def socialmedia_fetch_posts(uuid: str, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    
+    try:
+        if uuid is None:
+            raise HTTPException(status_code=200, detail="UUID is required")
+        user_id = str(id[1]) 
+        print(user_id) # Extract user_id from the JWT token
+        uuid = str(uuid)  # Ensure uuid is a string
+        file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+     
+        # print(f"json_data: {seo_file.json_data}")
+        if not file:
+            raise HTTPException(status_code=200, detail="File not found for this user")
+        
+        # data = fetch_seo_cluster_file(user_id, uuid)
+        # if not data:
+        #     raise HTTPException(status_code=200, detail="No documents found for the user")
+        
+        # json_data = json.loads(data["documents"])
+        
+
+        json_data = {
+            "id": uuid,
+            "fileName": file.file_name,
+            "data": {
+                "linkedin_posts": file.linkedIn_post,
+                "facebook_posts": file.facebook_post,
+                "twitter_posts": file.twitter_post,
+            }
+        }
+        return json_data
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/socialmedia_linkedin/{uuid}/post/{LinkedIn_id}")
 async def socialmedia_delete_linkedin(
