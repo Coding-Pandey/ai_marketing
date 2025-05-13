@@ -171,17 +171,17 @@ class SocialMediaFile(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     file_name = Column(String)
     uuid = Column(String)  
-    upload_time = Column(DateTime, default=datetime.utcnow)
-    schedule_post_limit = Column(Integer, default=15)
-    schedule_post_count = Column(Integer, default= 0)
+    last_reset = Column(DateTime, default=datetime.utcnow)
+    call_limit = Column(Integer, default=15)
+    call_count = Column(Integer, default= 0)
     linkedIn_post = Column(JSONB)
     facebook_post = Column(JSONB)
     twitter_post = Column(JSONB)
 
     user = relationship("User", back_populates="SocialMedia_file_records")
-    linkedin_posts = relationship("LinkedinPost", back_populates="file")#), cascade="all, delete-orphan")
-    facebook_posts = relationship("FacebookPost", back_populates="file")#, cascade="all, delete-orphan")
-    twitter_posts = relationship("TwitterPost", back_populates="file")#, cascade="all, delete-orphan")
+    linkedin_posts = relationship("LinkedinPost", back_populates="linkedinfile")#), cascade="all, delete-orphan")
+    facebook_posts = relationship("FacebookPost", back_populates="facebookfile")#, cascade="all, delete-orphan")
+    twitter_posts = relationship("TwitterPost", back_populates="twitterfile")#, cascade="all, delete-orphan")
 
 class LinkedinPost(Base):
     __tablename__ = "linkedin_posts"
@@ -195,7 +195,7 @@ class LinkedinPost(Base):
     post_id = Column(String) 
     copy_uuid = Column(String) 
 
-    file = relationship("SocialMediaFile", back_populates="linkedin_posts")
+    linkedinfile = relationship("SocialMediaFile", back_populates="linkedin_posts")
     user = relationship("User", back_populates="linkedin_posts")
 
 
@@ -211,7 +211,7 @@ class FacebookPost(Base):
     post_id = Column(String) 
     copy_uuid = Column(String) 
 
-    file = relationship("SocialMediaFile", back_populates="facebook_posts")
+    facebookfile = relationship("SocialMediaFile", back_populates="facebook_posts")
     user = relationship("User", back_populates="facebook_posts")
 
 
@@ -227,6 +227,6 @@ class TwitterPost(Base):
     post_id = Column(String) 
     copy_uuid = Column(String) 
 
-    file = relationship("SocialMediaFile", back_populates="twitter_posts")
+    twitterfile = relationship("SocialMediaFile", back_populates="twitter_posts")
     user = relationship("User", back_populates="twitter_posts")
     

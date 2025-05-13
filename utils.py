@@ -500,8 +500,8 @@ def check_api_limit(api_name: str):
             permission = db.query(PPCCluster).filter_by(user_id=user.id).first()
         elif api_name == "social_media":
             permission = db.query(SocialMedia).filter_by(user_id=user.id).first()   
-        elif api_name == "social_media_file":
-            permission = db.query().filter_by(user_id= user.id).first()      
+        # elif api_name == "social_media_file":
+        #     permission = db.query().filter_by(user_id= user.id).first()      
         # Add more checks for other APIs here as needed
         
         else:
@@ -525,3 +525,36 @@ def check_api_limit(api_name: str):
 
         return user  # returns user so you can use it in the route
     return _inner
+
+
+# def file_api_limit(api_name: str):
+#     def _inner(request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
+
+#         if user.role == "admin":
+#             return user  # Admin bypasses the API limits
+           
+#         if api_name == "social_media_file":
+#             permission = db.query().filter_by(user_id= user.id).first()      
+#         # Add more checks for other APIs here as needed
+        
+#         else:
+#             raise HTTPException(status_code=403, detail="No permission for this API")
+
+#         if not permission:
+#             raise HTTPException(status_code=403, detail="No permission for this API")
+
+#         # Reset monthly usage if needed
+#         now = datetime.utcnow()
+#         if permission.last_reset.month != now.month 
+#             permission.call_count = 0
+#             permission.last_reset = now
+
+#         if permission.call_count >= permission.call_limit:
+#             raise HTTPException(status_code=429, detail="API call limit exceeded")
+
+#         # Increment usage
+#         permission.call_count += 1
+#         db.commit()
+
+#         return user  # returns user so you can use it in the route
+#     return _inner

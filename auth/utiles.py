@@ -91,7 +91,8 @@ def create_permissions_for_user(new_user, db):
                 elif api_name == "social_media_file":
                     permission = SocialMediaFile(
                         user_id=new_user.id,
-                        schedule_post_limit=call_limit
+                        call_limit=call_limit, 
+                        last_reset = datetime.utcnow()
                     )
                     db.add(permission)
 
