@@ -101,7 +101,7 @@ def upload_socialmedia_table( uuid: str, user_id: int, file_name: str, linkedIn:
             linkedIn_post = linkedIn,
             facebook_post = facebook_post,
             twitter_post  = twitter_post,
-            last_reset=datetime.utcnow()
+            upload_time = datetime.utcnow()
         )
 
         
