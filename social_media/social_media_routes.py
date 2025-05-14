@@ -84,7 +84,9 @@ async def social_media_post(
             twitter_data, twitter_tokens = responses[index]
             results["twitter_posts"] = twitter_data
             total_tokens += twitter_tokens
-
+        
+        results["tiktok_posts"] = [{}]
+        results["instagram_posts"]  = [{}]
         print(results)
 
         # Update token usage and/or call count
@@ -96,7 +98,16 @@ async def social_media_post(
                 social_media_record.call_count = max(social_media_record.call_count - 1, 0)
             db.commit()
 
-        return results
+        your_tuple = id
+        user_id = your_tuple[1] 
+        linkedin_data = results.get("linkedin_posts", [])
+        facebook_data = results.get("facebook_posts", [])
+        twitter_data = results.get("twitter_posts", [])
+        unique_id = uuid.uuid4().hex 
+        result = upload_socialmedia_table(str(unique_id), user_id, fileName, linkedIn=linkedin_data,facebook_post=facebook_data,twitter_post=twitter_data)
+
+        return {"uuid":unique_id,
+                "data":results}
 
     except ValueError as e:
         traceback.print_exc()
