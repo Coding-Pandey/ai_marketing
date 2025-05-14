@@ -207,7 +207,7 @@ async def socialmedia_documents(db: Session = Depends(get_db), id: str = Depends
             {
                 "file_name": socialmedia_file.file_name,
                 "uuid": socialmedia_file.uuid,
-                "last_reset": socialmedia_file.upload_time + timedelta(days=30) if socialmedia_file.upload_time else None,
+                "last_reset": socialmedia_file.last_reset + timedelta(days=30) if socialmedia_file.last_reset else None,
             }
             for socialmedia_file in socialmedia_files
         ]
