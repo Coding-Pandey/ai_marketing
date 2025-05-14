@@ -13,6 +13,7 @@ from social_media.Agents.twitter_post import twitter_agent_call
 from social_media.utils import upload_socialmedia_table
 from social_media_models import UUIDRequest, PostUpdate
 from S3_bucket.fetch_document import download_document
+from S3_bucket.S3_upload import upload_image_to_s3
 from fastapi.responses import JSONResponse
 import json
 import asyncio
@@ -97,14 +98,14 @@ async def social_media_post(
             if not results:
                 social_media_record.call_count = max(social_media_record.call_count - 1, 0)
             db.commit()
-
-        your_tuple = id
-        user_id = your_tuple[1] 
-        linkedin_data = results.get("linkedin_posts", [])
-        facebook_data = results.get("facebook_posts", [])
-        twitter_data = results.get("twitter_posts", [])
-        unique_id = uuid.uuid4().hex 
-        result = upload_socialmedia_table(str(unique_id), user_id, fileName, linkedIn=linkedin_data,facebook_post=facebook_data,twitter_post=twitter_data)
+        if results:
+            your_tuple = id
+            user_id = your_tuple[1] 
+            linkedin_data = results.get("linkedin_posts", [])
+            facebook_data = results.get("facebook_posts", [])
+            twitter_data = results.get("twitter_posts", [])
+            unique_id = uuid.uuid4().hex 
+            result = upload_socialmedia_table(str(unique_id), user_id, fileName, linkedIn=linkedin_data,facebook_post=facebook_data,twitter_post=twitter_data)
 
         return {"uuid":unique_id,
                 "fileName": fileName,
@@ -343,7 +344,7 @@ async def Socialmedia_delete_facebook(
         raise HTTPException(status_code=404, detail="Social media file not found")
 
     posts = seo_file.facebook_post 
-    updated_posts = [p for p in posts if p.get("facebook_id") != facebook_id]
+    updated_posts = [p for p in posts if p.get("Facebook_id") != facebook_id]
 
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
@@ -373,7 +374,7 @@ async def Socialmedia_delete_twitter(
         raise HTTPException(status_code=404, detail="Social media file not found")
 
     posts = seo_file.twitter_post
-    updated_posts = [p for p in posts if p.get("twitter_id") != twitter_id]
+    updated_posts = [p for p in posts if p.get("Twitter_id") != twitter_id]
 
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
@@ -391,28 +392,36 @@ async def Socialmedia_delete_twitter(
 
 @router.patch("/socialmedia_linkedin/{uuid}/post/{LinkedIn_id}")
 async def socialmedia_edit_linkedin(
-    uuid: str, 
+    uuid: str,
     LinkedIn_id: str,
-    page_update: PostUpdate,
-    db: Session = Depends(get_db), 
-    id: str = Depends(verify_jwt_token)):
-
+    content: str = Form(None),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
     user_id = int(id[1])
-    
+    print(user_id)
     file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
     if not file:
         raise HTTPException(status_code=404, detail="LinkedIn file not found")
-    
-    json_data = file.linkedIn_post
 
+    json_data = file.linkedIn_post
     if not json_data:
         raise HTTPException(status_code=404, detail="No LinkedIn posts found")
 
     found = False
     for page in json_data:
-        if page.get("linkedIn_id") == LinkedIn_id:
-            if page_update.content is not None:
-                page["LinkedIn"] = page_update.content
+        if page.get("LinkedIn_id") == LinkedIn_id:
+            if content is not None:
+                page["LinkedIn"] = content
+
+            if image is not None:
+                file_path = f"User_{user_id}/Socialmedia_data/{uuid}/linkedin_post/{LinkedIn_id}"
+                image_url = upload_image_to_s3(image,file_path)
+                page["LinkedIn_image"] = image_url
+                print(image_url)
+
+
             found = True
             break
 

@@ -4,10 +4,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from S3_bucket.S3_client import s3
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
+from fastapi import UploadFile, HTTPException
 
 S3_BUCKET_NAME = os.environ.get("BUCKET_NAME")
 # user_folder = "User/"
-
+S3_REGION = "us-east-1"
 def upload_file_to_s3(user_folder: str, file_content: bytes, filename: str, category: str) -> str:
     """
     Upload file to S3 bucket under specified category folder
@@ -54,3 +55,24 @@ def upload_title_url(user_folder: str,file_content: bytes, filename: str, seo_co
         
     except ClientError as e:
         raise f"Failed to upload to S3: {str(e)}"
+    
+
+def upload_image_to_s3(image: UploadFile, file_path) -> str:
+    try:
+        file_extension = image.filename.split('.')[-1]
+        unique_filename = f"{file_path}.{file_extension}"
+
+        s3.upload_fileobj(
+            image.file,
+            S3_BUCKET_NAME,
+            unique_filename,
+            ExtraArgs={"ContentType": image.content_type,
+                       "ACL": "public-read" }
+        )
+
+        image_url = f"https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{unique_filename}"
+        return image_url
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload image to S3: {str(e)}")   
+
