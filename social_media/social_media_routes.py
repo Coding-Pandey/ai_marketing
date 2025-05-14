@@ -85,8 +85,8 @@ async def social_media_post(
             results["twitter_posts"] = twitter_data
             total_tokens += twitter_tokens
         
-        results["tiktok_posts"] = [{}]
-        results["instagram_posts"]  = [{}]
+        # results["tiktok_posts"] = [{}]
+        # results["instagram_posts"]  = [{}]
         print(results)
 
         # Update token usage and/or call count
@@ -107,6 +107,7 @@ async def social_media_post(
         result = upload_socialmedia_table(str(unique_id), user_id, fileName, linkedIn=linkedin_data,facebook_post=facebook_data,twitter_post=twitter_data)
 
         return {"uuid":unique_id,
+                "fileName": fileName,
                 "data":results}
 
     except ValueError as e:
