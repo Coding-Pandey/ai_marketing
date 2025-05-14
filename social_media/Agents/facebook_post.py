@@ -124,9 +124,9 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
             
             # posts = output_json["Posts"]
             formatted_data = {
-                "Facebook_id":facebook_id,
+                "facebook_id":facebook_id,
                 "discription": [output],
-                "Facebook_image":None, 
+                "facebook_image":None, 
             }
 
             previous_summaries.append(summary)

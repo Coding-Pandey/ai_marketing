@@ -111,9 +111,9 @@ def twitter_agent_call(text, json_data, num_iterations=5, hash_tag=False, emoji=
             page_id_counter = 1
             Twitter_id = f"{page_id_counter}.{post_index}"
             formatted_data = {
-                "Twitter_id":Twitter_id,
+                "twitter_id":Twitter_id,
                 "discription": [output],
-                "Twitter_image":None, 
+                "twitter_image":None, 
             }
 
             previous_summaries.append(summary)

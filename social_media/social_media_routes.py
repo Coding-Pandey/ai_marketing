@@ -13,7 +13,7 @@ from social_media.Agents.twitter_post import twitter_agent_call
 from social_media.utils import upload_socialmedia_table
 from social_media_models import UUIDRequest, PostUpdate
 from S3_bucket.fetch_document import download_document
-from S3_bucket.S3_upload import upload_image_to_s3
+from S3_bucket.S3_upload import upload_image_to_s3, generate_presigned_url
 from fastapi.responses import JSONResponse
 import json
 import asyncio
@@ -314,7 +314,7 @@ async def socialmedia_delete_linkedin(
         raise HTTPException(status_code=404, detail="Social media file not found")
 
     posts = seo_file.linkedIn_post 
-    updated_posts = [p for p in posts if p.get("LinkedIn_id") != LinkedIn_id]
+    updated_posts = [p for p in posts if p.get("linkedIn_id") != LinkedIn_id]
 
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
@@ -344,7 +344,7 @@ async def Socialmedia_delete_facebook(
         raise HTTPException(status_code=404, detail="Social media file not found")
 
     posts = seo_file.facebook_post 
-    updated_posts = [p for p in posts if p.get("Facebook_id") != facebook_id]
+    updated_posts = [p for p in posts if p.get("facebook_id") != facebook_id]
 
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
@@ -374,7 +374,7 @@ async def Socialmedia_delete_twitter(
         raise HTTPException(status_code=404, detail="Social media file not found")
 
     posts = seo_file.twitter_post
-    updated_posts = [p for p in posts if p.get("Twitter_id") != twitter_id]
+    updated_posts = [p for p in posts if p.get("twitter_id") != twitter_id]
 
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
@@ -411,13 +411,14 @@ async def socialmedia_edit_linkedin(
 
     found = False
     for page in json_data:
-        if page.get("LinkedIn_id") == LinkedIn_id:
+        if page.get("linkedIn_id") == LinkedIn_id:
             if content is not None:
-                page["LinkedIn"] = content
+                page["discription"] = content
 
             if image is not None:
                 file_path = f"User_{user_id}/Socialmedia_data/{uuid}/linkedin_post/{LinkedIn_id}"
                 image_url = upload_image_to_s3(image,file_path)
+                image_url = generate_presigned_url(file_path)
                 page["LinkedIn_image"] = image_url
                 print(image_url)
 
@@ -460,9 +461,9 @@ async def socialmedia_edit_facebook(
 
     found = False
     for page in json_data:
-        if page.get("Facebook_id") == Facebook_id:
+        if page.get("facebook_id") == Facebook_id:
             if page_update.content is not None:
-                page["Facebook"] = page_update.content
+                page["discription"] = page_update.content
             found = True
             break
 
@@ -501,9 +502,9 @@ async def socialmedia_edit_twitter(
 
     found = False
     for page in json_data:
-        if page.get("Twitter_id") == Twitter_id:
+        if page.get("twitter_id") == Twitter_id:
             if page_update.content is not None:
-                page["Twitter"] = page_update.content
+                page["discription"] = page_update.content
             found = True
             break
 
