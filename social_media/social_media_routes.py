@@ -244,7 +244,7 @@ async def socialmedia_delete_document(request: UUIDRequest, id: str = Depends(ve
         if file_record:
             db.delete(file_record)
             db.commit()
-            db.refresh() 
+            # db.refresh(file_record) 
 
         return JSONResponse(
             status_code=200,
