@@ -473,6 +473,7 @@ async def socialmedia_edit_facebook(
 
     content = json.loads(content) if content else None
     found = False
+    image_url = None 
     for page in json_data:
         if page.get("facebook_id") == Facebook_id:
             if content is not None:
