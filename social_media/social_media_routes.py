@@ -313,7 +313,7 @@ async def socialmedia_delete_linkedin(
         raise HTTPException(status_code=404, detail="Social media file not found")
 
     posts = seo_file.linkedIn_post 
-    updated_posts = [p for p in posts if p.get("linkedIn_id") != LinkedIn_id]
+    updated_posts = [p for p in posts if p.get("linkedin_id") != LinkedIn_id]
 
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
