@@ -417,6 +417,7 @@ async def socialmedia_edit_linkedin(
     
     content = json.loads(content) if content else None
     found = False
+    image_url = None  # Initialize image_url to None
     for page in json_data:
         if page.get("linkedin_id") == LinkedIn_id:
             if content is not None:
@@ -526,6 +527,7 @@ async def socialmedia_edit_twitter(
 
     content = json.loads(content) if content else None
     found = False
+    image_url = None  # Initialize image_url to None
     for page in json_data:
         if page.get("twitter_id") == Twitter_id:
             if content is not None:
