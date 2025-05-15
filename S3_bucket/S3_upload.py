@@ -56,7 +56,7 @@ def upload_title_url(user_folder: str,file_content: bytes, filename: str, seo_co
     except ClientError as e:
         raise f"Failed to upload to S3: {str(e)}"
 
-def generate_presigned_url(key: str, expiration: int = 3600) -> str:
+def generate_presigned_url(key: str, expiration: int = 2592000) -> str:
     try:
         return s3.generate_presigned_url(
             ClientMethod='get_object',
@@ -75,10 +75,10 @@ def upload_image_to_s3(image: UploadFile, file_path) -> str:
             image.file,
             S3_BUCKET_NAME,
             unique_filename,
-            ExtraArgs={"ContentType": image.content_type }
+            ExtraArgs={"ContentType": image.content_type}
         )
-
-        image_url = f"https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{unique_filename}"
+        image_url = generate_presigned_url(unique_filename)
+        # image_url = f"https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{unique_filename}"
         return image_url
 
     except Exception as e:

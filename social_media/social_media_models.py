@@ -16,4 +16,6 @@ class UUIDRequest(BaseModel):
             raise ValueError("UUID must be provided")
         
 class PostUpdate(BaseModel):
-    content: Optional[list] = None        
+    uuid : str
+    schedule_time: Optional[str] = None
+    content: Optional[list] = None

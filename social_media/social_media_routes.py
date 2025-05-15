@@ -23,7 +23,7 @@ import traceback
 from utils import verify_jwt_token, check_api_limit
 from sqlalchemy.orm.attributes import flag_modified
 from auth.auth import get_db
-from auth.models import SocialMediaFile, SocialMedia
+from auth.models import SocialMediaFile, SocialMedia, LinkedinPost, FacebookPost, TwitterPost
 # Soical media post
 @router.post("/social_media_post")
 async def social_media_post(
@@ -101,11 +101,11 @@ async def social_media_post(
         if results:
             your_tuple = id
             user_id = your_tuple[1] 
-            linkedin_data = results.get("linkedin_posts", [])
-            facebook_data = results.get("facebook_posts", [])
-            twitter_data = results.get("twitter_posts", [])
-            unique_id = uuid.uuid4().hex 
-            result = upload_socialmedia_table(str(unique_id), user_id, fileName, linkedIn=linkedin_data,facebook_post=facebook_data,twitter_post=twitter_data)
+            linkedin_file = results.get("linkedin_posts", [])
+            facebook_file = results.get("facebook_posts", [])
+            twitter_file = results.get("twitter_posts", [])
+            unique_id = uuid.uuid4().hex
+            result = upload_socialmedia_table(str(unique_id), user_id, fileName, linkedIn=linkedin_file, facebook_post=facebook_file, twitter_post=twitter_file)
 
         return {"uuid":unique_id,
                 "fileName": fileName,
@@ -408,7 +408,8 @@ async def socialmedia_edit_linkedin(
     json_data = file.linkedIn_post
     if not json_data:
         raise HTTPException(status_code=404, detail="No LinkedIn posts found")
-
+    
+    content = json.loads(content) if content else None
     found = False
     for page in json_data:
         if page.get("linkedIn_id") == LinkedIn_id:
@@ -418,8 +419,8 @@ async def socialmedia_edit_linkedin(
             if image is not None:
                 file_path = f"User_{user_id}/Socialmedia_data/{uuid}/linkedin_post/{LinkedIn_id}"
                 image_url = upload_image_to_s3(image,file_path)
-                image_url = generate_presigned_url(file_path)
-                page["LinkedIn_image"] = image_url
+                # image_url = generate_presigned_url(file_path)
+                page["linkedIn_image"] = image_url
                 print(image_url)
 
 
@@ -432,6 +433,11 @@ async def socialmedia_edit_linkedin(
     file.linkedIn_post = json_data
     flag_modified(file, "linkedIn_post")
 
+    if image and content is None:
+        return {
+            "LinkedIn_image": image_url
+        }
+
     try:
         db.commit()
         db.refresh(file)
@@ -442,28 +448,39 @@ async def socialmedia_edit_linkedin(
 
 @router.patch("/socialmedia_facebook/{uuid}/post/{Facebook_id}")
 async def socialmedia_edit_facebook(
-    uuid: str, 
-    Facebook_id: str,
-    page_update: PostUpdate,
-    db: Session = Depends(get_db), 
-    id: str = Depends(verify_jwt_token)):
+            uuid: str,
+            Facebook_id: str,
+            content: str = Form(None),
+            image: UploadFile = File(None),
+            db: Session = Depends(get_db),
+            id: str = Depends(verify_jwt_token)
+        ):
 
     user_id = int(id[1])
-    
+    print(user_id)
     file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
     if not file:
-        raise HTTPException(status_code=404, detail="facebook file not found")
-    
+        raise HTTPException(status_code=404, detail="Facebook file not found")
+
     json_data = file.facebook_post
-
     if not json_data:
-        raise HTTPException(status_code=404, detail="No facebook posts found")
+        raise HTTPException(status_code=404, detail="No Facebook posts found")
 
+    content = json.loads(content) if content else None
     found = False
     for page in json_data:
         if page.get("facebook_id") == Facebook_id:
-            if page_update.content is not None:
-                page["discription"] = page_update.content
+            if content is not None:
+                page["discription"] = content
+
+            if image is not None:
+                file_path = f"User_{user_id}/Socialmedia_data/{uuid}/facebook_post/{Facebook_id}"
+                image_url = upload_image_to_s3(image,file_path)
+                # image_url = generate_presigned_url(file_path)
+                page["facebook_image"] = image_url
+                print(image_url)
+
+
             found = True
             break
 
@@ -471,7 +488,12 @@ async def socialmedia_edit_facebook(
         raise HTTPException(status_code=404, detail="post not found")
 
     file.facebook_post = json_data
-    flag_modified(file, "Facebook_post")
+    flag_modified(file, "facebook_post")
+
+    if image and content is None:
+        return {
+            "facebook_image": image_url
+        }
 
     try:
         db.commit()
@@ -483,28 +505,39 @@ async def socialmedia_edit_facebook(
     
 @router.patch("/socialmedia_twitter/{uuid}/post/{Twitter_id}")
 async def socialmedia_edit_twitter(
-    uuid: str, 
+    uuid: str,
     Twitter_id: str,
-    page_update: PostUpdate,
-    db: Session = Depends(get_db), 
-    id: str = Depends(verify_jwt_token)):
+    content: str = Form(None),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
 
     user_id = int(id[1])
-    
+    print(user_id)
     file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
     if not file:
-        raise HTTPException(status_code=404, detail="twitter file not found")
-    
+        raise HTTPException(status_code=404, detail="Twitter file not found")
+
     json_data = file.twitter_post
-
     if not json_data:
-        raise HTTPException(status_code=404, detail="No twitter posts found")
+        raise HTTPException(status_code=404, detail="No Twitter posts found")
 
+    content = json.loads(content) if content else None
     found = False
     for page in json_data:
         if page.get("twitter_id") == Twitter_id:
-            if page_update.content is not None:
-                page["discription"] = page_update.content
+            if content is not None:
+                page["discription"] = content
+
+            if image is not None:
+                file_path = f"User_{user_id}/Socialmedia_data/{uuid}/twitter_post/{Twitter_id}"
+                image_url = upload_image_to_s3(image,file_path)
+                # image_url = generate_presigned_url(file_path)
+                page["twitter_image"] = image_url
+                print(image_url)
+
+
             found = True
             break
 
@@ -512,7 +545,12 @@ async def socialmedia_edit_twitter(
         raise HTTPException(status_code=404, detail="post not found")
 
     file.twitter_post = json_data
-    flag_modified(file, "Facebook_post")
+    flag_modified(file, "twitter_post")
+
+    if image and content is None:
+        return {
+            "twitter_image": image_url
+        }
 
     try:
         db.commit()
@@ -522,3 +560,139 @@ async def socialmedia_edit_twitter(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")    
     
+@router.post("/schedule_socialmedia_post")
+async def schedule_socialmedia_post(
+    post_data: PostUpdate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(verify_jwt_token)
+):
+    try:
+        if not post_data.uuid:
+            raise HTTPException(status_code=400, detail="UUID is required")
+        
+        user_id = int(user_id[1])  # Extract user_id from the JWT token
+
+        file = db.query(SocialMediaFile).filter_by(uuid=post_data.uuid, user_id=user_id).first()
+        if not file:    
+            raise HTTPException(status_code=404, detail="Social media file not found")
+        
+        # Assuming post_data.content is a list with a single dictionary
+        content = post_data.content[0]
+        if not content:
+            raise HTTPException(status_code=400, detail="Content is required for scheduling")
+        if not post_data.schedule_time:
+            raise HTTPException(status_code=400, detail="Schedule time is required")
+        
+        scheduled_posts = []
+        
+        if linkedin_id := content.get("linkedIn_id"):
+            linkedin_post = LinkedinPost(
+                file_id = file.id,
+                user_id=user_id,
+                schedule_time=post_data.schedule_time,
+                content=content,
+                post_id=linkedin_id,
+                copy_uuid=post_data.uuid
+            )
+            db.add(linkedin_post)
+            scheduled_posts.append("LinkedIn")
+        
+        if facebook_id := content.get("facebook_id"):
+            facebook_post = FacebookPost(
+                file_id = file.id,
+                user_id=user_id,
+                schedule_time=post_data.schedule_time,
+                content=content,
+                post_id=facebook_id,
+                copy_uuid=post_data.uuid
+            )
+            db.add(facebook_post)
+            scheduled_posts.append("Facebook")
+        
+        if twitter_id := content.get("twitter_id"):
+            twitter_post = TwitterPost(
+                file_id = file.id,
+                user_id=user_id,
+                schedule_time=post_data.schedule_time,
+                content=content,
+                post_id=twitter_id,
+                copy_uuid=post_data.uuid
+            )
+            db.add(twitter_post)
+            scheduled_posts.append("Twitter")
+        
+        if not scheduled_posts:
+            raise HTTPException(status_code=400, detail="No social media IDs provided")
+        
+        db.commit()
+        
+        return {
+            "message": f"Post scheduled successfully for {', '.join(scheduled_posts)}",
+            "uuid": post_data.uuid,
+            "schedule_time": post_data.schedule_time,
+            "status": "scheduled"
+        }
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to schedule post: {str(e)}")
+    
+@router.get("/socialmedia_scheduled_posts/{uuid}")
+async def get_scheduled_posts(uuid: str, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
+    user_id = int(user_id[1])  # Extract user_id from the JWT token
+    linkedIn_posts = db.query(LinkedinPost).filter_by(user_id=user_id, copy_uuid=uuid).all()
+    facebook_posts = db.query(FacebookPost).filter_by(user_id=user_id, copy_uuid=uuid).all()
+    twitter_posts = db.query(TwitterPost).filter_by(user_id=user_id, copy_uuid=uuid).all()
+
+    if not linkedIn_posts and not facebook_posts and not twitter_posts: 
+        raise HTTPException(status_code=404, detail="No scheduled posts found for this UUID")
+    if not linkedIn_posts:
+        linkedIn_posts = []
+    if not facebook_posts:
+        facebook_posts = []
+    if not twitter_posts:
+        twitter_posts = []
+
+    linkedIn_posts = [{"id": post.id, "content": post.content, "schedule_time": post.schedule_time, "uuid": post.copy_uuid} for post in linkedIn_posts]
+    facebook_posts = [{"id": post.id, "content": post.content, "schedule_time": post.schedule_time, "uuid": post.copy_uuid} for post in facebook_posts]
+    twitter_posts = [{"id": post.id, "content": post.content, "schedule_time": post.schedule_time, "uuid": post.copy_uuid} for post in twitter_posts]
+
+
+    return {"linkedin_posts": linkedIn_posts,
+            "facebook_posts": facebook_posts,
+            "twitter_posts": twitter_posts}
+
+
+@router.delete("/socialmedia_scheduled_posts/{posts}/{uuid}/{post_id}")
+async def delete_scheduled_post(posts: str, uuid: str, post_id: int, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
+    try:
+        if not posts or not uuid or post_id is None:
+            raise HTTPException(status_code=400, detail="Invalid parameters provided")
+
+        if posts not in ["linkedin_posts", "facebook_posts", "twitter_posts"]:
+            raise HTTPException(status_code=400, detail="Invalid social media platform specified")
+        user_id = int(user_id[1])
+        if posts == "linkedin_posts":
+            post = db.query(LinkedinPost).filter_by(user_id=user_id, copy_uuid=uuid, id=post_id).first()
+        elif posts == "facebook_posts":
+            post = db.query(FacebookPost).filter_by(user_id=user_id, copy_uuid=uuid, id=post_id).first()
+        elif posts == "twitter_posts":
+            post = db.query(TwitterPost).filter_by(user_id=user_id, copy_uuid=uuid, id=post_id).first()
+        else:
+            raise HTTPException(status_code=400, detail="Invalid social media platform")
+
+        if not post:
+            raise HTTPException(status_code=404, detail="Scheduled post not found")
+
+        db.delete(post)
+        db.commit()
+        return {"message": f"{posts} post deleted successfully", "post_id": post_id}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to delete post: {str(e)}")    
+
+
+
