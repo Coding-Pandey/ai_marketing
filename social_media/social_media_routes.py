@@ -418,7 +418,7 @@ async def socialmedia_edit_linkedin(
     content = json.loads(content) if content else None
     found = False
     for page in json_data:
-        if page.get("linkedIn_id") == LinkedIn_id:
+        if page.get("linkedin_id") == LinkedIn_id:
             if content is not None:
                 page["discription"] = content
 
@@ -426,7 +426,7 @@ async def socialmedia_edit_linkedin(
                 file_path = f"User_{user_id}/Socialmedia_data/{uuid}/linkedin_post/{LinkedIn_id}"
                 image_url = upload_image_to_s3(image,file_path)
                 # image_url = generate_presigned_url(file_path)
-                page["linkedIn_image"] = image_url
+                page["image"] = image_url
                 print(image_url)
 
 
@@ -481,7 +481,7 @@ async def socialmedia_edit_facebook(
                 file_path = f"User_{user_id}/Socialmedia_data/{uuid}/facebook_post/{Facebook_id}"
                 image_url = upload_image_to_s3(image,file_path)
                 # image_url = generate_presigned_url(file_path)
-                page["facebook_image"] = image_url
+                page["image"] = image_url
                 print(image_url)
 
 
@@ -535,7 +535,7 @@ async def socialmedia_edit_twitter(
                 file_path = f"User_{user_id}/Socialmedia_data/{uuid}/twitter_post/{Twitter_id}"
                 image_url = upload_image_to_s3(image,file_path)
                 # image_url = generate_presigned_url(file_path)
-                page["twitter_image"] = image_url
+                page["image"] = image_url
                 print(image_url)
 
 

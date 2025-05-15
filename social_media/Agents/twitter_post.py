@@ -113,7 +113,7 @@ def twitter_agent_call(text, json_data, num_iterations=5, hash_tag=False, emoji=
             formatted_data = {
                 "twitter_id":Twitter_id,
                 "discription": [output],
-                "twitter_image":None, 
+                "image":None, 
             }
 
             previous_summaries.append(summary)
