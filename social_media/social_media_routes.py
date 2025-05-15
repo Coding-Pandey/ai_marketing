@@ -548,10 +548,10 @@ async def socialmedia_edit_twitter(
     file.twitter_post = json_data
     flag_modified(file, "twitter_post")
 
-    if image and content is None:
-        return {
-            "twitter_image": image_url
-        }
+    # if image and content is None:
+    #     return {
+    #         "twitter_image": image_url
+    #     }
 
     try:
         db.commit()
