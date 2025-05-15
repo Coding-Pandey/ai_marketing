@@ -439,15 +439,13 @@ async def socialmedia_edit_linkedin(
     file.linkedIn_post = json_data
     flag_modified(file, "linkedIn_post")
 
-    if image and content is None:
-        return {
-            "LinkedIn_image": image_url
-        }
 
     try:
         db.commit()
         db.refresh(file)
-        return {"message": "Page updated successfully"}
+        if image_url:
+            return {"LinkedIn_image": image_url}
+        return {"message": "post updated successfully"}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
@@ -496,14 +494,11 @@ async def socialmedia_edit_facebook(
     file.facebook_post = json_data
     flag_modified(file, "facebook_post")
 
-    if image and content is None:
-        return {
-            "facebook_image": image_url
-        }
-
     try:
         db.commit()
         db.refresh(file)
+        if image_url:
+            return {"facebook_image": image_url}
         return {"message": "post updated successfully"}
     except Exception as e:
         db.rollback()
@@ -561,6 +556,8 @@ async def socialmedia_edit_twitter(
     try:
         db.commit()
         db.refresh(file)
+        if image_url:
+            return {"twitter_image": image_url}
         return {"message": "post updated successfully"}
     except Exception as e:
         db.rollback()
