@@ -110,6 +110,7 @@ async def social_media_post(
         return {"uuid":unique_id,
                 "fileName": fileName,
                 "data":results}
+    
 
     except ValueError as e:
         traceback.print_exc()
@@ -192,8 +193,7 @@ async def socialmedia_upload_data(json_data: dict = Body(...),
         raise HTTPException(
             status_code=500,
             detail=f"An unexpected error occurred: {str(e)}"
-        )    
-    
+        )       
 
 @router.get("/socialmedia_datalist")
 async def socialmedia_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
@@ -230,7 +230,6 @@ async def socialmedia_documents(db: Session = Depends(get_db), id: str = Depends
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))    
     
-
 @router.delete("/socialmedia_delete_document")
 async def socialmedia_delete_document(request: UUIDRequest, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     try:
@@ -329,6 +328,9 @@ async def socialmedia_delete_linkedin(
     except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to save changes")
+    
+    finally:
+        db.close()
 
 @router.delete("/socialmedia_facebook/{uuid}/post/{facebook_id}")
 async def Socialmedia_delete_facebook(
@@ -349,8 +351,8 @@ async def Socialmedia_delete_facebook(
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
 
-    seo_file.linkedIn_post = updated_posts
-    flag_modified(seo_file, "linkedIn_post")
+    seo_file.facebook_post = updated_posts
+    flag_modified(seo_file, "facebook_post")
 
     try:
         db.commit()
@@ -359,6 +361,8 @@ async def Socialmedia_delete_facebook(
     except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to save changes")
+    finally:
+        db.close()
 
 @router.delete("/socialmedia_twitter/{uuid}/post/{twitter_id}")
 async def Socialmedia_delete_twitter(
@@ -379,8 +383,8 @@ async def Socialmedia_delete_twitter(
     if len(updated_posts) == len(posts):
         raise HTTPException(status_code=404, detail="Post not found")
 
-    seo_file.linkedIn_post = updated_posts
-    flag_modified(seo_file, "linkedIn_post")
+    seo_file.twitter_post = updated_posts
+    flag_modified(seo_file, "twitter_post")
 
     try:
         db.commit()
@@ -389,6 +393,8 @@ async def Socialmedia_delete_twitter(
     except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to save changes")
+    finally:
+        db.close()
 
 @router.patch("/socialmedia_linkedin/{uuid}/post/{LinkedIn_id}")
 async def socialmedia_edit_linkedin(
@@ -663,7 +669,6 @@ async def get_scheduled_posts(uuid: str, db: Session = Depends(get_db), user_id:
     return {"linkedin_posts": linkedIn_posts,
             "facebook_posts": facebook_posts,
             "twitter_posts": twitter_posts}
-
 
 @router.delete("/socialmedia_scheduled_posts/{posts}/{uuid}/{post_id}")
 async def delete_scheduled_post(posts: str, uuid: str, post_id: int, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
