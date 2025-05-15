@@ -445,7 +445,7 @@ async def socialmedia_edit_linkedin(
         db.commit()
         db.refresh(file)
         if image_url:
-            return {"LinkedIn_image": image_url}
+            return {"image": image_url}
         return {"message": "post updated successfully"}
     except Exception as e:
         db.rollback()
@@ -500,7 +500,7 @@ async def socialmedia_edit_facebook(
         db.commit()
         db.refresh(file)
         if image_url:
-            return {"facebook_image": image_url}
+            return {"image": image_url}
         return {"message": "post updated successfully"}
     except Exception as e:
         db.rollback()
@@ -560,7 +560,7 @@ async def socialmedia_edit_twitter(
         db.commit()
         db.refresh(file)
         if image_url:
-            return {"twitter_image": image_url}
+            return {"image": image_url}
         return {"message": "post updated successfully"}
     except Exception as e:
         db.rollback()
