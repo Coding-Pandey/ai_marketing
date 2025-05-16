@@ -591,7 +591,7 @@ async def schedule_socialmedia_post(
         
         scheduled_posts = []
         
-        if linkedin_id := content.get("linkedIn_id"):
+        if linkedin_id := content.get("linkedin_id"):
             linkedin_post = LinkedinPost(
                 file_id = file.id,
                 user_id=user_id,
@@ -645,15 +645,15 @@ async def schedule_socialmedia_post(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to schedule post: {str(e)}")
     
-@router.get("/socialmedia_scheduled_posts/{uuid}")
-async def get_scheduled_posts(uuid: str, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
+@router.get("/socialmedia_scheduled_posts")
+async def get_scheduled_posts(db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
     user_id = int(user_id[1])  # Extract user_id from the JWT token
-    linkedIn_posts = db.query(LinkedinPost).filter_by(user_id=user_id, copy_uuid=uuid).all()
-    facebook_posts = db.query(FacebookPost).filter_by(user_id=user_id, copy_uuid=uuid).all()
-    twitter_posts = db.query(TwitterPost).filter_by(user_id=user_id, copy_uuid=uuid).all()
+    linkedIn_posts = db.query(LinkedinPost).filter_by(user_id=user_id).all()
+    facebook_posts = db.query(FacebookPost).filter_by(user_id=user_id).all()
+    twitter_posts = db.query(TwitterPost).filter_by(user_id=user_id).all()
 
-    if not linkedIn_posts and not facebook_posts and not twitter_posts: 
-        raise HTTPException(status_code=404, detail="No scheduled posts found for this UUID")
+    # if not linkedIn_posts and not facebook_posts and not twitter_posts: 
+    #     raise HTTPException(status_code=404, detail="No scheduled posts found for this UUID")
     if not linkedIn_posts:
         linkedIn_posts = []
     if not facebook_posts:
