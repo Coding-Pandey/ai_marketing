@@ -63,10 +63,10 @@ import re
 import emoji
 
 def clean_post(text, remove_emojis=True, remove_hashtags=True):
-    if remove_emojis:
+    if remove_emojis == False:
         text = ''.join(char for char in text if not emoji.is_emoji(char))
 
-    if remove_hashtags:
+    if remove_hashtags == False:
         text = re.sub(r'#\w+', '', text)
 
     return text.strip()

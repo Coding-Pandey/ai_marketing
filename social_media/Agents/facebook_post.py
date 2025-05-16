@@ -145,7 +145,7 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
         except Exception as e:
             print(f"Error formatting data in iteration {i+1}: {str(e)}")
 
-    if hash_tag == False and emoji == False:
+    if hash_tag == True and emoji == True:
         return all_data, token
 
     clean_data = clean_post_list(all_data, remove_emojis=emoji, remove_hashtags=hash_tag)
