@@ -588,7 +588,7 @@ async def schedule_socialmedia_post(
             raise HTTPException(status_code=400, detail="Content is required for scheduling")
         if not post_data.schedule_time:
             raise HTTPException(status_code=400, detail="Schedule time is required")
-        
+        unique_id = uuid.uuid4().hex
         scheduled_posts = []
         
         if linkedin_id := content.get("linkedin_id"):
@@ -598,7 +598,7 @@ async def schedule_socialmedia_post(
                 schedule_time=post_data.schedule_time,
                 content=content,
                 post_id=linkedin_id,
-                copy_uuid=post_data.uuid
+                copy_uuid=unique_id
             )
             db.add(linkedin_post)
             scheduled_posts.append("LinkedIn")
@@ -610,7 +610,7 @@ async def schedule_socialmedia_post(
                 schedule_time=post_data.schedule_time,
                 content=content,
                 post_id=facebook_id,
-                copy_uuid=post_data.uuid
+                copy_uuid=unique_id
             )
             db.add(facebook_post)
             scheduled_posts.append("Facebook")
@@ -622,7 +622,7 @@ async def schedule_socialmedia_post(
                 schedule_time=post_data.schedule_time,
                 content=content,
                 post_id=twitter_id,
-                copy_uuid=post_data.uuid
+                copy_uuid=unique_id
             )
             db.add(twitter_post)
             scheduled_posts.append("Twitter")
@@ -634,7 +634,7 @@ async def schedule_socialmedia_post(
         
         return {
             "message": f"Post scheduled successfully for {', '.join(scheduled_posts)}",
-            "uuid": post_data.uuid,
+            "uuid": unique_id,
             "schedule_time": post_data.schedule_time,
             "status": "scheduled"
         }
@@ -699,5 +699,166 @@ async def delete_scheduled_post(posts: str, uuid: str, post_id: int, db: Session
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to delete post: {str(e)}")    
 
+@router.patch("/socialmedia_scheduled_posts/{posts}/{uuid}")
+async def update_scheduled_post(
+    posts: str,
+    uuid: str,
+    id: str = Form(None),
+    content: str = Form(None),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token)
+):
+    try:
+        if not posts or not uuid is None:
+            raise HTTPException(status_code=400, detail="Invalid parameters provided")
 
+        if posts not in ["linkedin_posts", "facebook_posts", "twitter_posts"]:
+            raise HTTPException(status_code=400, detail="Invalid social media platform specified")
+        user_id = int(user_id[1])
+        if posts == "linkedin_posts":
+            # Query the LinkedIn post
+            post = db.query(LinkedinPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
+            if not post:
+                raise HTTPException(status_code=404, detail="LinkedIn post not found")
+
+            # Get current content (JSONB column)
+            current_content = post.content or {}
+            if not current_content:
+                raise HTTPException(status_code=404, detail="No content found in LinkedIn post")
+
+            # Update content if provided
+            if content:
+                try:
+                    new_content = json.loads(content)
+                    # Ensure the provided ID matches the linkedin_id in the content
+                    if id and new_content.get("linkedin_id") != id:
+                        raise HTTPException(status_code=400, detail="Provided ID does not match linkedin_id in content")
+                    # Update the entire content
+                    post.content = new_content
+                except json.JSONDecodeError:
+                    raise HTTPException(status_code=400, detail="Invalid JSON content provided")
+
+            # Handle image upload
+            image_url = None
+            if image:
+                file_path = f"User_{user_id}/schedule_data/{uuid}/linkedin_post/{id}"
+                image_url = upload_image_to_s3(image, file_path)
+                # Update image URL in content
+                post.content["image"] = image_url
+
+   
+            flag_modified(post, "content")
+
+            # Commit changes
+            try:
+                db.commit()
+                db.refresh(post)
+                return {
+                    "message": "Post updated successfully",
+                    "image_url": image_url if image_url else None
+                }
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
+
+    
+        elif posts == "facebook_posts":
+
+            post = db.query(FacebookPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
+            if not post:
+                raise HTTPException(status_code=404, detail="Facebook post not found")
+
+            # Get current content (JSONB column)
+            current_content = post.content or {}
+            if not current_content:
+                raise HTTPException(status_code=404, detail="No content found in Facebook post")
+
+            # Update content if provided
+            if content:
+                try:
+                    new_content = json.loads(content)
+                    # Ensure the provided ID matches the facebook_id in the content
+                    if id and new_content.get("facebook_id") != id:
+                        raise HTTPException(status_code=400, detail="Provided ID does not match facebook_id in content")
+                    # Update the entire content
+                    post.content = new_content
+                except json.JSONDecodeError:
+                    raise HTTPException(status_code=400, detail="Invalid JSON content provided")
+
+            # Handle image upload
+            image_url = None
+            if image:
+                file_path = f"User_{user_id}/schedule_data/{uuid}/facebook_post/{id}"
+                image_url = upload_image_to_s3(image, file_path)
+                # Update image URL in content
+                post.content["image"] = image_url
+
+   
+            flag_modified(post, "content")
+
+            # Commit changes
+            try:
+                db.commit()
+                db.refresh(post)
+                return {
+                    "message": "Post updated successfully",
+                    "image_url": image_url if image_url else None
+                }
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
+
+        elif posts == "twitter_posts":
+
+            post = db.query(LinkedinPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
+            if not post:
+                raise HTTPException(status_code=404, detail="LinkedIn post not found")
+
+            # Get current content (JSONB column)
+            current_content = post.content or {}
+            if not current_content:
+                raise HTTPException(status_code=404, detail="No content found in LinkedIn post")
+
+            # Update content if provided
+            if content:
+                try:
+                    new_content = json.loads(content)
+                    # Ensure the provided ID matches the linkedin_id in the content
+                    if id and new_content.get("twitter_id") != id:
+                        raise HTTPException(status_code=400, detail="Provided ID does not match linkedin_id in content")
+                    # Update the entire content
+                    post.content = new_content
+                except json.JSONDecodeError:
+                    raise HTTPException(status_code=400, detail="Invalid JSON content provided")
+
+            # Handle image upload
+            image_url = None
+            if image:
+                file_path = f"User_{user_id}/schedule_data/{uuid}/twitter_post/{id}"
+                image_url = upload_image_to_s3(image, file_path)
+                # Update image URL in content
+                post.content["image"] = image_url
+
+   
+            flag_modified(post, "content")
+
+            # Commit changes
+            try:
+                db.commit()
+                db.refresh(post)
+                return {
+                    "message": "Post updated successfully",
+                    "image_url": image_url if image_url else None
+                }
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
+            
+        else:
+            raise HTTPException(status_code=501, detail=f"Platform {posts} not yet implemented")    
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")   
 
