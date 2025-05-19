@@ -708,7 +708,7 @@ async def get_scheduled_posts(db: Session = Depends(get_db), user_id: int = Depe
             "twitter_posts": twitter_posts}
 
 @router.delete("/socialmedia_scheduled_posts/{posts}/{uuid}")
-async def delete_scheduled_post(posts: str, uuid: str, post_id: int, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
+async def delete_scheduled_post(posts: str, uuid: str, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
     try:
         if not posts or not uuid is None:
             raise HTTPException(status_code=400, detail="Invalid parameters provided")
