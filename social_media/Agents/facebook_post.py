@@ -127,6 +127,7 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
                 "facebook_id":facebook_id,
                 "discription": [output],
                 "image":None, 
+                "isSchedule": False,
             }
 
             previous_summaries.append(summary)

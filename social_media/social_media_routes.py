@@ -582,7 +582,8 @@ async def schedule_socialmedia_post(
         if not file:    
             raise HTTPException(status_code=404, detail="Social media file not found")
         
-        # Assuming post_data.content is a list with a single dictionary
+        
+    
         content = post_data.content[0]
         if not content:
             raise HTTPException(status_code=400, detail="Content is required for scheduling")
@@ -630,13 +631,49 @@ async def schedule_socialmedia_post(
         if not scheduled_posts:
             raise HTTPException(status_code=400, detail="No social media IDs provided")
         
+        if linkedin_id:
+            found = False
+            for post in file.linkedIn_post or []:
+                if post.get("linkedin_id") == linkedin_id:
+                    post["isSchedule"] = True
+                    found = True
+                    break
+            if not found:
+                raise HTTPException(status_code=400, detail=f"LinkedIn post with ID {linkedin_id} not found")
+            flag_modified(file, "linkedIn_post")  # Explicitly mark as modified
+        
+        if facebook_id:
+            found = False
+            for post in file.facebook_post or []:
+                if post.get("facebook_id") == facebook_id:
+                    post["isSchedule"] = True
+                    found = True
+                    break
+            if not found:
+                raise HTTPException(status_code=400, detail=f"Facebook post with ID {facebook_id} not found")
+            flag_modified(file, "facebook_post")  # Explicitly mark as modified
+        
+        if twitter_id:
+            found = False
+            for post in file.twitter_post or []:
+                if post.get("twitter_id") == twitter_id:
+                    post["isSchedule"] = True
+                    found = True
+                    break
+            if not found:
+                raise HTTPException(status_code=400, detail=f"Twitter post with ID {twitter_id} not found")
+            flag_modified(file, "twitter_post")  # Explicitly mark as modified
+        
+        # Commit all changes to the database
         db.commit()
+        # db.refresh(file)
         
         return {
             "message": f"Post scheduled successfully for {', '.join(scheduled_posts)}",
             "uuid": unique_id,
             "schedule_time": post_data.schedule_time,
-            "status": "scheduled"
+            "status": "scheduled",
+            "isScheduled": True,
         }
     
     except HTTPException as e:

@@ -114,6 +114,7 @@ def twitter_agent_call(text, json_data, num_iterations=5, hash_tag=False, emoji=
                 "twitter_id":Twitter_id,
                 "discription": [output],
                 "image":None, 
+                "isSchedule": False,
             }
 
             previous_summaries.append(summary)
