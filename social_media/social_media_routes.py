@@ -710,31 +710,37 @@ async def get_scheduled_posts(db: Session = Depends(get_db), user_id: int = Depe
 @router.delete("/socialmedia_scheduled_posts/{posts}/{uuid}")
 async def delete_scheduled_post(posts: str, uuid: str, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
     try:
-        if not posts or not uuid is None:
+        # Validate parameters
+        if not posts or not uuid:
             raise HTTPException(status_code=400, detail="Invalid parameters provided")
 
-        if posts not in ["linkedin_posts", "facebook_posts", "twitter_posts"]:
+        # Validate platform
+        valid_platforms = ["linkedin_posts", "facebook_posts", "twitter_posts"]
+        if posts not in valid_platforms:
             raise HTTPException(status_code=400, detail="Invalid social media platform specified")
-        user_id = int(user_id[1])
+        user_id = int(user_id[1])  # Extract user_id from the JWT token
+        # Query the appropriate post based on platform
         if posts == "linkedin_posts":
             post = db.query(LinkedinPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
         elif posts == "facebook_posts":
             post = db.query(FacebookPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
         elif posts == "twitter_posts":
             post = db.query(TwitterPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
-        else:
-            raise HTTPException(status_code=400, detail="Invalid social media platform")
 
+        # Check if post exists
         if not post:
             raise HTTPException(status_code=404, detail="Scheduled post not found")
 
+        # Delete the post
         db.delete(post)
         db.commit()
         return {"message": f"{posts} post deleted successfully", "post_id": post.id}
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to delete post: {str(e)}")    
+        raise HTTPException(status_code=500, detail=f"Failed to delete post: {str(e)}")
 
 @router.patch("/update_scheduled_posts/{posts}/{uuid}")
 async def update_scheduled_post(
