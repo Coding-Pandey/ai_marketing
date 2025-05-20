@@ -790,14 +790,19 @@ async def update_scheduled_post(
         if content:
             try:
                 print(f"Updating content for {posts} with: {content}")
-                new_content = json.loads(content)
-                new_content = new_content[0]
+                # new_content = json.loads(content)
+                new_content = content
+                # isinstance(content, list)
+                # new_content = new_content[0]
                 print(f"New content: {new_content}")
                 # Ensure the provided ID matches the platform-specific ID in the content
-                if id and new_content.get(id_field) != id:
-                    raise HTTPException(status_code=400, detail=f"Provided ID does not match {id_field} in content")
+                # if id and new_content.get(id_field) != id:
+                #     raise HTTPException(status_code=400, detail=f"Provided ID does not match {id_field} in content")
                 # Update the entire content
-                post.content = new_content
+                print(f"Updating content: {new_content}")
+                post.content['discription'] = [new_content]
+                # print(f"Updated content: {post.content}")
+                # post.content = new_content
             except json.JSONDecodeError:
                 raise HTTPException(status_code=400, detail="Invalid JSON content provided")
 
