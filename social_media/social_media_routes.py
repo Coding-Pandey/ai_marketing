@@ -804,8 +804,8 @@ async def update_scheduled_post(
         # Handle image upload
         image_url = None
         if image:
-            # Use id if provided, otherwise fallback to uuid
-            image_id = id or uuid
+            # Use id if provided
+            image_id = id
             file_path = f"User_{user_id}/schedule_data/{uuid}/{posts.replace('_posts', '_post')}/{image_id}"
             image_url = upload_image_to_s3(image, file_path)
             # Update image URL in content
@@ -816,7 +816,9 @@ async def update_scheduled_post(
             try:
                 from datetime import datetime
                 # Parse the reschedule time
-                post.schedule_time = datetime.strptime(reschedule_time, "%Y-%m-%d %H:%M:%S")
+                # post.schedule_time = datetime.strptime(reschedule_time, "%Y-%m-%d %H:%M:%S")
+                post.schedule_time = reschedule_time
+                print(f"Reschedule time updated: {post.schedule_time}")
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid reschedule time format. Use 'YYYY-MM-DD HH:MM:SS'.")    
 
