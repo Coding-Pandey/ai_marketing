@@ -804,7 +804,7 @@ async def update_scheduled_post(
                 # print(f"Updated content: {post.content}")
                 # post.content = new_content
             except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="Invalid JSON content provided")
+                raise HTTPException(status_code=400, detail="Invalid JSON format for content")
 
         # Handle image upload
         image_url = None
@@ -843,4 +843,26 @@ async def update_scheduled_post(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to save changes: {str(e)}")
 
+@router.patch("/edit_file_name/{uuid}")
+async def edit_file_name(
+    uuid: str,
+    new_file_name: str = Form(...),
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
+    try:
+        user_id = int(id[1])  # Extract user_id from the JWT token
+        file = db.query(SocialMediaFile).filter_by(user_id=user_id, uuid=uuid).first()
+        if not file:
+            raise HTTPException(status_code=404, detail="File not found")
 
+        file.file_name = new_file_name
+        flag_modified(file, "file_name")  # Explicitly mark as modified
+        
+        db.commit()
+        db.refresh(file)
+        return {"message": "File name updated successfully", "new_file_name": file.file_name}
+    
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update file name: {str(e)}")
