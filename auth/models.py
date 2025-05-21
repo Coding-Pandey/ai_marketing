@@ -187,7 +187,7 @@ class LinkedinPost(Base):
     __tablename__ = "linkedin_posts"
 
     id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id"), nullable=False)
+    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id", ondelete="SET NULL"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     schedule_time = Column(DateTime, default=datetime.utcnow)
     content = Column(JSONB)
@@ -195,14 +195,14 @@ class LinkedinPost(Base):
     post_id = Column(String) 
     copy_uuid = Column(String) 
 
-    linkedinfile = relationship("SocialMediaFile", back_populates="linkedin_posts")
+    linkedinfile = relationship("SocialMediaFile", back_populates="linkedin_posts", passive_deletes=True)
     user = relationship("User", back_populates="linkedin_posts")
 
 class FacebookPost(Base):
     __tablename__ = "facebook_posts"
 
     id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id"), nullable=False)
+    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id", ondelete="SET NULL"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     schedule_time = Column(DateTime, default=datetime.utcnow)
     content = Column(JSONB)
@@ -210,14 +210,14 @@ class FacebookPost(Base):
     post_id = Column(String) 
     copy_uuid = Column(String) 
 
-    facebookfile = relationship("SocialMediaFile", back_populates="facebook_posts")
+    facebookfile = relationship("SocialMediaFile", back_populates="facebook_posts", passive_deletes=True)
     user = relationship("User", back_populates="facebook_posts")
 
 class TwitterPost(Base):
     __tablename__ = "twitter_posts"
 
     id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id"), nullable=False)
+    file_id = Column(Integer, ForeignKey("socialmedia_file_data.id", ondelete="SET NULL"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     schedule_time = Column(DateTime, default=datetime.utcnow)
     content = Column(JSONB)
@@ -225,6 +225,6 @@ class TwitterPost(Base):
     post_id = Column(String) 
     copy_uuid = Column(String) 
 
-    twitterfile = relationship("SocialMediaFile", back_populates="twitter_posts")
+    twitterfile = relationship("SocialMediaFile", back_populates="twitter_posts", passive_deletes=True)
     user = relationship("User", back_populates="twitter_posts")
     

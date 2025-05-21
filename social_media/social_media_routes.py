@@ -257,7 +257,7 @@ async def socialmedia_delete_document(request: UUIDRequest, id: str = Depends(ve
         raise HTTPException(status_code=500, detail=str(e))   
     except Exception as e:
         db.rollback()
-        raise Exception(f"Error storing SEO file in table: {str(e)}")
+        raise Exception(f"Error storing file in table: {str(e)}")
     finally:
         db.close()  
 
@@ -858,7 +858,7 @@ async def edit_file_name(
 
         file.file_name = new_file_name
         flag_modified(file, "file_name")  # Explicitly mark as modified
-        
+
         db.commit()
         db.refresh(file)
         return {"message": "File name updated successfully", "new_file_name": file.file_name}
@@ -866,3 +866,4 @@ async def edit_file_name(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update file name: {str(e)}")
+    
