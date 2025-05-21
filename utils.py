@@ -1,7 +1,7 @@
 from fastapi import Request, HTTPException, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime
-from auth.models import UserPermission, FileStorage, SEOCSV, PPCCSV, SEOKeywords, PPCKeywords, SEOCluster, PPCCluster, SocialMedia
+from auth.models import UserPermission, FileStorage, SEOCSV, PPCCSV, SEOKeywords, PPCKeywords, SEOCluster,Contentgeneration, PPCCluster, SocialMedia
 from auth.auth import get_current_user 
 from auth.auth import get_db
 import json
@@ -501,7 +501,10 @@ def check_api_limit(api_name: str):
         elif api_name == "social_media":
             permission = db.query(SocialMedia).filter_by(user_id=user.id).first()   
         # elif api_name == "social_media_file":
-        #     permission = db.query().filter_by(user_id= user.id).first()      
+        #     permission = db.query().filter_by(user_id= user.id).first()    
+        # 
+        elif api_name == "content_generation":
+            permission = db.query(Contentgeneration).filter_by(user_id=user.id).first()  
         # Add more checks for other APIs here as needed
         
         else:

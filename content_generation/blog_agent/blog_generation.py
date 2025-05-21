@@ -55,9 +55,16 @@ def url_agent(items, json_data):
         total_token = response.usage.total_tokens
   
         response_json = json.loads(response_content)
-        text_data = json_to_text(response_json)
+        print(response_json)
+        # text_data = json_to_text(response_json)
+        # response_json['id'] = 1
+
+        if 'Sections' in response_json and isinstance(response_json['Sections'], list):
+            for index, section in enumerate(response_json['Sections'], start=1):
+                section['section_id'] = index 
+
         # print(text_data)
-        return text_data, total_token
+        return response_json, total_token
 
     except KeyError as e:
         print(f"Key error: {e}. The expected key was not found in the response.")

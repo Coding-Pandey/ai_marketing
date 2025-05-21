@@ -10,7 +10,8 @@ def get_default_permissions(role: str = "user"):
                 "seo_cluster": 20,
                 "ppc_cluster": 20,
                 "social_media": 20,
-                "SocialMediaFile":40,
+                "social_media_file":40,
+                "content_generation":40,
         }
     elif role == "admin":
         return {
@@ -21,7 +22,9 @@ def get_default_permissions(role: str = "user"):
             "seo_cluster": 100,
             "ppc_cluster": 100,
             "social_media": 100,
-            "SocialMediaFile":100,
+            "social_media_file":100,
+            "content_generation":100,
+
         }
     else:  # normal user
         return {
@@ -32,5 +35,6 @@ def get_default_permissions(role: str = "user"):
             "seo_cluster": 10,
             "ppc_cluster": 10,
             "social_media": 10,
-            "SocialMediaFile":15,   # schedule post limit
+            "social_media_file":15,   # schedule post limit
+            "content_generation":15, # content generation limit
         }

@@ -30,6 +30,9 @@ class User(Base):
     linkedin_posts = relationship("LinkedinPost", back_populates="user")
     facebook_posts = relationship("FacebookPost", back_populates="user")
     twitter_posts = relationship("TwitterPost", back_populates="user")
+    content_generation_records = relationship("Contentgeneration", back_populates="user")
+    content_generation_file_records = relationship("ContentgenerationFile", back_populates="user")
+    # content_generation_dropdown = relationship("ContentgenerationDropdown", back_populates="user")
 
 
 
@@ -227,4 +230,38 @@ class TwitterPost(Base):
 
     twitterfile = relationship("SocialMediaFile", back_populates="twitter_posts", passive_deletes=True)
     user = relationship("User", back_populates="twitter_posts")
-    
+
+class Contentgeneration(Base):
+    __tablename__ = "content_generation"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    call_limit = Column(Integer)
+    call_count = Column(Integer, default=0)
+    file_count = Column(Integer)
+    total_tokens = Column(Integer, default=0)
+    last_reset = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="content_generation_records")
+
+class ContentgenerationFile(Base):
+    __tablename__ = "content_generation_file_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    file_name = Column(String)
+    uuid = Column(String)  
+    last_reset = Column(DateTime, default=datetime.utcnow)
+    content_type = Column(String)
+    content_data = Column(JSONB)
+
+    user = relationship("User", back_populates="content_generation_file_records")    
+
+
+# class ContentgenerationDropdown(Base):
+#     __tablename__ = "content_generation_dropdown"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     content_type = Column(String, nullable=False)
+
+#     user = relationship("User", back_populates="content_generation_file_records")    

@@ -14,7 +14,7 @@ from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
 from datetime import datetime, timedelta
 from auth.permission import get_default_permissions
-from auth.utiles import create_permissions_for_user
+from auth.utiles import create_permissions_for_user, update_permissions_for_user
 import os
 
 class APIException(HTTPException):
@@ -251,3 +251,18 @@ def list_all_users(db: Session = Depends(get_db), _: User = Depends(get_admin_us
 def logout(token: str = Depends(oauth2_scheme)):
     # No server-side action for stateless JWT
     return JSONResponse(content={"message": "Successfully logged out. Please delete token on client."})
+
+
+@router.put("/users/{user_id}/permissions")
+def update_user_permissions(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    # Fetch the user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update permissions
+    update_permissions_for_user(user, db)
+    return {"message": "Permissions updated successfully"}

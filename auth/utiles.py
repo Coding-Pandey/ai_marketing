@@ -1,9 +1,11 @@
-from auth.models import SEOCSV, PPCCSV, SEOKeywords, PPCKeywords, SEOCluster, PPCCluster, SocialMedia, SEOFile, SocialMediaFile
+from auth.models import SEOCSV, PPCCSV, SEOKeywords, PPCKeywords, SEOCluster, PPCCluster, SocialMedia, SEOFile, SocialMediaFile, Contentgeneration
 from auth.permission import get_default_permissions
 from datetime import datetime, timedelta
 from fastapi import  HTTPException
+from sqlalchemy.orm import Session
+from auth.models import User
 
-def create_permissions_for_user(new_user, db):
+def create_permissions_for_user(new_user, db: Session):
     # Get default permissions based on the user's role
     default_permissions = get_default_permissions(role=new_user.role)
     
@@ -96,6 +98,15 @@ def create_permissions_for_user(new_user, db):
                     )
                     db.add(permission)
 
+                elif api_name == "content_generation":
+                    permission = Contentgeneration(
+                        user_id=new_user.id,
+                        call_limit=call_limit,
+                        call_count=0,
+                        last_reset=datetime.utcnow()
+                    )
+                    db.add(permission)    
+
             except Exception as e:
                         # Handle errors for each specific API insertion
                         db.rollback()  # Rollback the transaction if error occurs
@@ -108,4 +119,49 @@ def create_permissions_for_user(new_user, db):
         db.rollback()  # Rollback the entire transaction if any error occurs
         raise HTTPException(status_code=500, detail=f"Error while creating permissions for user: {str(e)}")     
     
+def update_permissions_for_user(user: User, db: Session):
+
+    default_permissions = get_default_permissions(role=user.role)
+
+    for api_name, call_limit in default_permissions.items():
+        try:
+            if api_name == "ppc_cluster":
+                # Check if the permission already exists for this user
+                permission = db.query(PPCCluster).filter(PPCCluster.user_id == user.id).first()
+                if permission:
+                    # Update existing permission
+                    # permission.call_limit = call_limit
+                    continue
+                else:
+                    # Create new permission if it doesn’t exist
+                    permission = PPCCluster(
+                        user_id=user.id,
+                        call_limit=call_limit,
+                        call_count=0,
+                        total_tokens=0,
+                        last_reset=datetime.utcnow()
+                    )
+                    db.add(permission)
+            elif api_name == "content_generation":
+                permission = db.query(Contentgeneration).filter(Contentgeneration.user_id == user.id).first()
+                if permission:
+                    # Update existing permission
+                    # permission.call_limit = call_limit
+                    continue
+                else:
+                    # Create new permission if it doesn’t exist
+                    permission = Contentgeneration(
+                        user_id=user.id,
+                        call_limit=call_limit,
+                        call_count=0,
+                        last_reset=datetime.utcnow()
+                    )
+                    db.add(permission)
+            # Add similar blocks for other APIs as needed
+        except Exception as e:
+            # Rollback on error and raise an exception with details
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error while setting permission for {api_name}: {str(e)}")
     
+    # Commit all changes if no errors occur
+    db.commit()    
