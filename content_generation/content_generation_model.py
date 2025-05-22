@@ -7,3 +7,9 @@ class UUIDRequest(BaseModel):
     def validate(self):
         if not self.uuid:
             raise ValueError("UUID must be provided")
+        
+
+class ContentGenerationFileSchema(BaseModel):
+    file_name: str
+    content_data: Dict
+    content_type: str        

@@ -5,6 +5,7 @@ from social_media.Agents.document_summared import Document_summerizer
 from S3_bucket.fetch_document import download_document
 from S3_bucket.fetch_document import download_document
 from content_generation.blog_agent.blog_generation import blog_generation
+from content_generation.blog_agent.blog_suggest import blog_suggest
 from content_generation.blog_agent.seo_blog import generation_blog_async
 from utils import verify_jwt_token, check_api_limit
 import json
@@ -13,7 +14,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.orm import Session
 from auth.models import Contentgeneration, ContentgenerationFile
 from datetime import timedelta
-from content_generation.content_generation_model import UUIDRequest
+from content_generation.content_generation_model import UUIDRequest,ContentGenerationFileSchema
 import uuid
 
 
@@ -70,7 +71,7 @@ async def content_generation(
         # Initialize variables
         summarized_text_json = {}
         total_token = 0
-        unique_id = uuid.uuid4().hex
+        # unique_id = uuid.uuid4().hex
 
         if content_type == 1:
             content_type = "blog generation"
@@ -93,35 +94,33 @@ async def content_generation(
                     content_generation_record.call_count = max(content_generation_record.call_count - 1, 0)
                 db.commit()
             
-            if json_data:
-                content_generation = ContentgenerationFile(
-                    user_id=user_id,
-                    file_name=file_name,
-                    uuid=unique_id,
-                    content_type=content_type,
-                    content_data=json_data
-                )
-                db.add(content_generation)
-                flag_modified(content_generation, "content_data")
+        #     if json_data:
+        #         content_generation = ContentgenerationFile(
+        #             user_id=user_id,
+        #             file_name=file_name,
+        #             uuid=unique_id,
+        #             content_type=content_type,
+        #             content_data=json_data
+        #         )
+        #         db.add(content_generation)
+        #         flag_modified(content_generation, "content_data")
 
-                db.commit()
-                db.refresh(content_generation)
+        #         db.commit()
+        #         db.refresh(content_generation)
 
-        # Log token usage (assuming this is needed)
-        print(f"File name: {file_name}")
-        print(f"Blog token: {total_tokens}")
-        print(f"Total token: {total_token}")
+        # # Log token usage (assuming this is needed)
+        # print(f"File name: {file_name}")
+        # print(f"Blog token: {total_tokens}")
+        # print(f"Total token: {total_token}")
 
         return JSONResponse(content={
             "filename": file_name,
-            "uuid": unique_id,
             "content_type": content_type,
             "data": json_data
         })
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
-
 
 @router.get("/content_datalist")
 async def content_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
@@ -223,6 +222,118 @@ async def content_fetch_data(uuid: str, id: str = Depends(verify_jwt_token), db:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/content_generation_uploadfile")
+async def content_generation_upload_file(
+    json_data: ContentGenerationFileSchema = Body(...),
+    id: str = Depends(verify_jwt_token),
+    # user=Depends(check_api_limit("seo_csv")),
+    db: Session = Depends(get_db)
+):
+    try:
+        # Extract data from JSON payload
+        file_content = json_data.content_data
+        file_name = json_data.file_name
+        content_type = json_data.content_type
+
+        # Validate inputs
+        if not file_content:
+            raise HTTPException(status_code=400, detail="No data provided")
+        if not file_name:
+            raise HTTPException(status_code=400, detail="No filename provided")
+        if not content_type:
+            raise HTTPException(status_code=400, detail="No content type provided")
+
+        # Extract user_id from JWT token
+        user_id = id[1]  # Assuming id is a tuple and user_id is at index 1
+
+        # Generate unique ID for the content
+        unique_id = uuid.uuid4().hex
+
+        # Create ContentGenerationFile instance
+        content_generation = ContentgenerationFile(
+            user_id=user_id,
+            file_name=file_name,
+            uuid=unique_id,
+            content_type=content_type,
+            content_data=file_content
+        )
+
+        # Database operations
+        db.add(content_generation)
+        flag_modified(content_generation, "content_data")
+        db.commit()
+        db.refresh(content_generation)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "File uploaded successfully",
+                "uuid": unique_id,
+                "filename": file_name,
+                "content_type": content_type
+            }
+        )
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )
+
+@router.post("/blog_suggestion_more")
+async def blog_suggestion_more(
+    file: Optional[UploadFile] = File(None),
+    text_data: Optional[str] = Form(None),
+    generated_blog: Optional[str] = Form(None),
+    # user = Depends(check_api_limit("content_generation")),
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token)   # Renamed to be more descriptive
+):
+    try:
+        user_id = int(user_id[1])  # Extract user_id from the JWT token
+        # Validate inputs
+
+        if not file and not text_data:
+            raise HTTPException(status_code=400, detail="Either file or text_data must be provided")
+
+        # Validate file format
+        if file and not file.filename.lower().endswith((".docx", ".doc", ".pdf")):
+            raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx, .doc, or .pdf file")
+
+        # Process file or text data
+        file_contents = await file.read() if file else text_data.encode('utf-8')
+        
+        # Initialize variables
+        summarized_text_json = {}
+        total_token = 0
+        try:
+            # Assuming blog_generation returns JSON data and token count
+            json_data, total_tokens = blog_suggest(
+                file=file_contents,
+                Generated_Blog=generated_blog,
+                json_data=summarized_text_json
+            )
+            total_token += total_tokens
+
+            return json_data
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Blog generation failed: {str(e)}")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
+
 
 # @router.post("/seo_based_blog")
 # async def Seo_based_blog(csv_data: str = Form(...), text: Optional[str] = Form(None)):

@@ -136,3 +136,48 @@ You are an expert in natural language processing and contextual reasoning. Your 
 **Note**:
 - Do not return any extra text
 """
+
+blog_suggest_prompt ="""
+Write a comprehensive blog post using the provided copy and external link sources.
+The article must integrate external information with internal factors such as tone of voice, brand identity, and target personas.
+
+**Tone of Voice Guidelines**:
+{Tone}
+**Target Buyer Persona Guidelines**:
+{Buyer}
+**Brand Identity Guidelines**:
+{Brand}
+**Offering Guidelines**:
+{Offering}
+**Generated Blog**:
+{Generated_Blog}
+
+**Requirements for the Sections**:
+    - Generated Blog:
+        check the previse Generated blog and create a new sections based on the content.
+    - Structure:
+        Use clear subheadings to outline the main arguments or points.
+        Include the following sections:
+            Decide the Subheading of the section based on the content of the generated blog.
+            generate the content of the section based on the Subheading and content of the generated blog.
+    - Formatting and Style:
+        Apply inline styling consistent with the provided tone of voice.
+        Tailor the sections to be engaging and relevant for the target personas, using a style that resonates with them.
+        Avoid hyphens throughout the article.
+        Target an overall each section length of 50 to 150 words.
+    - Additional Guidelines:
+        Blend external data and internal insights (tone of voice, brand identity, target personas) into a rich, engaging narrative.
+        Ensure a compelling flow from start to finish with smooth transitions between sections.
+
+**Output**:
+
+Return a JSON object with a single dictionary containing the following key-value pairs:
+    - Sections: An array of section objects(Maybe 2 -3), each representing a main point or argument. Each object should include:
+    - Subheading: A clear, descriptive title for the section (e.g., "Problem Overview and Implications").
+    - Content: - Detailed text for the section, written in paragraphs, incorporating the specified requirements (e.g., data, examples, actionable steps).
+               - Do not include a "topic" field within sections; focus on the subheading and content to highlight the main point.
+
+blog content
+{items}
+
+"""
