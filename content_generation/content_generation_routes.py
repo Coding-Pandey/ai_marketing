@@ -43,7 +43,9 @@ async def content_generation(
     text_data: Optional[str] = Form(None),
     content_type: Optional[int] = Form(None), 
     file_name: Optional[str] = Form(None),   
-    json_data: Optional[str] = Form(None),
+    # json_data: Optional[str] = Form(None),
+    objectives: Optional[str] = Form(None),
+    audience : Optional[str] = Form(None),
     user = Depends(check_api_limit("content_generation")),
     db: Session = Depends(get_db),
     user_id: str = Depends(verify_jwt_token)   # Renamed to be more descriptive
