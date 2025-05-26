@@ -234,8 +234,8 @@ async def content_generation_upload_file(
 ):
     try:
         # Extract data from JSON payload
-        file_content = json_data.content_data
-        file_name = json_data.file_name
+        file_content = json_data.data
+        file_name = json_data.filename
         content_type = json_data.content_type
 
         # Validate inputs
