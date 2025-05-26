@@ -17,6 +17,7 @@ from datetime import timedelta
 from content_generation.content_generation_model import UUIDRequest,ContentGenerationFileSchema
 import uuid
 import os
+from docx import Document
 
 
 router = APIRouter()
@@ -323,13 +324,19 @@ async def blog_suggestion_more(
         if not file_path and not text_data:
             raise HTTPException(status_code=400, detail="Either file or text_data must be provided")
 
-        # Validate file format
-        if file and not file.filename.lower().endswith((".docx", ".doc", ".pdf")):
-            raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx, .doc, or .pdf file")
+        # # Validate file format
+        # if file_path and not file_path.filename.lower().endswith((".docx", ".doc", ".pdf")):
+        #     raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx, .doc, or .pdf file")
 
         # Process file or text data
-        file_contents = await file.read() if file else text_data.encode('utf-8')
-        
+        if file_path:
+            # with open(file_path, "r", encoding="utf-8") as f:
+            #     content = f.read()
+            doc = Document(file_path)
+            content = "\n".join([para.text for para in doc.paragraphs])
+
+        file_contents = content if file_path else text_data.encode('utf-8')
+
         # Initialize variables
         summarized_text_json = {}
         total_token = 0
