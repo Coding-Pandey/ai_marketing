@@ -302,6 +302,9 @@ async def content_generation_upload_file(
                 # Optional: log cleanup failure
                 print(f"Failed to remove temp file: {cleanup_error}")
 
+        else:
+            print("No temp file to delete or file does not exist.")        
+
 
 
 @router.post("/blog_suggestion_more")
