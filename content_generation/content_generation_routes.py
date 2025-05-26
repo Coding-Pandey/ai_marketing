@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Body, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Body, Form, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
 from social_media.Agents.document_summared import Document_summerizer
@@ -408,7 +408,28 @@ async def update_name_and_title(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
+@router.delete("/delete_temp_file")
+def delete_temp_file(file_path: str = Query(..., description="Relative file path from frontend")):
+    # Security check: prevent directory traversal
+    if ".." in file_path or file_path.startswith("/"):
+        raise HTTPException(status_code=400, detail="Invalid file path.")
 
+    # Resolve safe base dir
+    base_dir = os.path.abspath("content_generation/tmp/uploads")
+    full_path = os.path.abspath(file_path)
+
+    # Ensure it's inside the uploads folder
+    if not full_path.startswith(base_dir):
+        raise HTTPException(status_code=403, detail="Unauthorized file path")
+
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        os.remove(full_path)
+        return {"message": f"File '{file_path}' deleted successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting file: {str(e)}")
 # @router.post("/seo_based_blog")
 # async def Seo_based_blog(csv_data: str = Form(...), text: Optional[str] = Form(None)):
 #     try:
