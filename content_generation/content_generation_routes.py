@@ -348,6 +348,54 @@ async def blog_suggestion_more(
         raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
 
 
+@router.patch("/update_name_and_title/{uuid}")
+async def update_name_and_title(
+    uuid: str,
+    new_filename: Optional[str] = Body(None),
+    new_title: Optional[str] = Body(None),
+    id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db)
+):
+    try:
+        user_id = int(id[1])
+
+        content_file = db.query(ContentgenerationFile).filter(
+            ContentgenerationFile.uuid == uuid,
+            ContentgenerationFile.user_id == user_id
+        ).first()
+
+        if not content_file:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        # If neither field is sent, raise error
+        if not new_filename and not new_title:
+            raise HTTPException(status_code=400, detail="At least one of new_filename or new_title must be provided")
+
+        if new_filename and new_filename.strip():
+            content_file.file_name = new_filename
+
+        if new_title and new_title.strip():
+            if isinstance(content_file.content_data, dict):
+                content_file.content_data["Title"] = new_title
+                flag_modified(content_file, "content_data")
+            else:
+                raise HTTPException(status_code=500, detail="content_data is not a valid JSON object")
+
+        db.commit()
+        db.refresh(content_file)
+
+        return {
+            "message": "Update successful",
+            "new_filename": content_file.file_name,
+            "new_title": content_file.content_data.get("Title", None)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
 # @router.post("/seo_based_blog")
 # async def Seo_based_blog(csv_data: str = Form(...), text: Optional[str] = Form(None)):
 #     try:
