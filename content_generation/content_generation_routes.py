@@ -239,6 +239,8 @@ async def content_generation_upload_file(
 
             # Update existing entry
             content_generation.content_data = json_data.data
+            content_generation.file_name = json_data.filename
+            
             flag_modified(content_generation, "content_data")
             db.commit()
             db.refresh(content_generation)
@@ -334,6 +336,7 @@ async def blog_suggestion_more(
             #     content = f.read()
             doc = Document(file_path)
             content = "\n".join([para.text for para in doc.paragraphs])
+            print(f"Content from file: {content[:100]}...")  # Log first 100 characters for debugging
 
         file_contents = content if file_path else text_data.encode('utf-8')
 
