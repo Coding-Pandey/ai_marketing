@@ -217,7 +217,7 @@ async def content_fetch_data(uuid: str, id: str = Depends(verify_jwt_token), db:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.patch("/content_generation_uploadfile/{uuid}")
+@router.patch("/content_generation_uploadfile/{uuid_id}")
 async def content_generation_upload_file(
     json_data: ContentGenerationFileSchema = Body(...),
     uuid_id: Optional[str] = None,
