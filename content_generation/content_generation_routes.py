@@ -108,6 +108,12 @@ async def content_generation(
                     db.commit()
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Blog generation failed: {str(e)}")
+            
+        if content_type != 1:    
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Only blog generation is supported at this time"}
+            )
 
         return JSONResponse(content={
             "filename": file_name,
@@ -115,6 +121,7 @@ async def content_generation(
             "data": json_data,
             "temp_file_path": temp_file_path  # Send this if you want to reuse the file
         })
+    
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
