@@ -229,7 +229,7 @@ async def content_generation_upload_file(
         # Extract user_id from JWT token
         user_id = id[1]  # Assuming it's a tuple like (status, user_id)
 
-        if uuid:
+        if uuid != "undefined" :
             db_query = db.query(ContentgenerationFile).filter(ContentgenerationFile.uuid == uuid)
             content_generation = db_query.first()
 
@@ -309,7 +309,7 @@ async def content_generation_upload_file(
 
 @router.post("/blog_suggestion_more")
 async def blog_suggestion_more(
-    file: Optional[UploadFile] = File(None),
+    file_path: Optional[str] = Form(None),
     text_data: Optional[str] = Form(None),
     generated_blog: Optional[str] = Form(None),
     # user = Depends(check_api_limit("content_generation")),
@@ -320,7 +320,7 @@ async def blog_suggestion_more(
         user_id = int(user_id[1])  # Extract user_id from the JWT token
         # Validate inputs
 
-        if not file and not text_data:
+        if not file_path and not text_data:
             raise HTTPException(status_code=400, detail="Either file or text_data must be provided")
 
         # Validate file format
