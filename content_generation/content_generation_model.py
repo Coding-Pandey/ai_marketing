@@ -10,6 +10,6 @@ class UUIDRequest(BaseModel):
         
 
 class ContentGenerationFileSchema(BaseModel):
-    file_name: str
-    content_data: Dict
+    filename: str
+    data: Dict
     content_type: str        
