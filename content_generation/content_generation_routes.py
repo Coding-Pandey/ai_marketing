@@ -220,7 +220,7 @@ async def content_fetch_data(uuid: str, id: str = Depends(verify_jwt_token), db:
 @router.patch("/content_generation_uploadfile/{uuid}")
 async def content_generation_upload_file(
     json_data: ContentGenerationFileSchema = Body(...),
-    uuid: Optional[str] = None,
+    uuid_id: Optional[str] = None,
     id: str = Depends(verify_jwt_token),
     temp_file_path: Optional[str] = None,
     db: Session = Depends(get_db)
@@ -229,8 +229,8 @@ async def content_generation_upload_file(
         # Extract user_id from JWT token
         user_id = id[1]  # Assuming it's a tuple like (status, user_id)
 
-        if uuid != "undefined" :
-            db_query = db.query(ContentgenerationFile).filter(ContentgenerationFile.uuid == uuid)
+        if uuid_id != "undefined":
+            db_query = db.query(ContentgenerationFile).filter(ContentgenerationFile.uuid == uuid_id)
             content_generation = db_query.first()
 
             if not content_generation:
@@ -244,7 +244,7 @@ async def content_generation_upload_file(
 
             return JSONResponse(
                 status_code=200,
-                content={"message": "File updated successfully", "uuid": uuid}
+                content={"message": "File updated successfully", "uuid": uuid_id}
             )
 
         else:
