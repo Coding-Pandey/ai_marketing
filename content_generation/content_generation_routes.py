@@ -316,7 +316,6 @@ async def content_generation_upload_file(
             print("No temp file to delete or file does not exist.")        
 
 
-
 @router.post("/blog_suggestion_more")
 async def blog_suggestion_more(
     file_path: Optional[str] = Form(None),
@@ -437,6 +436,92 @@ def delete_temp_file(file_path: str = Query(..., description="Relative file path
         return {"message": f"File '{file_path}' deleted successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting file: {str(e)}")
+    
+
+@router.post("/edit_content_generation")
+async def edit_content_generation(
+    file: Optional[UploadFile] = File(None),
+    temp_file_path: Optional[str] = None,
+    text_data: Optional[str] = Form(None),
+    content_type: Optional[int] = Form(None), 
+    file_name: Optional[str] = Form(None),   
+    objectives: Optional[str] = Form(None),
+    audience: Optional[str] = Form(None),
+    user=Depends(check_api_limit("content_generation")),
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token)
+):
+    try:
+        user_id = int(user_id[1])  
+
+        # Validate required inputs
+        if not file and not temp_file_path and not text_data:
+            raise HTTPException(status_code=400, detail="Provide either a file, a temp_file_path, or text_data")
+
+        if not file_name:
+            raise HTTPException(status_code=400, detail="File name is required")
+
+        file_contents = None
+
+        # Use uploaded file if available
+        if file:
+            # Validate file format
+            if not file.filename.lower().endswith((".docx", ".doc", ".pdf")):
+                raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx, .doc, or .pdf file")
+            file_contents = await file.read()
+
+        # If no file uploaded, try reading from temp_file_path
+        elif temp_file_path:
+            try:
+                doc = Document(temp_file_path)
+                file_contents = "\n".join([para.text for para in doc.paragraphs])
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to read from temp file path: {str(e)}")
+
+        # Validate content type
+        allowed_content_types = [1]  # Expand this if needed
+        if content_type and content_type not in allowed_content_types:
+            raise HTTPException(status_code=400, detail="Invalid content type")
+
+        summarized_text_json = {}
+        total_tokens = 0
+
+        if content_type == 1:
+            try:
+                json_data, total_tokens = blog_generation(
+                    file=file_contents,
+                    json_data=summarized_text_json
+                )
+
+                # Update user token usage
+                content_gen_record = db.query(Contentgeneration).filter(Contentgeneration.user_id == user_id).first()
+                if content_gen_record:
+                    if total_tokens > 0:
+                        content_gen_record.total_tokens += total_tokens
+                    if not json_data:
+                        content_gen_record.call_count = max(content_gen_record.call_count - 1, 0)
+                    db.commit()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Blog generation failed: {str(e)}")
+            
+        if content_type != 1:    
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Only blog generation is supported at this time"}
+            )
+
+        return JSONResponse(content={
+            "filename": file_name,
+            "content_type": "blog generation",
+            "data": json_data,
+            "temp_file_path": temp_file_path  
+        })
+    
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
+    
+
 # @router.post("/seo_based_blog")
 # async def Seo_based_blog(csv_data: str = Form(...), text: Optional[str] = Form(None)):
 #     try:
