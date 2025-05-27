@@ -462,19 +462,41 @@ async def edit_content_generation(
             raise HTTPException(status_code=400, detail="File name is required")
 
         file_contents = None
-
+        temp_file = None
         # Use uploaded file if available
-        if file:
+        if file and temp_file_path:
             # Validate file format
             if not file.filename.lower().endswith((".docx", ".doc", ".pdf")):
                 raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx, .doc, or .pdf file")
             file_contents = await file.read()
 
+            os.makedirs(TEMP_FILE_DIR, exist_ok=True)
+            new_file_path = os.path.join(TEMP_FILE_DIR, f"{uuid.uuid4().hex}_{file.filename}")
+            with open(new_file_path, "wb") as f:
+                f.write(file_contents)
+
+            temp_file = os.path.normpath(new_file_path).replace("\\", "/")
+
+            base_dir = os.path.abspath("content_generation/tmp/uploads")
+            full_path = os.path.abspath(temp_file_path)
+
+            # Ensure it's inside the uploads folder
+            if not full_path.startswith(base_dir):
+                raise HTTPException(status_code=403, detail="Unauthorized file path")
+
+            if not os.path.exists(full_path):
+                raise HTTPException(status_code=404, detail="File not found")
+            
+            os.remove(full_path)
+
+
+
         # If no file uploaded, try reading from temp_file_path
-        elif temp_file_path:
+        elif temp_file_path and not file:
             try:
                 doc = Document(temp_file_path)
                 file_contents = "\n".join([para.text for para in doc.paragraphs])
+                temp_file = temp_file_path
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Failed to read from temp file path: {str(e)}")
 
@@ -514,7 +536,7 @@ async def edit_content_generation(
             "filename": file_name,
             "content_type": "blog generation",
             "data": json_data,
-            "temp_file_path": temp_file_path  
+            "temp_file_path": temp_file  
         })
     
 

@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Enum, JSON
 from sqlalchemy.dialects.postgresql import JSONB 
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from auth.database import Base
+from enum import Enum as PyEnum
 
 class User(Base):
     __tablename__ = "users"
@@ -256,6 +257,31 @@ class ContentgenerationFile(Base):
     content_data = Column(JSONB)
 
     user = relationship("User", back_populates="content_generation_file_records")    
+
+
+# class SourceFileCategory(PyEnum):
+#     IDEAL_CUSTOMER_PROFILE = "Ideal Customer Profile"
+#     BUYER_PERSONA = "Buyer Persona"
+#     TONE_OF_VOICE = "Tone of voice"
+#     BRAND_IDENTITY = "Brand Identity"
+#     OFFERING = "Offering"
+#     COMMON_PAIN_POINTS = "Common Pain Points"
+#     VALUE_PROPOSITION = "Value Proposition"
+
+
+
+
+# class SourceFileContent(Base):
+#     __tablename__ = "SourceFileContent"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     uuid_id = Column(String, unique=True, nullable=False)
+#     category = Column(Enum(SourceFileCategory), nullable=False, index=True)
+#     extracted_text = Column(Text, nullable=True)
+#     file_name = Column(String, nullable=False)
+#     file_data = Column(JSON, nullable=True) 
+#     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
 
 # class ContentgenerationDropdown(Base):
