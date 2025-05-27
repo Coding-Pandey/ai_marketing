@@ -441,7 +441,7 @@ def delete_temp_file(file_path: str = Query(..., description="Relative file path
 @router.post("/edit_content_generation")
 async def edit_content_generation(
     file: Optional[UploadFile] = File(None),
-    temp_file_path: Optional[str] = None,
+    temp_file_path: Optional[str] = Form(None),
     text_data: Optional[str] = Form(None),
     content_type: Optional[int] = Form(None), 
     file_name: Optional[str] = Form(None),   
