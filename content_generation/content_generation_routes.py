@@ -18,6 +18,7 @@ from content_generation.content_generation_model import UUIDRequest,ContentGener
 import uuid
 import os
 from docx import Document
+import shutil
 
 
 router = APIRouter()
@@ -77,6 +78,13 @@ async def content_generation(
             file_contents = await file.read()
 
             # Save file temporarily
+            TEMP_FILE_DIR = "content_generation/tmp/uploads/User_" + str(user_id)
+            # remove the entire directory if it exists
+            if os.path.isdir(TEMP_FILE_DIR):
+                shutil.rmtree(TEMP_FILE_DIR)
+
+
+            
             os.makedirs(TEMP_FILE_DIR, exist_ok=True)
             temp_file_path = os.path.join(TEMP_FILE_DIR, f"{uuid.uuid4().hex}_{file.filename}")
             with open(temp_file_path, "wb") as f:
@@ -470,6 +478,11 @@ async def edit_content_generation(
                 raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx, .doc, or .pdf file")
             file_contents = await file.read()
 
+            TEMP_FILE_DIR = "content_generation/tmp/uploads/User_" + str(user_id)
+
+            if os.path.isdir(TEMP_FILE_DIR):
+                shutil.rmtree(TEMP_FILE_DIR)
+
             os.makedirs(TEMP_FILE_DIR, exist_ok=True)
             new_file_path = os.path.join(TEMP_FILE_DIR, f"{uuid.uuid4().hex}_{file.filename}")
             with open(new_file_path, "wb") as f:
@@ -477,17 +490,17 @@ async def edit_content_generation(
 
             temp_file = os.path.normpath(new_file_path).replace("\\", "/")
 
-            base_dir = os.path.abspath("content_generation/tmp/uploads")
-            full_path = os.path.abspath(temp_file_path)
+            # base_dir = os.path.abspath("content_generation/tmp/uploads")
+            # full_path = os.path.abspath(temp_file_path)
 
-            # Ensure it's inside the uploads folder
-            if not full_path.startswith(base_dir):
-                raise HTTPException(status_code=403, detail="Unauthorized file path")
+            # # Ensure it's inside the uploads folder
+            # if not full_path.startswith(base_dir):
+            #     raise HTTPException(status_code=403, detail="Unauthorized file path")
 
-            if not os.path.exists(full_path):
-                raise HTTPException(status_code=404, detail="File not found")
+            # if not os.path.exists(full_path):
+            #     raise HTTPException(status_code=404, detail="File not found")
             
-            os.remove(full_path)
+            # os.remove(full_path)
 
 
 
