@@ -68,6 +68,12 @@ async def content_generation(
         if file and not file.filename.lower().endswith((".docx", ".doc", ".pdf")):
             raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx, .doc, or .pdf file")
 
+        if content_type != 1:    
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Only blog generation is supported at this time"}
+            )
+        
         # Validate content type
         allowed_content_types = [1]  # Expand this if needed
         if content_type and content_type not in allowed_content_types:
@@ -117,11 +123,6 @@ async def content_generation(
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Blog generation failed: {str(e)}")
             
-        if content_type != 1:    
-            return JSONResponse(
-                status_code=400,
-                content={"message": "Only blog generation is supported at this time"}
-            )
 
         return JSONResponse(content={
             "filename": file_name,
