@@ -11,6 +11,7 @@ class Usergoogle(BaseModel):
     email: EmailStr
     oAuthId: str
     role: str = "user"
+    image_url: str = None
 
 class UserOut(BaseModel):
     id: int

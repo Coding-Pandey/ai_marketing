@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status,  Request
+from fastapi import APIRouter, Depends, HTTPException, status,  Request, Body
 from sqlalchemy.orm import Session
 from auth.schemas import UserCreate, UserOut, Token, User, Usergoogle
 from auth.models import User, UserPermission
-from auth.auth import get_db, get_password_hash, authenticate_user, create_access_token
+from auth.auth import get_db, get_password_hash, authenticate_user, create_access_token, pwd_context
 from auth.deps import get_current_active_user, get_admin_user
 from auth.auth import oauth2_scheme
 from fastapi.responses import JSONResponse
@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from auth.permission import get_default_permissions
 from auth.utiles import create_permissions_for_user, update_permissions_for_user
 import os
+from utils import verify_jwt_token, check_api_limit
+from sqlalchemy.orm.attributes import flag_modified
 
 class APIException(HTTPException):
     def __init__(self, status_code: int, detail: str):
@@ -125,6 +127,7 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
             else:
                
                 user_by_email.oAuthId = user.oAuthId
+                user_by_email.image_url = user.image_url
                 db.commit()
                 db.refresh(user_by_email)
 
@@ -266,3 +269,61 @@ def update_user_permissions(
     # Update permissions
     update_permissions_for_user(user, db)
     return {"message": "Permissions updated successfully"}
+
+
+@router.get("/user/info")
+def get_user_info(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token)
+):
+    user_id = user_id[1]
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        return JSONResponse(status_code=404, content={"message": "User not found"})
+
+    return JSONResponse(status_code=200, content={
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "image_url": user.image_url if user.image_url else None
+    })
+
+@router.post("/profile/new_password")
+def edit_new_password(
+    db: Session = Depends(get_db),
+    new_password: str = Body(...),
+    old_password: str = Body(...),
+    user_id: str = Depends(verify_jwt_token)
+):
+    user_id = user_id[1]
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        return JSONResponse(status_code=404, content={"message": "User not found"})
+
+    # Check the old password using the hash
+    if not pwd_context.verify(old_password, user.hashed_password):
+        return JSONResponse(status_code=400, content={"message": "password is incorrect"})
+
+    # Hash the new password and store it
+    user.hashed_password = pwd_context.hash(new_password)
+    db.commit()
+    flag_modified(user, "hashed_password") 
+    db.refresh(user)  
+
+    try:
+        token = create_access_token({"email": user.email, "sub": user.username, "id": user.id})
+
+    except JWTError:
+        raise JSONResponse(
+            status_code=500,
+            content={"detail": "Internal Server Error. Failed to generate access token."}
+        )
+    return JSONResponse(status_code=200, content={"message": "Password updated successfully",
+                                                   "access_token": token,
+                                                     "token_type": "bearer", 
+                                                     "user": {"username": user.username, "id": user.id, "email": user.email}})
+
+
+

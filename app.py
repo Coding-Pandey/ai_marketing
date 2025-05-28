@@ -4,6 +4,7 @@ from Ppc_process.ppc_routes import router as ppc_router
 from social_media.social_media_routes import router as social_media_router
 from content_generation.content_generation_routes import router as content_generate_router
 from S3_bucket.bucket_routes import router as bucket_router
+from settings.sourcefile_upload.fileupload_route import router as file_upload_router
 from auth.users import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -43,5 +44,7 @@ app.include_router(social_media_router, tags=["Social Media"])
 app.include_router(bucket_router, tags=["S3 Bucket"])
 # content generation
 app.include_router(content_generate_router, tags=["Content Generation"])
+# source file upload routes
+app.include_router(file_upload_router, tags=["Source File Upload"])
 
 
