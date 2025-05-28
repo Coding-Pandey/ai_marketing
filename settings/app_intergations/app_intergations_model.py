@@ -28,7 +28,7 @@ OAUTH_CONFIG: Dict[ProviderEnum, OAuthConfig] = {
         auth_url     = "https://accounts.google.com/o/oauth2/v2/auth",
         token_url    = "https://oauth2.googleapis.com/token",
         scopes       = "openid email profile https://www.googleapis.com/auth/webmasters.readonly",
-        redirect_uri = "http://localhost:8000/auth/google_search_console"
+        redirect_uri = "https://api.optiminder.com/api/auth/google_search_console"
     ),
 
     ProviderEnum.GOOGLE_ANALYTICS: OAuthConfig(
