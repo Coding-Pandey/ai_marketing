@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from auth.database import Base
 from enum import Enum as PyEnum
+from settings.app_intergations.app_intergations_model import ProviderEnum
 
 class User(Base):
     __tablename__ = "users"
@@ -36,6 +37,7 @@ class User(Base):
     content_generation_file_records = relationship("ContentgenerationFile", back_populates="user")
     # content_generation_dropdown = relationship("ContentgenerationDropdown", back_populates="user")
     source_file_records = relationship("SourceFileContent", back_populates="user")
+    integrations_auth = relationship("Integration", back_populates="user", cascade="all, delete-orphan")
 
 
 
@@ -260,7 +262,6 @@ class ContentgenerationFile(Base):
 
     user = relationship("User", back_populates="content_generation_file_records")   
 
-
 class SourceFileCategory(PyEnum):
     IDEAL_CUSTOMER_PROFILE = "Ideal Customer Profile"
     BUYER_PERSONA = "Buyer Persona"
@@ -269,9 +270,6 @@ class SourceFileCategory(PyEnum):
     OFFERING = "Offering"
     COMMON_PAIN_POINTS = "Common Pain Points"
     VALUE_PROPOSITION = "Value Proposition"
-
-
-
 
 class SourceFileContent(Base):
     __tablename__ = "SourceFileContent"
@@ -285,10 +283,21 @@ class SourceFileContent(Base):
     file_data = Column(JSON, nullable=True) 
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
-    user = relationship("User", back_populates="source_file_records")    
+    user = relationship("User", back_populates="source_file_records")
 
+class Integration(Base):
+    __tablename__ = "integrations_apps"
 
+    id            = Column(Integer, primary_key=True, index=True)
+    user_id       = Column(Integer, ForeignKey("users.id"), nullable=False)
+    provider      = Column(Enum(ProviderEnum), nullable=False)
+    access_token  = Column(String, nullable=False)
+    refresh_token = Column(String, nullable=True)
+    expires_at    = Column(DateTime, nullable=True)
+    scope         = Column(String, nullable=True)
+    created_at    = Column(DateTime, default=datetime.utcnow)
 
+    user = relationship("User", back_populates="integrations_auth")
 
 # class ContentgenerationDropdown(Base):
 #     __tablename__ = "content_generation_dropdown"
