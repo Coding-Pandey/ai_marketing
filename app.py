@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from Seo_process.seo_routes import router as seo_router
+from Seo_process.v2 import router as seo_v2_router
 from Ppc_process.ppc_routes import router as ppc_router
 from social_media.social_media_routes import router as social_media_router
 from content_generation.content_generation_routes import router as content_generate_router
@@ -49,5 +50,8 @@ app.include_router(content_generate_router, tags=["Content Generation"])
 app.include_router(file_upload_router, tags=["Source File Upload"])
 
 app.include_router(app_intergations_router, tags=["Apps Integration"])
+
+# SEO v2 routes
+app.include_router(seo_v2_router, tags=["SEO v2"])
 
 

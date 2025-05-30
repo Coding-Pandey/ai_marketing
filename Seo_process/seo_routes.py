@@ -116,7 +116,6 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
         raise HTTPException(status_code=500, detail=str(e))    
     
 
-
 @router.post("/seo_keyword_clustering")
 async def seo_keyword_clustering(request: KeywordClusterRequest,
                                 user= Depends(check_api_limit("seo_cluster")),
@@ -139,7 +138,7 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
         if delete_word and delete_word.branded_keyword:
             # print("hello",request.branded_keyword)
             keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
-            add_keywords_to_json(delete_word.branded_keyword)   
+            # add_keywords_to_json(delete_word.branded_keyword)   
         # Read file contents and convert to DataFrame
         print("hello")
         df = pd.DataFrame([k.dict() for k in keywords]) 
@@ -364,7 +363,6 @@ async def ppc_delete_document(request: UUIDRequest, id: str = Depends(verify_jwt
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-
 
 @router.delete("/seo-files/{seo_file_uuid}/keywords/{keyword_id}")
 async def seo_delete_keyword(seo_file_uuid: str, keyword_id: str, db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):

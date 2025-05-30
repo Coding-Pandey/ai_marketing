@@ -43,7 +43,6 @@ def login(provider_name: ProviderEnum,
     return {"url": f"{cfg.auth_url}?{query}"}
 
 
-
 @router.get("/auth/{provider_name}")
 def auth_callback(
     provider_name: ProviderEnum,
@@ -64,11 +63,11 @@ def auth_callback(
     token_resp = requests.post(
         cfg.token_url,
         data={
-            "code":         code,
-            "client_id":   GOOGLE_CLIENT_ID,
-            "client_secret":GOOGLE_CLIENT_SECRET,
+            "code": code,
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
             "redirect_uri": cfg.redirect_uri,
-            "grant_type":   "authorization_code"
+            "grant_type": "authorization_code"
         }
     )
     token_data = token_resp.json()
@@ -101,8 +100,10 @@ def auth_callback(
         if token_data.get("refresh_token"):
             integration.refresh_token = token_data["refresh_token"]
         integration.expires_at = expires_at
-        integration.scope      = cfg.scopes
+        integration.scope = cfg.scopes
 
     db.commit()
 
     return {"message": f"{provider_name.value.capitalize()} credentials saved."}
+
+
