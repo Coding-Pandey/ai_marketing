@@ -86,7 +86,7 @@ async def upload_and_parse_file(
     db.commit()
     db.refresh(record)
 
-    return {"message": "File content saved", "record_id": record.id}
+    return {"message": "File content saved", "record_id": record.id, "file_name":file_name, "uuid_id": uuid_id}
 
 @router.patch("/upload_and_parse/{uuid_id}")
 async def upload_and_parse_file(
@@ -135,6 +135,6 @@ async def upload_and_parse_file(
     db.commit()
     db.refresh(record)
 
-    return {"message": "File content saved", "record_id": record.id}
+    return {"message": "File content saved", "record_id": record.id,"file_name":file_name, "uuid_id": uuid_id}
 
 
