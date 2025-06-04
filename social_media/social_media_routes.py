@@ -23,7 +23,7 @@ import traceback
 from utils import verify_jwt_token, check_api_limit
 from sqlalchemy.orm.attributes import flag_modified
 from auth.auth import get_db
-from auth.models import SocialMediaFile, SocialMedia, LinkedinPost, FacebookPost, TwitterPost
+from auth.models import SocialMediaFile, SocialMedia, LinkedinPost, FacebookPost, TwitterPost, SourceFileContent
 # Soical media post
 @router.post("/social_media_post")
 async def social_media_post(
@@ -866,4 +866,21 @@ async def edit_file_name(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update file name: {str(e)}")
+
+
+@router.get("/file_name_data")
+async def database_file_name(
+    db:Session = Depends(get_db),
+    user_id: int = Depends(verify_jwt_token)
+):
+    user_id = int(user_id[1])
+
+    files = db.query(SourceFileContent.uuid_id, SourceFileContent.file_name, SourceFileContent.category).filter(
+        SourceFileContent.user_id == user_id
+    ).all()
+
+    # Convert list of tuples to list of dicts
+    data = [{"uuid_id": f[0], "file_name": f[1], "category": f[2]} for f in files]
+
+    return data
     

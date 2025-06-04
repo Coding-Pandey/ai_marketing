@@ -50,7 +50,6 @@ app.include_router(content_generate_router, tags=["Content Generation"])
 app.include_router(file_upload_router, tags=["Source File Upload"])
 
 app.include_router(app_intergations_router, tags=["Apps Integration"])
-
 # SEO v2 routes
 app.include_router(seo_v2_router, tags=["SEO v2"])
 
