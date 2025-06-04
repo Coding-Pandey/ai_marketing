@@ -299,6 +299,16 @@ class Integration(Base):
 
     user = relationship("User", back_populates="integrations_auth")
 
+# class BrandedKeywords(Base):
+#     __tablename__ = "branded_keywords"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     keywords = Column(String, nullable=False)
+#     created_at = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="branded_keywords_records")   
+
 # class ContentgenerationDropdown(Base):
 #     __tablename__ = "content_generation_dropdown"
 

@@ -62,3 +62,12 @@ class RemoveKeyword(BaseModel):
 class KeywordClusterRequest(BaseModel):
     keywords: List[KeywordItem]
     delete_word: Optional[RemoveKeyword] = None    
+
+
+class SiteData(BaseModel):
+    site_url: str
+    search_type: str = "web"  # e.g., "web", "image", "video"
+    country: Optional[str] = None  # ISO 3166-1 alpha-3 code, e.g., "USA"
+    device_type: Optional[str] = None  # e.g., "mobile", "desktop", "tablet"
+    start_date: str  # YYYY-MM-DD
+    end_date: str       

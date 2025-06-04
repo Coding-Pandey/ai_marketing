@@ -9,6 +9,7 @@ from docx import Document
 from io import BytesIO
 import uuid
 import datetime
+# import textract 
 
 
 router = APIRouter()
@@ -29,7 +30,6 @@ async def get_uploaded_files(user_id: str = Depends(verify_jwt_token), db: Sessi
 
     return {"uploaded_files": files}
 
-
 @router.delete("/delete_Source_file/{uuid_id}")
 async def delete_source_file(uuid_id: str, user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
     user_id = user_id[1]
@@ -46,7 +46,6 @@ async def delete_source_file(uuid_id: str, user_id: str = Depends(verify_jwt_tok
     flag_modified(file_record, "file_data")  # Mark file_data as modified if needed
 
     return {"message": "File deleted successfully"}
-
 
 @router.post("/upload_and_parse")
 async def upload_and_parse_file(
@@ -87,5 +86,55 @@ async def upload_and_parse_file(
     db.commit()
     db.refresh(record)
 
-    return {"message": "File content saved", "record_id": record.id}
+    return {"message": "File content saved", "record_id": record.id, "file_name":file_name, "uuid_id": uuid_id}
+
+@router.patch("/upload_and_parse/{uuid_id}")
+async def upload_and_parse_file(
+    uuid_id: str,
+    category: SourceFileCategory = Form(...),
+    file: UploadFile = File(...),
+    file_name: str = Form(...),
+    user_id: str = Depends(verify_jwt_token),
+    db: Session = Depends(get_db)
+):
+    # Extract user_id from the tuple returned by verify_jwt_token
+    user_id = user_id[1]
+
+    # Find existing record
+    record = db.query(SourceFileContent).filter(
+        SourceFileContent.uuid_id == uuid_id,
+        SourceFileContent.user_id == user_id
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=404, detail="File record not found")
+
+    if file:
+        file_ext = file.filename.lower().split(".")[-1]
+        file_bytes = await file.read()
+
+        if file_ext == "docx":
+            doc = Document(BytesIO(file_bytes))
+            text = "\n".join([para.text for para in doc.paragraphs])
+        # elif file_ext == "doc":
+        #     try:
+        #         text = textract.process(BytesIO(file_bytes), extension='doc').decode('utf-8')
+        #     except Exception as e:
+        #         raise HTTPException(status_code=500, detail=f"Error processing .doc file: {str(e)}")
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format. Only .docx and .doc are supported.")
+
+        # Update record
+        json_data = {category.name: text}
+        record.file_data = json_data
+
+    if file_name:
+        record.file_name = file_name
+
+    flag_modified(record, "file_data")  # Mark the JSON column as modified
+    db.commit()
+    db.refresh(record)
+
+    return {"message": "File content saved", "record_id": record.id,"file_name":file_name, "uuid_id": uuid_id}
+
 

@@ -110,7 +110,7 @@ async def ppc_keyword_clustering(request: KeywordClusterRequest,user=Depends(che
         if delete_word and delete_word.branded_keyword:
             # print("hello",request.branded_keyword)
             keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
-            add_keywords_to_json(delete_word.branded_keyword)  
+            # add_keywords_to_json(delete_word.branded_keyword)  
         
         # Convert keywords to DataFrame
         df = pd.DataFrame([k.dict() for k in keywords])

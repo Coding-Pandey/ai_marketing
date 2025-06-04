@@ -11,6 +11,7 @@ from auth.models import Integration
 
 from utils import verify_jwt_token, check_api_limit
 from auth.auth import get_db
+from typing import List
 
 load_dotenv()
 
@@ -43,7 +44,6 @@ def login(provider_name: ProviderEnum,
     return {"url": f"{cfg.auth_url}?{query}"}
 
 
-
 @router.get("/auth/{provider_name}")
 def auth_callback(
     provider_name: ProviderEnum,
@@ -64,11 +64,11 @@ def auth_callback(
     token_resp = requests.post(
         cfg.token_url,
         data={
-            "code":         code,
-            "client_id":   GOOGLE_CLIENT_ID,
-            "client_secret":GOOGLE_CLIENT_SECRET,
+            "code": code,
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
             "redirect_uri": cfg.redirect_uri,
-            "grant_type":   "authorization_code"
+            "grant_type": "authorization_code"
         }
     )
     token_data = token_resp.json()
@@ -101,8 +101,46 @@ def auth_callback(
         if token_data.get("refresh_token"):
             integration.refresh_token = token_data["refresh_token"]
         integration.expires_at = expires_at
-        integration.scope      = cfg.scopes
+        integration.scope = cfg.scopes
 
     db.commit()
 
-    return {"message": f"{provider_name.value.capitalize()} credentials saved."}
+    url = f"https://app.optiminder.com/ProfileSettingSuccess/{provider_name}"
+    print(url)
+
+    return RedirectResponse(url=url, status_code=302)
+
+
+
+
+@router.get("/app_integration_data")
+async def integration_data(
+    db: Session = Depends(get_db),
+    user_token: tuple = Depends(verify_jwt_token),
+):
+    # verify_jwt_token() returns something like (sub, user_id)
+    user_id = user_token[1]
+
+    # 1. Query all Integration rows for this user in one shot
+    rows: List[Integration] = (
+        db.query(Integration)
+          .filter(Integration.user_id == user_id)
+          .all()
+    )
+
+    # 2. Build a set of all providers this user has already connected
+    connected_providers = { row.provider for row in rows }
+
+    # 3. Now loop over EVERY ProviderEnum to see if it’s in that set
+    result_list = []
+    for prov in ProviderEnum:
+        result_list.append({
+            "provider": prov.value,
+            "connected": (prov in connected_providers)
+        })
+
+    # 4. Return a JSON array telling which providers are connected vs not
+    return { "user_id": user_id, "integrations": result_list }
+
+
+
