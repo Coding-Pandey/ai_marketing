@@ -25,9 +25,6 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 
-REFRESH_TOKEN = ""
-ACCESS_TOKEN = ""
-
 
 
 def connect_search_console(access_token, refresh_token, client_id, client_secret):

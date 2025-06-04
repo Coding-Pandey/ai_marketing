@@ -19,8 +19,7 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 # REFRESH_TOKEN = os.getenv("REFRESH_TOKEN")
 # ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
-REFRESH_TOKEN = ""
-ACCESS_TOKEN =""
+
 SITE_URL = "https://optiminder.com/"
 
 # OAuth scope
