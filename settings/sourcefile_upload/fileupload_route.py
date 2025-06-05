@@ -25,6 +25,7 @@ async def get_uploaded_files(user_id: str = Depends(verify_jwt_token), db: Sessi
             "file_name": file.file_name,
             "category": file.category,
             "uuid_id": file.uuid_id,
+            "uploaded_file_name":file.extracted_text
         } for file in files
     ]
 
@@ -57,6 +58,7 @@ async def upload_and_parse_file(
 ):
     # Extract text from file
     user_id = user_id[1]
+    uploaded_file_name = file.filename
 
     file_ext = file.filename.lower().split(".")[-1]
     file_bytes = await file.read()
@@ -79,14 +81,14 @@ async def upload_and_parse_file(
         file_name=file_name,
         category=category,
         uploaded_at=datetime.datetime.now(),
-        # extracted_text=text
+        extracted_text=uploaded_file_name,
         file_data = json_data
     )
     db.add(record)
     db.commit()
     db.refresh(record)
 
-    return {"message": "File content saved", "record_id": record.id, "file_name":file_name, "uuid_id": uuid_id}
+    return {"message": "File content saved", "record_id": record.id, "file_name":file_name, "uuid_id": uuid_id, "uploaded_file_name":uploaded_file_name}
 
 @router.patch("/upload_and_parse/{uuid_id}")
 async def upload_and_parse_file(
@@ -114,6 +116,7 @@ async def upload_and_parse_file(
         file_bytes = await file.read()
 
         if file_ext == "docx":
+            uploaded_file_name = file.filename
             doc = Document(BytesIO(file_bytes))
             text = "\n".join([para.text for para in doc.paragraphs])
         # elif file_ext == "doc":
@@ -127,6 +130,7 @@ async def upload_and_parse_file(
         # Update record
         json_data = {category.name: text}
         record.file_data = json_data
+        record.extracted_text = uploaded_file_name
 
     if file_name:
         record.file_name = file_name
