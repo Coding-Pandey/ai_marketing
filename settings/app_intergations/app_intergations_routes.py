@@ -127,6 +127,8 @@ async def integration_data(
           .filter(Integration.user_id == user_id)
           .all()
     )
+    if rows is None:
+        return []
 
     # 2. Build a set of all providers this user has already connected
     connected_providers = { row.provider for row in rows }
