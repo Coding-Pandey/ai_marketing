@@ -51,7 +51,7 @@ async def delete_source_file(uuid_id: str, user_id: str = Depends(verify_jwt_tok
 @router.post("/upload_and_parse")
 async def upload_and_parse_file(
     category: SourceFileCategory = Form(...),
-    file: UploadFile = File(...),
+    file:UploadFile = File(...),
     file_name: str = Form(...),
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
@@ -94,8 +94,8 @@ async def upload_and_parse_file(
 async def upload_and_parse_file(
     uuid_id: str,
     category: SourceFileCategory = Form(...),
-    file: UploadFile = File(...),
-    file_name: str = Form(...),
+    file: UploadFile = File(None),
+    file_name: str = Form(None),
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
 ):
