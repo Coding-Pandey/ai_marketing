@@ -114,6 +114,7 @@ async def get_search_console_data(
     Returns comparison metrics, line plot data, and keyword ranking distribution.
     """
     try:
+        user_id = user_id[1]
         # Validate date range
         start_dt = datetime.strptime(data.start_date, "%Y-%m-%d")
         end_dt = datetime.strptime(data.end_date, "%Y-%m-%d")
@@ -243,6 +244,7 @@ async def get_ranking_keywords_analysis(data: SiteData,
         - Summary statistics
     """
     try:
+        user_id = user_id[1]
         user_auth = db.query(Integration).filter(
             Integration.user_id == user_id,
             Integration.provider == "GOOGLE_SEARCH_CONSOLE"
