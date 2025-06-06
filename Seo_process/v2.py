@@ -693,3 +693,34 @@ async def get_search_console_metrics(
 
 
 
+@router.get("/report_filter")
+async def get_countries():
+    """Get list of available countries with their codes"""
+    try:
+        import pycountry
+        search_types= ["web", "image", "video"],
+        device_types= ["mobile", "desktop", "tablet"]
+        countries = [
+            {"name": country.name, "code": country.alpha_3}
+            for country in pycountry.countries
+        ]
+        return {"countries": countries,
+                "search_types": search_types,
+        "device_types":device_types }
+    except Exception as e:
+        # Fallback list of common countries
+        common_countries = [
+            {"name": "United States", "code": "USA"},
+            {"name": "United Kingdom", "code": "GBR"},
+            {"name": "Canada", "code": "CAN"},
+            {"name": "Australia", "code": "AUS"},
+            {"name": "Germany", "code": "DEU"},
+            {"name": "France", "code": "FRA"},
+            {"name": "India", "code": "IND"},
+            {"name": "Japan", "code": "JPN"},
+            {"name": "Brazil", "code": "BRA"},
+            {"name": "Mexico", "code": "MEX"}
+        ]
+        return {"countries": common_countries,
+                "search_types": search_types,
+        "device_types":device_types }
