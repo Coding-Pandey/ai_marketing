@@ -11,7 +11,6 @@ import uuid
 import datetime
 # import textract 
 
-
 router = APIRouter()
 
 @router.get("/uploaded_files")
@@ -99,7 +98,7 @@ async def upload_and_parse_file(
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
 ):
-    # Extract user_id from the tuple returned by verify_jwt_token
+
     user_id = user_id[1]
 
     # Find existing record

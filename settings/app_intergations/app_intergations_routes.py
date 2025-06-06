@@ -77,6 +77,7 @@ def auth_callback(
         raise HTTPException(400, token_data["error_description"])
 
     expires_at = datetime.utcnow() + timedelta(seconds=token_data.get("expires_in", 0))
+    print(expires_at)
 
     # Upsert into your Integration table
     user_id = int(state)
@@ -111,7 +112,31 @@ def auth_callback(
     return RedirectResponse(url=url, status_code=302)
 
 
-
+@router.get("/refresh_token/{provider_name}")
+def refresh_token(provider_name: ProviderEnum, db: Session = Depends(get_db), user_id: int = Depends(verify_jwt_token)):
+    user_id = user_id[1]
+    integration = db.query(Integration).filter_by(user_id=user_id, provider=provider_name).first()
+    if not integration or not integration.refresh_token:
+        raise HTTPException(400, "No refresh token found")
+    cfg = OAUTH_CONFIG.get(provider_name)
+    if not cfg:
+        raise HTTPException(404, f"No OAuth config for {provider_name}")
+    token_resp = requests.post(cfg.token_url, data={
+        "grant_type": "refresh_token",
+        "refresh_token": integration.refresh_token,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET
+    })
+    token_data = token_resp.json()
+    if "error" in token_data:
+        raise HTTPException(400, token_data["error_description"])
+    integration.access_token = token_data["access_token"]
+    
+    if "refresh_token" in token_data:
+        integration.refresh_token = token_data["refresh_token"]
+    integration.expires_at = datetime.utcnow() + timedelta(seconds=token_data.get("expires_in", 0))
+    db.commit()
+    return {"message": "Token refreshed successfully"}
 
 @router.get("/app_integration_data")
 async def integration_data(

@@ -17,7 +17,7 @@ from utils import verify_jwt_token
 import webbrowser
 import http.server
 import socketserver
-from Seo_process.main import (
+from Seo_process.branded_keywords_analysis import (
     BATCH_SIZE, DailyMetrics, KeywordCTREntry, KeywordClicksEntry,
     KeywordImpressionsEntry, KeywordLists, KeywordMetrics, KeywordPositionEntry,
     SearchConsoleRequest, SearchConsoleResponse, fetch_all_data_paginated,
@@ -25,7 +25,7 @@ from Seo_process.main import (
     safe_divide, safe_percentage
 )
 import requests
-
+from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 
@@ -98,8 +98,16 @@ async def get_verified_sites(user_id: str = Depends(verify_jwt_token), db: Sessi
 
         sites = service.sites().list().execute()
         return {"sites": sites.get("siteEntry", [])}
+    except RefreshError:
+        # Handle case where refresh token is invalid
+        raise HTTPException(
+            status_code=401,
+            detail="Refresh token is invalid. Please re-link your Google Search Console account."
+        )
     except Exception as e:
+        # Handle other unexpected errors
         raise HTTPException(status_code=500, detail=str(e))
+
     
     
 @router.post("/search_console/")
@@ -224,10 +232,6 @@ async def get_search_console_data(
     except Exception as e:
         print(f"Error: {str(e)}")  # For debugging
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-
-
-
 
 
 @router.post("/ranking_keywords/")
