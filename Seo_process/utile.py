@@ -127,22 +127,33 @@ class DataProcessor:
     
     @staticmethod
     def summarize_metrics(df: pd.DataFrame) -> dict:
-        """Summarize key metrics from dataframe"""
+        """Summarize key metrics from dataframe including Ranking Keywords and Ranking URLs"""
         if df.empty:
-            return {'Clicks': 0, 'Impressions': 0, 'CTR': 0, 'AvgPosition': 0}
+            return {
+                'Clicks': 0,
+                'Impressions': 0,
+                'CTR': 0,
+                'AvgPosition': 0,
+                'Ranking_Keywords': 0,
+                'Ranking_URLs': 0
+            }
         
         total_clicks = df['clicks'].sum()
         total_impressions = df['impressions'].sum()
         ctr = (total_clicks / total_impressions) * 100 if total_impressions > 0 else 0
         avg_position = df['position'].mean()
+        unique_keywords = df['query'].nunique()
+        unique_urls = df['page'].nunique()
         
         return {
             'Clicks': int(total_clicks),
             'Impressions': int(total_impressions),
             'CTR': round(float(ctr), 2),
-            'AvgPosition': round(float(avg_position), 2)
+            'AvgPosition': round(float(avg_position), 2),
+            'Ranking_Keywords': int(unique_keywords),
+            'Ranking_URLs': int(unique_urls)
         }
-    
+        
     @staticmethod
     def compare_metrics(current: dict, previous: dict) -> dict:
         """Compare current vs previous metrics with proper percentage calculations"""

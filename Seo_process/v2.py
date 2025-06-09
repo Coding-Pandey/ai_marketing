@@ -724,3 +724,5 @@ async def get_countries():
         return {"countries": common_countries,
                 "search_types": search_types,
         "device_types":device_types }
+    
+    
