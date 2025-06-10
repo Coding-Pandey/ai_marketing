@@ -6,7 +6,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import re
 from pydantic import BaseModel, HttpUrl
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 import os
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
@@ -235,16 +235,19 @@ class DailyMetrics(BaseModel):
     generic_ctr: float
     generic_avg_position: float
 
+class DiffMetrics(BaseModel):
+    ctr: Dict[str, float]
+    position: Dict[str, float]
+    click: Dict[str, float]
+    impression: Dict[str, float]
+
 class SearchConsoleResponse(BaseModel):
-    diff_ctr:Dict[str, float]
-    diff_position:Dict[str, float]
-    diff_click:Dict[str, float]
-    diff_impression:Dict[str, float]
+    # diff_metrics: DiffMetrics
     click_percentage: Dict[str, float]
     impression_percentage: Dict[str, float]
+    pie_chart_data: Dict[str, Dict[str, Union[int, float]]]  # Single pie chart data structure
     branded_keywords: KeywordMetrics
     non_branded_keywords: KeywordMetrics
     branded_keyword_list: KeywordLists
     generic_keyword_list: KeywordLists
     daily_metrics: List[DailyMetrics]
-

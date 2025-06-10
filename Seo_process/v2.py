@@ -22,7 +22,7 @@ from Seo_process.branded_keywords_analysis import (
     KeywordImpressionsEntry, KeywordLists, KeywordMetrics, KeywordPositionEntry,
     SearchConsoleRequest, SearchConsoleResponse, fetch_all_data_paginated,
     format_fluctuation, get_previous_period_dates, process_search_console_data,
-    safe_divide, safe_percentage
+    safe_divide, safe_percentage, DiffMetrics
 )
 import requests
 from google.auth.exceptions import RefreshError
@@ -299,6 +299,7 @@ async def get_ranking_keywords_analysis(data: SiteData,
         print(f"Error in ranking keywords analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
+
 @router.post("/branded_word_analysis", response_model=SearchConsoleResponse)
 async def get_search_console_metrics(
     request: SearchConsoleRequest,
@@ -435,49 +436,94 @@ async def get_search_console_metrics(
         total_clicks = df_current['clicks'].sum()
         total_impressions = df_current['impressions'].sum()
 
-        clicke_diff = {
-            "branded_click": int(branded_current['clicks'].sum()),
-            "branded_pct": safe_divide(branded_current['clicks'].sum(), branded_prev['clicks'].sum()) * 100 if not branded_prev.empty else 0,
-            "generic_click": int(non_branded_current['clicks'].sum()),
-            "generic_pct": safe_divide(non_branded_current['clicks'].sum(), non_branded_prev['clicks'].sum()) * 100 if not non_branded_prev.empty else 0,
+        # Calculate pie chart data for clicks
+        total_branded_clicks = int(branded_current['clicks'].sum())
+        total_generic_clicks = int(non_branded_current['clicks'].sum())
+        total_clicks = total_branded_clicks + total_generic_clicks
+
+        # Calculate pie chart data for impressions
+        total_branded_impressions = int(branded_current['impressions'].sum())
+        total_generic_impressions = int(non_branded_current['impressions'].sum())
+        total_impressions = total_branded_impressions + total_generic_impressions
+
+        # Calculate CTR values for pie chart and diff calculations - MOVED HERE
+        branded_curr_ctr_for_diff = safe_divide(branded_current['clicks'].sum(), branded_current['impressions'].sum()) * 100
+        branded_prev_ctr_for_diff = safe_divide(branded_prev['clicks'].sum(), branded_prev['impressions'].sum()) * 100 if not branded_prev.empty else 0
+        generic_curr_ctr_for_diff = safe_divide(non_branded_current['clicks'].sum(), non_branded_current['impressions'].sum()) * 100
+        generic_prev_ctr_for_diff = safe_divide(non_branded_prev['clicks'].sum(), non_branded_prev['impressions'].sum()) * 100 if not non_branded_prev.empty else 0
+
+        # Calculate pie chart data for CTR
+        branded_curr_ctr = branded_curr_ctr_for_diff
+        generic_curr_ctr = generic_curr_ctr_for_diff
+        total_curr_ctr = safe_divide(total_clicks, total_impressions) * 100
+
+        # Calculate Position values for pie chart and diff calculations - MOVED HERE
+        branded_curr_pos_for_diff = branded_current['position'].mean() if len(branded_current) > 0 else 0
+        branded_prev_pos_for_diff = branded_prev['position'].mean() if len(branded_prev) > 0 else 0
+        generic_curr_pos_for_diff = non_branded_current['position'].mean() if len(non_branded_current) > 0 else 0
+        generic_prev_pos_for_diff = non_branded_prev['position'].mean() if len(non_branded_prev) > 0 else 0
+
+        if pd.isna(branded_curr_pos_for_diff): branded_curr_pos_for_diff = 0
+        if pd.isna(branded_prev_pos_for_diff): branded_prev_pos_for_diff = 0
+        if pd.isna(generic_curr_pos_for_diff): generic_curr_pos_for_diff = 0
+        if pd.isna(generic_prev_pos_for_diff): generic_prev_pos_for_diff = 0
+
+        # Calculate pie chart data for Position (Average)
+        branded_curr_pos = branded_curr_pos_for_diff
+        generic_curr_pos = generic_curr_pos_for_diff
+        total_curr_pos = df_current['position'].mean() if len(df_current) > 0 else 0
+
+        if pd.isna(total_curr_pos): total_curr_pos = 0
+
+        # Combine all pie chart data into a single structure
+        pie_chart_data = {
+            "clicks": {
+                "branded_value": total_branded_clicks,
+                "branded_percentage": round((total_branded_clicks / total_clicks) * 100, 1) if total_clicks > 0 else 0,
+                "generic_value": total_generic_clicks,
+                "generic_percentage": round((total_generic_clicks / total_clicks) * 100, 1) if total_clicks > 0 else 0,
+                "total": total_clicks,
+                "branded_pct_diff": safe_percentage(branded_current['clicks'].sum(), branded_prev['clicks'].sum()),
+                "generic_pct_diff": safe_percentage(non_branded_current['clicks'].sum(), non_branded_prev['clicks'].sum())
+            },
+            "impressions": {
+                "branded_value": total_branded_impressions,
+                "branded_percentage": round((total_branded_impressions / total_impressions) * 100, 1) if total_impressions > 0 else 0,
+                "generic_value": total_generic_impressions,
+                "generic_percentage": round((total_generic_impressions / total_impressions) * 100, 1) if total_impressions > 0 else 0,
+                "total": total_impressions,
+                "branded_pct_diff": safe_percentage(branded_current['impressions'].sum(), branded_prev['impressions'].sum()),
+                "generic_pct_diff": safe_percentage(non_branded_current['impressions'].sum(), non_branded_prev['impressions'].sum())
+            },
+            "ctr": {
+                "branded_value": round(branded_curr_ctr, 2),
+                "branded_percentage": round((branded_curr_ctr / total_curr_ctr) * 100, 1) if total_curr_ctr > 0 else 0,
+                "generic_value": round(generic_curr_ctr, 2),
+                "generic_percentage": round((generic_curr_ctr / total_curr_ctr) * 100, 1) if total_curr_ctr > 0 else 0,
+                "total": round(total_curr_ctr, 2),
+                "branded_pct_diff": branded_curr_ctr_for_diff - branded_prev_ctr_for_diff, 
+                "generic_pct_diff": generic_curr_ctr_for_diff - generic_prev_ctr_for_diff
+            },
+            "position": {
+                "branded_value": round(float(branded_curr_pos), 2),
+                "branded_percentage": round((branded_curr_pos / total_curr_pos) * 100, 1) if total_curr_pos > 0 else 0,
+                "generic_value": round(float(generic_curr_pos), 2),
+                "generic_percentage": round((generic_curr_pos / total_curr_pos) * 100, 1) if total_curr_pos > 0 else 0,
+                "total": round(float(total_curr_pos), 2),
+                "branded_pct_diff": round(float(branded_curr_pos_for_diff - branded_prev_pos_for_diff), 2),
+                "generic_pct_diff": round(float(generic_curr_pos_for_diff - generic_prev_pos_for_diff), 2)
+            }
         }
 
-        impression_diff = {
-            "branded_click": int(branded_current['impressions'].sum()),  # Note: should this be "branded_impressions"?
-            "brand_pct": safe_divide(branded_current['impressions'].sum(), branded_prev['impressions'].sum()) * 100 if not branded_prev.empty else 0,
-            "generic_click": int(non_branded_current['impressions'].sum()),  # Note: should this be "generic_impressions"?
-            "generic_pct": safe_divide(non_branded_current['impressions'].sum(), non_branded_prev['impressions'].sum()) * 100 if not non_branded_prev.empty else 0,
-        }
-
-        ctr_diff = {
-            "branded_click": int(branded_current['ctr'].sum()),  # Note: should this be "branded_impressions"?
-            "brand_pct": safe_divide(branded_current['ctr'].sum(), branded_prev['ctr'].sum()) * 100 if not branded_prev.empty else 0,
-            "generic_click": int(non_branded_current['ctr'].sum()),  # Note: should this be "generic_impressions"?
-            "generic_pct": safe_divide(non_branded_current['ctr'].sum(), non_branded_prev['ctr'].sum()) * 100 if not non_branded_prev.empty else 0,
-        }
-
-        position_diff = {
-            "branded_position": int(branded_current['position'].sum()),  # Note: should this be "branded_impressions"?
-            "brand_pct": safe_divide(branded_current['position'].sum(), branded_prev['position'].sum()) * 100 if not branded_prev.empty else 0,
-            "generic_position": int(non_branded_current['position'].sum()),  # Note: should this be "generic_impressions"?
-            "generic_pct": safe_divide(non_branded_current['position'].sum(), non_branded_prev['position'].sum()) * 100 if not non_branded_prev.empty else 0,
-        }
-
-
-
-
+        # Calculate percentage data for clicks and impressions
         click_percentage = {
             "branded": safe_divide(branded_current['clicks'].sum(), total_clicks) * 100,
-            "generic": safe_divide(non_branded_current['clicks'].sum(), total_clicks) * 100,
-            # "branded_click": branded_current['clicks'].sum()
-            # "generic_click": non_branded_current['clicks'].sum()
-
+            "generic": safe_divide(non_branded_current['clicks'].sum(), total_clicks) * 100
         }
 
         impression_percentage = {
             "branded": safe_divide(branded_current['impressions'].sum(), total_impressions) * 100,
             "generic": safe_divide(non_branded_current['impressions'].sum(), total_impressions) * 100
-
         }
 
         # Branded metrics calculations
@@ -748,25 +794,18 @@ async def get_search_console_metrics(
                     "generic_avg_position": round(float(generic_pos), 2)
                 })
 
-
-        # Construct and return response
         return SearchConsoleResponse(
-            diff_click=clicke_diff,
-            diff_impression=impression_diff,
-            diff_ctr=ctr_diff,
-            diff_position=position_diff,
             click_percentage=click_percentage,
             impression_percentage=impression_percentage,
+            pie_chart_data=pie_chart_data,
             branded_keywords=branded_metrics,
             non_branded_keywords=non_branded_metrics,
             branded_keyword_list=branded_keyword_lists,
             generic_keyword_list=generic_keyword_lists,
             daily_metrics=daily_metrics
         )
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 
 @router.get("/report_filter")
 async def get_countries():
