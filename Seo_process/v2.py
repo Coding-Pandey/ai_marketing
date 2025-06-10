@@ -204,15 +204,20 @@ async def get_search_console_data(
                 rank_counts[col] = 0
         
         rank_counts = rank_counts[['Top 3', 'Top 10', 'Top 20+']]
+
+        period1_with_index = line_plot1.reset_index().reset_index().rename(columns={'index': 'row_number'})
+        period1_data = period1_with_index.to_dict('records')
         
+        period2_with_index = line_plot2.reset_index().reset_index().rename(columns={'index': 'row_number'})
+        period2_data = period2_with_index.to_dict('records')
         # Prepare response
         response_data = {
             "card_matrix": card_matrix,
             "device_performance": device_performance,
             "device_distribution": device_distribution,
             "line_plot_data": {
-                "period1": line_plot1.reset_index().to_dict('records'),
-                "period2": line_plot2.reset_index().to_dict('records')
+                "period1": period1_data,
+                "period2": period2_data
             },
             "keywords_ranking": rank_counts.reset_index().to_dict('records'),
             "summary": {
@@ -294,23 +299,38 @@ async def get_ranking_keywords_analysis(data: SiteData,
         print(f"Error in ranking keywords analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
-
 @router.post("/branded_word_analysis", response_model=SearchConsoleResponse)
 async def get_search_console_metrics(
     request: SearchConsoleRequest,
     user_id: str = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
 ):
-    """Get search console metrics with fluctuations"""
+    """
+    Get Search Console metrics with fluctuations for branded and non-branded keywords.
+    
+    Args:
+        request (SearchConsoleRequest): Request payload with site URL, date range, etc.
+        user_id (str): User ID extracted from JWT token.
+        db (Session): Database session dependency.
+    
+    Returns:
+        SearchConsoleResponse: Structured response with metrics and keyword data.
+    
+    Raises:
+        HTTPException: For authentication, configuration, or processing errors.
+    """
     try:
+        # Extract user ID from JWT token
         try:
-            user_id = user_id[1]
+            user_id = user_id[1]  # Assuming user_id is a tuple/list; adjust as needed
         except (IndexError, TypeError):
             raise HTTPException(status_code=401, detail="Invalid JWT token structure")
 
+        # Verify Google API credentials
         if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
             raise HTTPException(status_code=500, detail="Google API credentials not configured")
 
+        # Fetch user authentication details from database
         user_auth = db.query(Integration).filter(
             Integration.user_id == user_id,
             Integration.provider == "GOOGLE_SEARCH_CONSOLE"
@@ -318,6 +338,7 @@ async def get_search_console_metrics(
         if not user_auth:
             raise HTTPException(status_code=404, detail="Google Search Console account not linked")
 
+        # Refresh access token if expired or near expiry
         now = datetime.utcnow()
         if not user_auth.expires_at or user_auth.expires_at < now + timedelta(seconds=60):
             if not user_auth.refresh_token:
@@ -330,6 +351,7 @@ async def get_search_console_metrics(
             except Exception as e:
                 raise HTTPException(status_code=401, detail=f"Failed to refresh access token: {str(e)}")
 
+        # Validate request parameters
         valid_search_types = ["web", "image", "video"]
         if request.search_type not in valid_search_types:
             raise HTTPException(status_code=400, detail=f"Invalid search_type. Must be one of {valid_search_types}")
@@ -338,6 +360,7 @@ async def get_search_console_metrics(
         if request.device_type not in valid_device_types:
             raise HTTPException(status_code=400, detail=f"Invalid device_type. Must be one of {valid_device_types[1:]} or null")
 
+        # Set date range (default to last 30 days if not provided)
         if request.start_date and request.end_date:
             try:
                 datetime.strptime(request.start_date, "%Y-%m-%d")
@@ -350,6 +373,7 @@ async def get_search_console_metrics(
             end_date = datetime.now().strftime("%Y-%m-%d")
             start_date = (datetime.now() - timedelta(days=29)).strftime("%Y-%m-%d")
 
+        # Connect to Search Console API
         service = connect_search_console(
             access_token=user_auth.access_token,
             refresh_token=user_auth.refresh_token,
@@ -357,8 +381,10 @@ async def get_search_console_metrics(
             client_secret=GOOGLE_CLIENT_SECRET
         )
 
+        # Calculate previous period for comparison
         prev_start_date, prev_end_date = get_previous_period_dates(start_date, end_date)
 
+        # Prepare API payload
         payload_base = {
             'dimensions': ['query', 'country', 'device', 'date', 'page'],
             'type': request.search_type,
@@ -381,6 +407,7 @@ async def get_search_console_metrics(
         if filters:
             payload_base['dimensionFilterGroups'] = [{'filters': filters}]
 
+        # Fetch and process data
         print(f"\nAPI Call Details:")
         print(f"Fetching data for {request.search_type} search type, {request.device_type} device, {request.country} country")
         print(f"Fetching data for site: {request.site_url}")
@@ -389,6 +416,7 @@ async def get_search_console_metrics(
         all_rows = fetch_all_data_paginated(service, str(request.site_url), payload_base, prev_start_date, end_date)
         df_all = process_search_console_data(all_rows)
 
+        # Split data into current and previous periods
         df_current = df_all[(df_all['date'] >= start_date) & (df_all['date'] <= end_date)]
         df_prev = df_all[(df_all['date'] >= prev_start_date) & (df_all['date'] <= prev_end_date)]
 
@@ -397,24 +425,46 @@ async def get_search_console_metrics(
         print(f"Current period rows: {len(df_current)}")
         print(f"Previous period rows: {len(df_prev)}")
 
+        # Categorize data into branded and non-branded
         branded_current = df_current[df_current['brand_category'] == 'Branded']
         non_branded_current = df_current[df_current['brand_category'] == 'Non-Branded']
         branded_prev = df_prev[df_prev['brand_category'] == 'Branded']
         non_branded_prev = df_prev[df_prev['brand_category'] == 'Non-Branded']
 
+        # Calculate total metrics
         total_clicks = df_current['clicks'].sum()
         total_impressions = df_current['impressions'].sum()
 
+        clicke_diff = {
+            "branded_click": int(branded_current['clicks'].sum()),
+            "branded_pct": safe_divide(branded_current['clicks'].sum(), branded_prev['clicks'].sum()) * 100 if not branded_prev.empty else 0,
+            "generic_click": int(non_branded_current['clicks'].sum()),
+            "generic_pct": safe_divide(non_branded_current['clicks'].sum(), non_branded_prev['clicks'].sum()) * 100 if not non_branded_prev.empty else 0,
+        }
+
+        impression_diff = {
+            "branded_click": int(branded_current['impressions'].sum()),  # Note: should this be "branded_impressions"?
+            "pct": safe_divide(branded_current['impressions'].sum(), branded_prev['impressions'].sum()) * 100 if not branded_prev.empty else 0,
+            "generic_click": int(non_branded_current['impressions'].sum()),  # Note: should this be "generic_impressions"?
+            "generic_pct": safe_divide(non_branded_current['impressions'].sum(), non_branded_prev['impressions'].sum()) * 100 if not non_branded_prev.empty else 0,
+        }
+
+
         click_percentage = {
             "branded": safe_divide(branded_current['clicks'].sum(), total_clicks) * 100,
-            "generic": safe_divide(non_branded_current['clicks'].sum(), total_clicks) * 100
+            "generic": safe_divide(non_branded_current['clicks'].sum(), total_clicks) * 100,
+            # "branded_click": branded_current['clicks'].sum()
+            # "generic_click": non_branded_current['clicks'].sum()
+
         }
 
         impression_percentage = {
             "branded": safe_divide(branded_current['impressions'].sum(), total_impressions) * 100,
             "generic": safe_divide(non_branded_current['impressions'].sum(), total_impressions) * 100
+
         }
 
+        # Branded metrics calculations
         branded_curr_imp = branded_current['impressions'].sum()
         branded_prev_imp = branded_prev['impressions'].sum()
         branded_curr_clicks = branded_current['clicks'].sum()
@@ -454,6 +504,7 @@ async def get_search_console_metrics(
             }
         }
 
+        # Non-branded metrics calculations
         non_branded_curr_imp = non_branded_current['impressions'].sum()
         non_branded_prev_imp = non_branded_prev['impressions'].sum()
         non_branded_curr_clicks = non_branded_current['clicks'].sum()
@@ -493,6 +544,7 @@ async def get_search_console_metrics(
             }
         }
 
+        # Branded keyword-level data
         branded_keyword_lists = {
             "clicks": [],
             "impressions": [],
@@ -528,7 +580,7 @@ async def get_search_console_metrics(
 
                 prev_pos = prev_data['position'].iloc[0] if len(prev_data) > 0 else 0
                 prev_clicks = int(prev_data['clicks'].iloc[0]) if len(prev_data) > 0 else 0
-                prev_impressions = int(prev_data['impressions'].iloc[0]) if len(current_data) > 0 else 0
+                prev_impressions = int(prev_data['impressions'].iloc[0]) if len(prev_data) > 0 else 0
                 prev_ctr = prev_data['ctr'].iloc[0] if len(prev_data) > 0 else 0
 
                 if pd.isna(curr_pos): curr_pos = 0
@@ -536,34 +588,35 @@ async def get_search_console_metrics(
                 if pd.isna(curr_ctr): curr_ctr = 0
                 if pd.isna(prev_ctr): prev_ctr = 0
 
-                branded_keyword_lists["clicks"].append(KeywordClicksEntry(
-                    keyword=keyword,
-                    pos_last_30_days=curr_clicks,
-                    pos_before_30_days=prev_clicks,
-                    change=curr_clicks - prev_clicks
-                ))
+                branded_keyword_lists["clicks"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": curr_clicks,
+                    "pos_before_30_days": prev_clicks,
+                    "change": curr_clicks - prev_clicks
+                })
 
-                branded_keyword_lists["impressions"].append(KeywordImpressionsEntry(
-                    keyword=keyword,
-                    pos_last_30_days=curr_impressions,
-                    pos_before_30_days=prev_impressions,
-                    change=curr_impressions - prev_impressions
-                ))
+                branded_keyword_lists["impressions"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": curr_impressions,
+                    "pos_before_30_days": prev_impressions,
+                    "change": curr_impressions - prev_impressions
+                })
 
-                branded_keyword_lists["ctr"].append(KeywordCTREntry(
-                    keyword=keyword,
-                    pos_last_30_days=round(float(curr_ctr * 100), 2),
-                    pos_before_30_days=round(float(prev_ctr * 100), 2),
-                    change=round(float((curr_ctr - prev_ctr) * 100), 2)
-                ))
+                branded_keyword_lists["ctr"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": round(float(curr_ctr * 100), 2),
+                    "pos_before_30_days": round(float(prev_ctr * 100), 2),
+                    "change": round(float((curr_ctr - prev_ctr) * 100), 2)
+                })
 
-                branded_keyword_lists["avg_position"].append(KeywordPositionEntry(
-                    keyword=keyword,
-                    pos_last_30_days=round(float(curr_pos), 2),
-                    pos_before_30_days=round(float(prev_pos), 2),
-                    change=round(float(curr_pos - prev_pos), 2)
-                ))
+                branded_keyword_lists["avg_position"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": round(float(curr_pos), 2),
+                    "pos_before_30_days": round(float(prev_pos), 2),
+                    "change": round(float(curr_pos - prev_pos), 2)
+                })
 
+        # Non-branded keyword-level data
         generic_keyword_lists = {
             "clicks": [],
             "impressions": [],
@@ -607,34 +660,35 @@ async def get_search_console_metrics(
                 if pd.isna(curr_ctr): curr_ctr = 0
                 if pd.isna(prev_ctr): prev_ctr = 0
 
-                generic_keyword_lists["clicks"].append(KeywordClicksEntry(
-                    keyword=keyword,
-                    pos_last_30_days=curr_clicks,
-                    pos_before_30_days=prev_clicks,
-                    change=curr_clicks - prev_clicks
-                ))
+                generic_keyword_lists["clicks"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": curr_clicks,
+                    "pos_before_30_days": prev_clicks,
+                    "change": curr_clicks - prev_clicks
+                })
 
-                generic_keyword_lists["impressions"].append(KeywordImpressionsEntry(
-                    keyword=keyword,
-                    pos_last_30_days=curr_impressions,
-                    pos_before_30_days=prev_impressions,
-                    change=curr_impressions - prev_impressions
-                ))
+                generic_keyword_lists["impressions"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": curr_impressions,
+                    "pos_before_30_days": prev_impressions,
+                    "change": curr_impressions - prev_impressions
+                })
 
-                generic_keyword_lists["ctr"].append(KeywordCTREntry(
-                    keyword=keyword,
-                    pos_last_30_days=round(float(curr_ctr * 100), 2),
-                    pos_before_30_days=round(float(prev_ctr * 100), 2),
-                    change=round(float((curr_ctr - prev_ctr) * 100), 2)
-                ))
+                generic_keyword_lists["ctr"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": round(float(curr_ctr * 100), 2),
+                    "pos_before_30_days": round(float(prev_ctr * 100), 2),
+                    "change": round(float((curr_ctr - prev_ctr) * 100), 2)
+                })
 
-                generic_keyword_lists["avg_position"].append(KeywordPositionEntry(
-                    keyword=keyword,
-                    pos_last_30_days=round(float(curr_pos), 2),
-                    pos_before_30_days=round(float(prev_pos), 2),
-                    change=round(float(curr_pos - prev_pos), 2)
-                ))
+                generic_keyword_lists["avg_position"].append({
+                    "keyword": keyword,
+                    "pos_last_30_days": round(float(curr_pos), 2),
+                    "pos_before_30_days": round(float(prev_pos), 2),
+                    "change": round(float(curr_pos - prev_pos), 2)
+                })
 
+        # Daily metrics
         daily_metrics = []
         if len(df_current) > 0:
             daily_data = df_current.groupby(['date', 'brand_category']).agg({
@@ -666,31 +720,35 @@ async def get_search_console_metrics(
                 if pd.isna(generic_ctr): generic_ctr = 0
                 if pd.isna(generic_pos): generic_pos = 0
 
-                daily_metrics.append(DailyMetrics(
-                    date=date,
-                    branded_clicks=branded_clicks,
-                    branded_impressions=branded_impressions,
-                    branded_ctr=round(float(branded_ctr * 100), 2),
-                    branded_avg_position=round(float(branded_pos), 2),
-                    generic_clicks=generic_clicks,
-                    generic_impressions=generic_impressions,
-                    generic_ctr=round(float(generic_ctr * 100), 2),
-                    generic_avg_position=round(float(generic_pos), 2)
-                ))
+                daily_metrics.append({
+                    "date": date,
+                    "branded_clicks": branded_clicks,
+                    "branded_impressions": branded_impressions,
+                    "branded_ctr": round(float(branded_ctr * 100), 2),
+                    "branded_avg_position": round(float(branded_pos), 2),
+                    "generic_clicks": generic_clicks,
+                    "generic_impressions": generic_impressions,
+                    "generic_ctr": round(float(generic_ctr * 100), 2),
+                    "generic_avg_position": round(float(generic_pos), 2)
+                })
 
+
+        # Construct and return response
         return SearchConsoleResponse(
+            diff_click=clicke_diff,
+            diff_impression=impression_diff,
+
             click_percentage=click_percentage,
             impression_percentage=impression_percentage,
-            branded_keywords=KeywordMetrics(**branded_metrics),
-            non_branded_keywords=KeywordMetrics(**non_branded_metrics),
-            branded_keyword_list=KeywordLists(**branded_keyword_lists),
-            generic_keyword_list=KeywordLists(**generic_keyword_lists),
+            branded_keywords=branded_metrics,
+            non_branded_keywords=non_branded_metrics,
+            branded_keyword_list=branded_keyword_lists,
+            generic_keyword_list=generic_keyword_lists,
             daily_metrics=daily_metrics
         )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 
 
 @router.get("/report_filter")
@@ -724,5 +782,6 @@ async def get_countries():
         return {"countries": common_countries,
                 "search_types": search_types,
         "device_types":device_types }
+
     
     
