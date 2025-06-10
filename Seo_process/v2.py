@@ -415,7 +415,7 @@ async def get_search_console_metrics(
         print(f"Fetching data from {prev_start_date} to {end_date}")
 
         all_rows = fetch_all_data_paginated(service, str(request.site_url), payload_base, prev_start_date, end_date)
-        df_all = process_search_console_data(all_rows)
+        df_all =process_search_console_data(all_rows, request.branded_words)
 
         # Split data into current and previous periods
         df_current = df_all[(df_all['date'] >= start_date) & (df_all['date'] <= end_date)]

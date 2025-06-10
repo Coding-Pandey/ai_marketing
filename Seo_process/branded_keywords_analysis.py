@@ -115,20 +115,44 @@ def fetch_all_data_paginated(service, site_url, payload_base, start_date, end_da
 
     return all_rows
 
-def process_search_console_data(rows):
-    """Process raw API response into DataFrame"""
+def process_search_console_data(rows, branded_words=None):
+    """
+    Process raw API response into DataFrame
+    
+    Args:
+        rows: Raw API response data
+        branded_words: List of branded keywords (case-insensitive). If None, all keywords are marked as "Non-Branded"
+    
+    Returns:
+        pd.DataFrame: Processed search console data
+    """
+    if rows is None:
+        return pd.DataFrame()
+    
     data = []
+    
     for row in rows:
+        # Handle missing or malformed row data
+        if not row or "keys" not in row or len(row["keys"]) < 5:
+            continue
+            
         keyword = row["keys"][0]
-        brand_pattern = r"(?i).*looker.*"
-        brand_category = "Branded" if re.match(brand_pattern, keyword) else "Non-Branded"
+        
+        # Determine brand category
+        if branded_words is None:
+            brand_category = "Non-Branded"  # All keywords are non-branded when branded_words is None
+        else:
+            # Create pattern from branded words list
+            escaped_words = [re.escape(word) for word in branded_words]
+            brand_pattern = r"(?i).*(" + "|".join(escaped_words) + ").*"
+            brand_category = "Branded" if re.search(brand_pattern, keyword) else "Non-Branded"
         
         data.append({
             "keyword": keyword,
-            "country": row["keys"][1],
-            "device": row["keys"][2],
-            "date": row["keys"][3],
-            "page": row["keys"][4],
+            "country": row["keys"][1] if len(row["keys"]) > 1 else None,
+            "device": row["keys"][2] if len(row["keys"]) > 2 else None,
+            "date": row["keys"][3] if len(row["keys"]) > 3 else None,
+            "page": row["keys"][4] if len(row["keys"]) > 4 else None,
             "clicks": row.get("clicks", 0),
             "impressions": row.get("impressions", 0),
             "ctr": row.get("ctr", 0),
@@ -137,6 +161,7 @@ def process_search_console_data(rows):
         })
     
     return pd.DataFrame(data)
+
 
 def safe_divide(a, b, default=0):
     """Safe division to avoid division by zero"""
@@ -180,12 +205,13 @@ def get_previous_period_dates(start_date_str, end_date_str):
 
 # Pydantic models
 class SearchConsoleRequest(BaseModel):
-    site_url: HttpUrl  # Required URL field with validation
+    site_url: str  # Required URL field with validation
     search_type: str = "web"  # "web", "image", "video"
     device_type: Optional[str] = "mobile"  # "mobile", "desktop", "tablet", None
     country: Optional[str] = "usa"  # ISO 3166-1 alpha-3 code like "USA", "GBR", etc.
     start_date: Optional[str] = None  # YYYY-MM-DD format, defaults to last 30 days
     end_date: Optional[str] = None    # YYYY-MM-DD format, defaults to today
+    branded_words: Optional[List[str]] = None  # List of branded keywords, if None all keywords are non-branded
 
 class KeywordMetrics(BaseModel):
     impressions: Dict[str, Any]  # {"Actual": value, "fluctuation": "+/-value"}
