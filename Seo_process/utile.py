@@ -359,7 +359,7 @@ class DataProcessor:
             
             pie_data.append({
                 'device': device,
-                'clicks': int(clicks),
+                'Clicks': int(clicks),
                 'percentage': round(percentage, 1)
             })
             

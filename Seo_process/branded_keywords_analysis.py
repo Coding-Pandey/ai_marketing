@@ -236,6 +236,8 @@ class DailyMetrics(BaseModel):
     generic_avg_position: float
 
 class SearchConsoleResponse(BaseModel):
+    diff_ctr:Dict[str, float]
+    diff_position:Dict[str, float]
     diff_click:Dict[str, float]
     diff_impression:Dict[str, float]
     click_percentage: Dict[str, float]

@@ -444,10 +444,26 @@ async def get_search_console_metrics(
 
         impression_diff = {
             "branded_click": int(branded_current['impressions'].sum()),  # Note: should this be "branded_impressions"?
-            "pct": safe_divide(branded_current['impressions'].sum(), branded_prev['impressions'].sum()) * 100 if not branded_prev.empty else 0,
+            "brand_pct": safe_divide(branded_current['impressions'].sum(), branded_prev['impressions'].sum()) * 100 if not branded_prev.empty else 0,
             "generic_click": int(non_branded_current['impressions'].sum()),  # Note: should this be "generic_impressions"?
             "generic_pct": safe_divide(non_branded_current['impressions'].sum(), non_branded_prev['impressions'].sum()) * 100 if not non_branded_prev.empty else 0,
         }
+
+        ctr_diff = {
+            "branded_click": int(branded_current['ctr'].sum()),  # Note: should this be "branded_impressions"?
+            "brand_pct": safe_divide(branded_current['ctr'].sum(), branded_prev['ctr'].sum()) * 100 if not branded_prev.empty else 0,
+            "generic_click": int(non_branded_current['ctr'].sum()),  # Note: should this be "generic_impressions"?
+            "generic_pct": safe_divide(non_branded_current['ctr'].sum(), non_branded_prev['ctr'].sum()) * 100 if not non_branded_prev.empty else 0,
+        }
+
+        position_diff = {
+            "branded_position": int(branded_current['position'].sum()),  # Note: should this be "branded_impressions"?
+            "brand_pct": safe_divide(branded_current['position'].sum(), branded_prev['position'].sum()) * 100 if not branded_prev.empty else 0,
+            "generic_position": int(non_branded_current['position'].sum()),  # Note: should this be "generic_impressions"?
+            "generic_pct": safe_divide(non_branded_current['position'].sum(), non_branded_prev['position'].sum()) * 100 if not non_branded_prev.empty else 0,
+        }
+
+
 
 
         click_percentage = {
@@ -737,7 +753,8 @@ async def get_search_console_metrics(
         return SearchConsoleResponse(
             diff_click=clicke_diff,
             diff_impression=impression_diff,
-
+            diff_ctr=ctr_diff,
+            diff_position=position_diff,
             click_percentage=click_percentage,
             impression_percentage=impression_percentage,
             branded_keywords=branded_metrics,
