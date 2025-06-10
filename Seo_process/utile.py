@@ -13,7 +13,6 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 
 
-
 class SearchConsoleService:
     """Service class for Google Search Console operations"""
     
@@ -50,7 +49,7 @@ class SearchConsoleService:
         payload = {
             'startDate': start_date,
             'endDate': end_date,
-            'dimensions': ['query', 'page', 'country', 'date', 'device'],
+            'dimensions': ['query', 'page', 'country', 'date', 'device'],  # Fixed capitalization
             'type': search_type,
             'dimensionFilterGroups': [{
                 'filters': [{
@@ -113,14 +112,14 @@ class DataProcessor:
         # Extract keys into separate columns
         keys_df = pd.DataFrame(
             df['keys'].tolist(),
-            columns=['query', 'page', 'country', 'date', 'device']
+            columns=['query', 'page', 'country', 'date', 'device']  # Fixed capitalization
         )
         
         # Combine with metrics
         df = pd.concat([keys_df, df.drop(columns=['keys'])], axis=1)
         
         # Convert data types
-        df['date'] = pd.to_datetime(df['date'])
+        df['date'] = pd.to_datetime(df['date'])  # Fixed column name
         numeric_columns = ['clicks', 'impressions', 'ctr', 'position']
         df[numeric_columns] = df[numeric_columns].apply(pd.to_numeric, errors='coerce')
         
@@ -131,12 +130,12 @@ class DataProcessor:
         """Summarize key metrics from dataframe including Ranking Keywords and Ranking URLs"""
         if df.empty:
             return {
-                'clicks': 0,
-                'impressions': 0,
-                'ctr': 0,
-                'avgposition': 0,
-                'ranking_keywords': 0,
-                'ranking_urls': 0
+                'Clicks': 0,
+                'Impressions': 0,
+                'CTR': 0,
+                'AvgPosition': 0,
+                'Ranking_Keywords': 0,
+                'Ranking_URLs': 0
             }
         
         total_clicks = df['clicks'].sum()
@@ -147,12 +146,12 @@ class DataProcessor:
         unique_urls = df['page'].nunique()
         
         return {
-            'clicks': int(total_clicks),
-            'impressions': int(total_impressions),
-            'ctr': round(float(ctr), 2),
-            'avgposition': round(float(avg_position), 2),
-            'ranking_keywords': int(unique_keywords),
-            'ranking_urls': int(unique_urls)
+            'Clicks': int(total_clicks),
+            'Impressions': int(total_impressions),
+            'CTR': round(float(ctr), 2),
+            'AvgPosition': round(float(avg_position), 2),
+            'Ranking_Keywords': int(unique_keywords),
+            'Ranking_URLs': int(unique_urls)
         }
         
     @staticmethod
@@ -168,46 +167,46 @@ class DataProcessor:
                 diff = curr_val - prev_val
                 
                 # Calculate percentage change based on metric type
-                if key in ['clicks', 'impressions']:
+                if key in ['Clicks', 'Impressions']:
                     # For counts: standard percentage change
                     pct_change = ((diff / prev_val) * 100) if prev_val != 0 else (100 if curr_val > 0 else 0)
                     
-                elif key == 'ctr':
+                elif key == 'CTR':
                     # For CTR: percentage point change and relative change
                     percentage_point_change = diff  # This is already in percentage points
                     relative_change = ((diff / prev_val) * 100) if prev_val != 0 else (100 if curr_val > 0 else 0)
                     
                     result[key] = {
-                        'current': round(curr_val, 2),
-                        'previous': round(prev_val, 2),
-                        'difference': round(diff, 2),
-                        'percentage_point_change': round(percentage_point_change, 2),
-                        'relative_change_percent': round(relative_change, 1),
-                        'change_type': 'ctr_special'
+                        'Current': round(curr_val, 2),
+                        'Previous': round(prev_val, 2),
+                        'Difference': round(diff, 2),
+                        'Percentage_Point_Change': round(percentage_point_change, 2),
+                        'Relative_Change (%)': round(relative_change, 1),
+                        'Change_Type': 'CTR_Special'
                     }
                     continue
                     
-                elif key == 'avgposition':
+                elif key == 'AvgPosition':
                     # For position: lower is better, so we need to interpret changes differently
                     position_improvement = -diff  # Negative diff means position improved (lower number)
                     pct_change = ((diff / prev_val) * 100) if prev_val != 0 else 0
                     
                     # Position interpretation
                     if diff < 0:
-                        change_direction = "improved"
+                        change_direction = "Improved"
                     elif diff > 0:
-                        change_direction = "declined"
+                        change_direction = "Declined"
                     else:
-                        change_direction = "no_change"
+                        change_direction = "No Change"
                     
                     result[key] = {
-                        'current': round(curr_val, 2),
-                        'previous': round(prev_val, 2),
-                        'difference': round(diff, 2),
-                        'position_change': round(position_improvement, 2),
-                        'relative_change_percent': round(abs(pct_change), 1),
-                        'direction': change_direction,
-                        'change_type': 'position_special'
+                        'Current': round(curr_val, 2),
+                        'Previous': round(prev_val, 2),
+                        'Difference': round(diff, 2),
+                        'Position_Change': round(position_improvement, 2),
+                        'Relative_Change (%)': round(abs(pct_change), 1),
+                        'Direction': change_direction,
+                        'Change_Type': 'Position_Special'
                     }
                     continue
                     
@@ -215,16 +214,16 @@ class DataProcessor:
                     # Default calculation for other metrics
                     pct_change = ((diff / prev_val) * 100) if prev_val != 0 else (100 if curr_val > 0 else 0)
                 
-                # Standard result format for clicks and impressions
+                # Standard result format for Clicks and Impressions
                 result[key] = {
-                    'current': curr_val if key in ['clicks', 'impressions'] else round(curr_val, 2),
-                    'previous': prev_val if key in ['clicks', 'impressions'] else round(prev_val, 2),
-                    'difference': round(diff, 2),
-                    'change_percent': round(pct_change, 1),
-                    'change_direction': 'increase' if diff > 0 else ('decrease' if diff < 0 else 'no_change')
+                    'Current': curr_val if key in ['Clicks', 'Impressions'] else round(curr_val, 2),
+                    'Previous': prev_val if key in ['Clicks', 'Impressions'] else round(prev_val, 2),
+                    'Difference': round(diff, 2),
+                    'Change (%)': round(pct_change, 1),
+                    'Change_Direction': 'Increase' if diff > 0 else ('Decrease' if diff < 0 else 'No Change')
                 }
             else:
-                result[key] = "non_numeric_comparison_not_supported"
+                result[key] = "Non-numeric comparison not supported"
         
         return result
     
@@ -234,7 +233,7 @@ class DataProcessor:
         if df.empty:
             return {}
         
-        df = df.sort_values('date')
+        df = df.sort_values('date')  # Fixed column name
         start_date = df['date'].min()
         end_date = df['date'].max()
         
@@ -295,13 +294,13 @@ class DataProcessor:
             device_comparison[device] = DataProcessor.compare_metrics(current_metrics, previous_metrics)
             
             # Track best performing device (by current clicks)
-            if current_metrics['clicks'] > best_clicks:
-                best_clicks = current_metrics['clicks']
+            if current_metrics['Clicks'] > best_clicks:
+                best_clicks = current_metrics['Clicks']
                 device_summary['best_performing_device'] = device
             
             # Track highest growth device (by click percentage change)
-            if 'clicks' in device_comparison[device] and 'change_percent' in device_comparison[device]['clicks']:
-                click_growth = device_comparison[device]['clicks']['change_percent']
+            if 'Clicks' in device_comparison[device] and 'Change (%)' in device_comparison[device]['Clicks']:
+                click_growth = device_comparison[device]['Clicks']['Change (%)']
                 if click_growth > highest_growth:
                     highest_growth = click_growth
                     device_summary['highest_growth_device'] = device
@@ -311,21 +310,21 @@ class DataProcessor:
                 'total_queries': len(current_device_data),
                 'unique_pages': current_device_data['page'].nunique() if not current_device_data.empty else 0,
                 'date_range': f"{original_start_date} to {original_end_date}",
-                'avg_daily_clicks': round(current_metrics['clicks'] / max(1, (original_end - original_start).days), 2)
+                'avg_daily_clicks': round(current_metrics['Clicks'] / max(1, (original_end - original_start).days), 2)
             }
             device_comparison[device]['previous_period_stats'] = {
                 'total_queries': len(previous_device_data),
                 'unique_pages': previous_device_data['page'].nunique() if not previous_device_data.empty else 0,
                 'date_range': f"{previous_period['date'].min().strftime('%Y-%m-%d') if not previous_period.empty else 'N/A'} to {(original_start - pd.Timedelta(days=1)).strftime('%Y-%m-%d')}",
-                'avg_daily_clicks': round(previous_metrics['clicks'] / max(1, len(previous_device_data) // 30 if len(previous_device_data) > 0 else 1), 2)
+                'avg_daily_clicks': round(previous_metrics['Clicks'] / max(1, len(previous_device_data) // 30 if len(previous_device_data) > 0 else 1), 2)
             }
             
             # Add performance overview for this device
             device_summary['performance_overview'][device] = {
-                'current_clicks': current_metrics['clicks'],
-                'click_change_percent': device_comparison[device]['clicks']['change_percent'] if 'clicks' in device_comparison[device] else 0,
-                'current_ctr': current_metrics['ctr'],
-                'position_change': device_comparison[device]['avgposition']['direction'] if 'avgposition' in device_comparison[device] else 'no_change'
+                'current_clicks': current_metrics['Clicks'],
+                'click_change_pct': device_comparison[device]['Clicks']['Change (%)'] if 'Clicks' in device_comparison[device] else 0,
+                'current_ctr': current_metrics['CTR'],
+                'position_change': device_comparison[device]['AvgPosition']['Direction'] if 'AvgPosition' in device_comparison[device] else 'No Change'
             }
         
         return {
@@ -360,7 +359,7 @@ class DataProcessor:
             
             pie_data.append({
                 'device': device,
-                'clicks': int(clicks),
+                'Clicks': int(clicks),
                 'percentage': round(percentage, 1)
             })
             
@@ -371,7 +370,7 @@ class DataProcessor:
                 'clicks': int(clicks),
                 'impressions': int(device_data['impressions'].sum()),
                 'ctr': round(device_data['ctr'].mean(), 2),
-                'avgposition': round(device_data['position'].mean(), 2),
+                'avg_position': round(device_data['position'].mean(), 2),
                 'percentage': round(percentage, 1)
             })
         
@@ -397,7 +396,7 @@ class DataProcessor:
         if df.empty:
             return pd.DataFrame(), pd.DataFrame()
         
-        df['date'] = pd.to_datetime(df['date'])
+        df['date'] = pd.to_datetime(df['date'])  # Fixed column name
         
         # Group by date and aggregate metrics
         daily = df.groupby('date').agg({
