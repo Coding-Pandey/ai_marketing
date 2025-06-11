@@ -324,8 +324,8 @@ class RankingKeywordsAnalyzer:
         # Format improved keywords dataframe
         improved_keywords = pd.DataFrame({
             'keyword': improved.index,
-            'pos_last_30_days': improved[('current', 'position')].values,
-            'pos_before_30_days': improved[('previous', 'position')].values,
+            'position_last_30_days': improved[('current', 'position')].values,
+            'position_before_30_days': improved[('previous', 'position')].values,
             'change_in_position': improved['position_change'].values,
             'clicks_last_30_days': improved[('current', 'clicks')].values,
             'clicks_before_30_days': improved[('previous', 'clicks')].values,
@@ -362,8 +362,8 @@ class RankingKeywordsAnalyzer:
         # Format declined keywords dataframe
         declined_keywords = pd.DataFrame({
             'keyword': declined.index,
-            'pos_last_30_days': declined[('current', 'position')].values,
-            'pos_before_30_days': declined[('previous', 'position')].values,
+            'position_last_30_days': declined[('current', 'position')].values,
+            'position_before_30_days': declined[('previous', 'position')].values,
             'change_in_position': declined['position_change'].values,
             'clicks_last_30_days': declined[('current', 'clicks')].values,
             'clicks_before_30_days': declined[('previous', 'clicks')].values,
