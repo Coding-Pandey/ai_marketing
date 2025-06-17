@@ -131,7 +131,7 @@ def refresh_token(provider_name: ProviderEnum, db: Session = Depends(get_db), us
     # print("Token Response:", token_resp.text)
     if "error" in token_data:
         raise HTTPException(
-        status_code=401,
+        status_code=404,
         detail="Token expired or revoked. Please reconnect your Google Search Console account."
     )
     integration.access_token = token_data["access_token"]
