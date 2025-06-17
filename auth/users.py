@@ -96,11 +96,14 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email, username, and oAuthId are required."
             )
+        
+        print("User data:", user)
 
         user_by_email = db.query(User).filter(User.email == user.email).first()
         user_by_oauth = db.query(User).filter(User.oAuthId == user.oAuthId).first()
 
-        # Case 1: Email exists
+
+        # Case 1: Email exists  
         if user_by_email:
             # a. OAuth ID already assigned
             if user_by_oauth:
@@ -121,7 +124,8 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                     "user": {
                         "username": user_by_email.username,
                         "id": user_by_email.id,
-                        "email": user_by_email.email
+                        "email": user_by_email.email,
+                        "image_url": user_by_email.image_url if user_by_email.image_url else None
                     }
                 }
             else:
@@ -144,7 +148,8 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                     "user": {
                         "username": user_by_email.username,
                         "id": user_by_email.id,
-                        "email": user_by_email.email
+                        "email": user_by_email.email,
+                        "image_url": user_by_email.image_url if user_by_email.image_url else None
                     }
                 }
 
@@ -160,7 +165,8 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                 username=user.username,
                 email=user.email,
                 role=user.role,
-                oAuthId=user.oAuthId
+                oAuthId=user.oAuthId,
+                image_url=user.image_url if user.image_url else None,
             )
             db.add(new_user)
             db.commit()
@@ -179,7 +185,8 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                 "user": {
                     "username": new_user.username,
                     "id": new_user.id,
-                    "email": new_user.email
+                    "email": new_user.email,
+                    "image_url": new_user.image_url if new_user.image_url else None
                 }
             }
 
