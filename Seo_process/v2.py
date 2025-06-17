@@ -812,18 +812,27 @@ async def get_countries():
     """Get list of available countries with their codes"""
     try:
         import pycountry
-        search_types= ["web", "image", "video"],
-        device_types= ["mobile", "desktop", "tablet"]
-        countries = [
-            {"name": country.name, "code": country.alpha_3}
-            for country in pycountry.countries
-        ]
-        return {"countries": countries,
-                "search_types": search_types,
-        "device_types":device_types }
+
+        search_types = ["web", "image", "video"]
+        device_types = ["mobile", "desktop", "tablet"]
+
+        countries = sorted(
+            [
+                {"name": country.name, "code": country.alpha_3}
+                for country in pycountry.countries
+            ],
+            key=lambda x: x["name"]
+        )
+
+        return {
+            "countries": countries,
+            "search_types": search_types,
+            "device_types": device_types
+        }
+
     except Exception as e:
         # Fallback list of common countries
-        common_countries = [
+        common_countries = sorted([
             {"name": "United States", "code": "USA"},
             {"name": "United Kingdom", "code": "GBR"},
             {"name": "Canada", "code": "CAN"},
@@ -834,10 +843,13 @@ async def get_countries():
             {"name": "Japan", "code": "JPN"},
             {"name": "Brazil", "code": "BRA"},
             {"name": "Mexico", "code": "MEX"}
-        ]
-        return {"countries": common_countries,
-                "search_types": search_types,
-        "device_types":device_types }
+        ], key=lambda x: x["name"])
+
+        return {
+            "countries": common_countries,
+            "search_types": ["web", "image", "video"],
+            "device_types": ["mobile", "desktop", "tablet"]
+        }
 
     
     
