@@ -296,6 +296,7 @@ class Integration(Base):
     expires_at    = Column(DateTime, nullable=True)
     scope         = Column(String, nullable=True)
     created_at    = Column(DateTime, default=datetime.utcnow)
+    selected_site = Column(String, nullable=True)
 
     user = relationship("User", back_populates="integrations_auth")
 

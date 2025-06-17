@@ -97,7 +97,8 @@ async def get_verified_sites(user_id: str = Depends(verify_jwt_token), db: Sessi
         )
 
         sites = service.sites().list().execute()
-        return {"sites": sites.get("siteEntry", [])}
+        return {"sites": sites.get("siteEntry", []),
+                "selected_site": user_auth.selected_site if user_auth.selected_site else None}
     except RefreshError:
         # Handle case where refresh token is invalid
         raise HTTPException(
@@ -145,6 +146,9 @@ async def get_search_console_data(
         ).first()
         if not user_auth:
             raise HTTPException(status_code=404, detail="Google Search Console account not linked")
+        
+        user_auth.selected_site = data.site_url
+        db.commit()
         
         # Initialize Search Console service
         # Note: You'll need to provide these credentials
