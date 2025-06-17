@@ -118,6 +118,11 @@ async def google_login(user: Usergoogle, db: Session = Depends(get_db)):
                     "sub": user_by_email.username,
                     "id": user_by_email.id
                 })
+                # user_by_email.oAuthId = user.oAuthId
+                user_by_email.image_url = user.image_url
+                db.commit()
+                db.refresh(user_by_email)
+
                 return {
                     "access_token": token,
                     "token_type": "bearer",
