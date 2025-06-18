@@ -140,4 +140,24 @@ async def upload_and_parse_file(
 
     return {"message": "File content saved", "record_id": record.id,"file_name":file_name, "uuid_id": uuid_id}
 
+@router.get("/file_content")
+async def get_file_content(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    user_id = user_id[1]
+    records = db.query(SourceFileContent).filter(
+        SourceFileContent.user_id == user_id
+    ).all()
+
+    if not records:
+        raise HTTPException(status_code=404, detail="No file records found")
+
+    return [
+        {
+            "uuid_id": record.uuid_id,
+            "file_name": record.file_name,
+            "category": record.category,
+            "uploaded_file_name": record.extracted_text,
+            # "file_data": record.file_data
+        }
+        for record in records
+    ]
 
