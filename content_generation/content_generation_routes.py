@@ -12,7 +12,7 @@ import json
 from auth.auth import get_db
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.orm import Session
-from auth.models import Contentgeneration, ContentgenerationFile
+from auth.models import Contentgeneration, ContentgenerationFile, SourceFileContent
 from datetime import timedelta
 from content_generation.content_generation_model import UUIDRequest,ContentGenerationFileSchema
 import uuid
@@ -102,7 +102,39 @@ async def content_generation(
             file_contents = text_data.encode("utf-8")
             temp_file_path = None  # No physical file saved
 
-        summarized_text_json = {}
+        if objectives:
+            objectives = json.loads(objectives)
+
+        if audience:
+            audience = json.loads(audience)
+
+        filecontent_obj = []
+        filecontent = db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id).all()
+        if filecontent is not None:
+            for obj in objectives:
+                # print(obj)
+                for i in filecontent:
+                    # print(i.uuid_id)
+                    if i.uuid_id == obj:
+                        fileData = i.file_data
+                        # print(fileData)
+                    # filecontent = i.extracted_text
+                        filecontent_obj.append(fileData)
+
+            for obj in audience:
+                for i in filecontent:
+                    if i.uuid_id == obj:
+                        audienceData = i.file_data
+                    # filecontent = i.extracted_text
+                        filecontent_obj.append(audienceData)
+        if filecontent_obj:
+            summarized_text_json, total_toke = Document_summerizer(filecontent_obj)
+        else:
+            summarized_text_json = {}
+        
+        print(summarized_text_json)    
+
+        # summarized_text_json = {}
         total_tokens = 0
 
         if content_type == 1:

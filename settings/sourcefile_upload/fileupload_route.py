@@ -170,13 +170,13 @@ async def get_uploaded_sourcefiles(user_id: str = Depends(verify_jwt_token), db:
         files = db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id).all()
         # Log details of each file
         if not files:
-            return {"define_objective": [], "Target_audience": []}
+            return {"define_objective": "No Post Objective uploaded.", "Target_audience": "No Audience uploaded."}
 
         result = {"define_objective": [], "Target_audience": []}
         
         for file in files:
             file_data = {
-                "file_name": file.file_name,
+                "file_name": file.file_name,        
                 "category": file.category if file.category else "Unknown",
                 "uuid_id": file.uuid_id,
                 "uploaded_file_name": file.extracted_text
