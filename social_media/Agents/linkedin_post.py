@@ -68,6 +68,7 @@ def linkedIn_agent(items, json_data, previous_summaries=None):
             
    
         posts = response_json.get("Posts", {})
+        print(posts)
         linkedin_data = posts.get("LinkedIn", {})      
         summary = linkedin_data.get("Summary", "")
 
@@ -91,7 +92,7 @@ def linkedIn_agent_call( text,json_data ,num_iterations=5, hash_tag=False, emoji
     
     try:
         text = text
-        print(text)
+        # print(text)
     except FileNotFoundError as e:
         return f"File not found: {str(e)}"
     # text = file

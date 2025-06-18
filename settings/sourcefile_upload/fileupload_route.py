@@ -140,27 +140,59 @@ async def upload_and_parse_file(
 
     return {"message": "File content saved", "record_id": record.id,"file_name":file_name, "uuid_id": uuid_id}
 
-@router.get("/file_content")
-async def get_file_content(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
-    user_id = user_id[1]
-    records = db.query(SourceFileContent).filter(
-        SourceFileContent.user_id == user_id
-    ).all()
+# @router.get("/file_content")
+# async def get_file_content(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+#     user_id = user_id[1]
+#     records = db.query(SourceFileContent).filter(
+#         SourceFileContent.user_id == user_id
+#     ).all()
 
-    if not records:
-        raise HTTPException(status_code=404, detail="No file records found")
+#     if not records:
+#         raise HTTPException(status_code=404, detail="No file records found")
 
-    return [
-        {
-            "uuid_id": record.uuid_id,
-            "file_name": record.file_name,
-            "category": record.category,
-            "uploaded_file_name": record.extracted_text,
-            # "file_data": record.file_data
-        }
-        for record in records
-    ]
+#     return [
+#         {
+#             "uuid_id": record.uuid_id,
+#             "file_name": record.file_name,
+#             "category": record.category,
+#             "uploaded_file_name": record.extracted_text,
+#             # "file_data": record.file_data
+#         }
+#         for record in records
+#     ]
 
+@router.get("/uploaded_sourcefiles")
+async def get_uploaded_sourcefiles(user_id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):
+    try:
+        # Extract user_id
+        user_id = user_id[1]
+        # Query the database
+        files = db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id).all()
+        # Log details of each file
+        if not files:
+            return {"define_objective": [], "Target_audience": []}
+
+        result = {"define_objective": [], "Target_audience": []}
+        
+        for file in files:
+            file_data = {
+                "file_name": file.file_name,
+                "category": file.category if file.category else "Unknown",
+                "uuid_id": file.uuid_id,
+                "uploaded_file_name": file.extracted_text
+            }
+            
+            if file.category.name == "BUYER_PERSONA":
+                result["Target_audience"].append(file_data)
+            else:
+                result["define_objective"].append(file_data)
+        
+        return result
+    
+    except Exception as e:
+    
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+    
 
 
 

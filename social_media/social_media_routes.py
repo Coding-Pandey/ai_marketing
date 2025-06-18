@@ -49,15 +49,39 @@ async def social_media_post(
         if file and not file.filename.endswith((".docx", ".doc")):
             raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx or .doc file")
         user_id = int(id[1])  # Extract user_id from the JWT token
-        # raw = {}
-        # for obj in objectives:
-        #     db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id,SourceFileContent.uuid_id == obj).all()
 
+        if objectives:
+            objectives = json.loads(objectives)
+
+        if audience:
+            audience = json.loads(audience)
+
+        filecontent_obj = []
+        filecontent = db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id).all()
+        if filecontent is not None:
+            for obj in objectives:
+                # print(obj)
+                for i in filecontent:
+                    # print(i.uuid_id)
+                    if i.uuid_id == obj:
+                        fileData = i.file_data
+                        # print(fileData)
+                    # filecontent = i.extracted_text
+                        filecontent_obj.append(fileData)
+
+            for obj in audience:
+                for i in filecontent:
+                    if i.uuid_id == obj:
+                        audienceData = i.file_data
+                    # filecontent = i.extracted_text
+                        filecontent_obj.append(audienceData)
+        if filecontent_obj:
+            summarized_data, total_toke = Document_summerizer(filecontent_obj)
+        else:
+            summarized_data = {}
         
-
-        # Document_summerizer()
-        summarized_data = {}
-
+        print(summarized_data)
+        
         file_contents = await file.read() if file else text_data.encode()
         text = convert_doc_to_text(file_contents, file.filename if file else "uploaded_text")
 

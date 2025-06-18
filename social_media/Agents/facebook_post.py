@@ -93,7 +93,7 @@ def facebook_agent_call(text,json_data, num_iterations=5, hash_tag=False, emoji=
     
     try:
         text = text
-        print(text)
+        # print(text)
     except FileNotFoundError as e:
         return f"File not found: {str(e)}"
     # text = file
