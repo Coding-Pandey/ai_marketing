@@ -139,8 +139,8 @@ def process_search_console_data(rows, branded_words=None):
         keyword = row["keys"][0]
         
         # Determine brand category
-        if branded_words is None:
-            brand_category = "Non-Branded"  # All keywords are non-branded when branded_words is None
+        if not branded_words:
+            brand_category = "Non-Branded"
         else:
             # Create pattern from branded words list
             escaped_words = [re.escape(word) for word in branded_words]

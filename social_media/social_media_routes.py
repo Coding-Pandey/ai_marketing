@@ -48,7 +48,14 @@ async def social_media_post(
 
         if file and not file.filename.endswith((".docx", ".doc")):
             raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx or .doc file")
+        user_id = int(id[1])  # Extract user_id from the JWT token
+        # raw = {}
+        # for obj in objectives:
+        #     db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id,SourceFileContent.uuid_id == obj).all()
 
+        
+
+        # Document_summerizer()
         summarized_data = {}
 
         file_contents = await file.read() if file else text_data.encode()
@@ -884,3 +891,5 @@ async def database_file_name(
 
     return data
     
+
+
