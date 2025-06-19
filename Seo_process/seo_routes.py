@@ -164,6 +164,14 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
 
             if result:
                 upload_seo_table(str(unique_id), user_id, filename, result)
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "message": "SEO clustering completed successfully",
+                        "uuid": unique_id,
+                        "filename": filename
+                    }
+                )
 
             seo_cluster_record = db.query(SEOCluster).filter(SEOCluster.user_id == user.id).first()
 
@@ -460,7 +468,6 @@ async def seo_edit_page(seo_file_uuid: str, page_title_id: str, page_update: Pag
                 raise HTTPException(status_code=500, detail="Failed to save changes")
           
     raise HTTPException(status_code=404, detail="Page not found")
-
 
 
 @router.patch("/seofile_name/{seo_file_uuid}")
