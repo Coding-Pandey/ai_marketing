@@ -356,15 +356,15 @@ async def ppc_delete_document(request: UUIDRequest, id: str = Depends(verify_jwt
     try:
         user_id = str(id[1])  # Extract user_id from the JWT token
         uuid = request.uuid
-        success = seo_cluster_delete_document(uuid, user_id)
-        if success:
+        # success = seo_cluster_delete_document(uuid, user_id)
+        # if success:
             # 2. Delete DB record
-            user_id = int(id[1]) 
-            file_record = db.query(SEOFile).filter_by(user_id=user_id, uuid=uuid).first()
+        user_id = int(id[1]) 
+        file_record = db.query(SEOFile).filter_by(user_id=user_id, uuid=uuid).first()
 
-            if file_record:
-                db.delete(file_record)
-                db.commit()
+        if file_record:
+            db.delete(file_record)
+            db.commit()
 
         return JSONResponse(
             status_code=200,
