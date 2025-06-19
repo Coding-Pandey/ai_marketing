@@ -94,7 +94,10 @@ def ppc_generate_keywords(request: KeywordRequest,user=Depends(check_api_limit("
     
 
 @router.post("/ppc_keyword_clustering")
-async def ppc_keyword_clustering(request: KeywordClusterRequest,user=Depends(check_api_limit("ppc_cluster")),  db: Session = Depends(get_db)):
+async def ppc_keyword_clustering(request: KeywordClusterRequest
+                                 ,user=Depends(check_api_limit("ppc_cluster")), 
+                                   db: Session = Depends(get_db),
+                                     id: str = Depends(verify_jwt_token)):
     try:
 
         keywords = request.keywords
