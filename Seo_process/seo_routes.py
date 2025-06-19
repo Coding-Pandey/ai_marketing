@@ -323,11 +323,11 @@ async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         if not seo_file:
             raise HTTPException(status_code=200, detail="File not found for this user")
         
-        data = fetch_seo_cluster_file(user_id, uuid)
-        if not data:
-            raise HTTPException(status_code=200, detail="No documents found for the user")
+        # data = fetch_seo_cluster_file(user_id, uuid)
+        # if not data:
+        #     raise HTTPException(status_code=200, detail="No documents found for the user")
         
-        json_data = json.loads(data["documents"])
+        # json_data = json.loads(data["documents"])
         
 
         json_data = {
