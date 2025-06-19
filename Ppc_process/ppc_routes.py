@@ -474,15 +474,15 @@ def ppc_edit_page(ppc_file_uuid: str, page_title_id: str, page_update: ppcPageUp
         raise HTTPException(status_code=404, detail="Page not found")
     
 
-@router.patch("/seofile_name/{seo_file_uuid}")
-async def seo_update_file_name(
-    seo_file_uuid: str,
+@router.patch("/ppcfile_name/{ppc_file_uuid}")
+async def ppc_update_file_name(
+    ppc_file_uuid: str,
     payload: PPCFileNameUpdate,
     db: Session = Depends(get_db),
     id: str = Depends(verify_jwt_token)
 ):
     user_id = int(id[1])
-    ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
+    ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=ppc_file_uuid).first()
     if not ppc_file:
         raise HTTPException(status_code=404, detail="PPC file not found")
 
