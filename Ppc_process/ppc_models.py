@@ -74,4 +74,12 @@ class RemoveKeyword(BaseModel):
 
 class KeywordClusterRequest(BaseModel):
     keywords: List[KeywordItem]
-    delete_word: Optional[RemoveKeyword] = None            
+    delete_word: Optional[RemoveKeyword] = None    
+    file_name: Optional[str] = None        
+
+
+class PPCFileNameUpdate(BaseModel):
+    file_name: Optional[str] = None
+    def validate(self):
+        if not self.file_name:
+            raise ValueError("File name must be provided")    

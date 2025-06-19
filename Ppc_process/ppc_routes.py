@@ -7,7 +7,7 @@ from typing import List
 import pandas as pd
 import io
 from Seo_process.Agents.Keyword_agent import query_keywords_description
-from .ppc_models import KeywordRequest, KeywordItem, ppcPageUpdate, UUIDRequest, KeywordClusterRequest
+from .ppc_models import KeywordRequest, KeywordItem, ppcPageUpdate, UUIDRequest, KeywordClusterRequest, PPCFileNameUpdate
 from Seo_process.prompts.keywords_prompt import prompt_keyword
 from utils import (  
     extract_keywords,
@@ -128,6 +128,12 @@ async def ppc_keyword_clustering(request: KeywordClusterRequest,user=Depends(che
         print("Result:", cluster_data)
         ppc_data = flatten_ppc_data(cluster_data,df)
         if cluster_data and total_token:
+            unique_id = uuid.uuid4().hex
+            filename = request.file_name
+            user_id = int(id[1]) 
+
+            if ppc_data:
+                upload_ppc_table(str(unique_id), user_id, filename, ppc_data)
          
             ppc_cluster_record = db.query(PPCCluster).filter(PPCCluster.user_id == user.id).first()
 
@@ -143,7 +149,14 @@ async def ppc_keyword_clustering(request: KeywordClusterRequest,user=Depends(che
 
             db.commit()
 
-        return ppc_data
+        return JSONResponse(
+                    status_code=200,
+                    content={
+                        "message": "PPC clustering completed successfully",
+                        "uuid": unique_id,
+                        "filename": filename
+                    }
+                )
     
 
 
@@ -281,10 +294,10 @@ async def ppc_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=uuid).first()
         if not ppc_file:
             raise HTTPException(status_code=200, detail="File not found for this user")
-        data = fetch_ppc_cluster_file(user_id, uuid)
-        if not data:
-            raise HTTPException(status_code=200, detail="No documents found for the user")
-        json_data = json.loads(data["documents"])
+        # data = fetch_ppc_cluster_file(user_id, uuid)
+        # if not data:
+        #     raise HTTPException(status_code=200, detail="No documents found for the user")
+        # json_data = json.loads(data["documents"])
 
         json_data = {
             "id": uuid,
@@ -304,15 +317,15 @@ async def ppc_delete_document(request: UUIDRequest, id: str = Depends(verify_jwt
     try:
         user_id = str(id[1]) 
         uuid = request.uuid
-        success = ppc_cluster_delete_document(uuid, user_id)
-        if success:
+        # success = ppc_cluster_delete_document(uuid, user_id)
+        # if success:
         
-            user_id = int(id[1]) 
-            file_record = db.query(PPCFile).filter_by(user_id=user_id, uuid=uuid).first()
+        user_id = int(id[1]) 
+        file_record = db.query(PPCFile).filter_by(user_id=user_id, uuid=uuid).first()
 
-            if file_record:
-                db.delete(file_record)
-                db.commit()
+        if file_record:
+            db.delete(file_record)
+            db.commit()
 
         return JSONResponse(
             status_code=200,
@@ -456,3 +469,29 @@ def ppc_edit_page(ppc_file_uuid: str, page_title_id: str, page_update: ppcPageUp
     
     if not page_found:
         raise HTTPException(status_code=404, detail="Page not found")
+    
+
+@router.patch("/seofile_name/{seo_file_uuid}")
+async def seo_update_file_name(
+    seo_file_uuid: str,
+    payload: PPCFileNameUpdate,
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
+    user_id = int(id[1])
+    ppc_file = db.query(PPCFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
+    if not ppc_file:
+        raise HTTPException(status_code=404, detail="PPC file not found")
+
+    ppc_file.file_name = payload.file_name
+    flag_modified(ppc_file, "file_name")
+
+    try:
+        db.commit()
+        db.refresh(ppc_file)
+        return {"message": "PPC file name updated"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save changes : " + str(e))
+
+

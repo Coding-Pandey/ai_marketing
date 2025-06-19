@@ -164,14 +164,7 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
 
             if result:
                 upload_seo_table(str(unique_id), user_id, filename, result)
-                return JSONResponse(
-                    status_code=200,
-                    content={
-                        "message": "SEO clustering completed successfully",
-                        "uuid": unique_id,
-                        "filename": filename
-                    }
-                )
+                
 
             seo_cluster_record = db.query(SEOCluster).filter(SEOCluster.user_id == user.id).first()
 
@@ -186,7 +179,14 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
 
             db.commit()
 
-        return result
+        return JSONResponse(
+                    status_code=200,
+                    content={
+                        "message": "SEO clustering completed successfully",
+                        "uuid": unique_id,
+                        "filename": filename
+                    }
+                )
     
 
 
@@ -491,6 +491,6 @@ async def seo_update_file_name(
         return {"message": "SEO file name updated"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Failed to save changes")
+        raise HTTPException(status_code=500, detail="Failed to save changes: " + str(e))
 
 
