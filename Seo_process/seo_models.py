@@ -71,3 +71,7 @@ class SiteData(BaseModel):
     device_type: Optional[str] = None  # e.g., "mobile", "desktop", "tablet"
     start_date: str  # YYYY-MM-DD
     end_date: str       
+
+
+class SEOFileNameUpdate(BaseModel):
+    file_name: str    

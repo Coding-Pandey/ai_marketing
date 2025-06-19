@@ -6,7 +6,7 @@ from auth.models import SEOCluster ,SEOCSV, SEOFile
 import json
 import pandas as pd
 import io
-from .seo_models import KeywordRequest, SuggestionKeywordRequest, KeywordItem, UUIDRequest, PageUpdate, RemoveKeyword, KeywordClusterRequest
+from .seo_models import KeywordRequest, SuggestionKeywordRequest, KeywordItem, UUIDRequest, PageUpdate, RemoveKeyword, KeywordClusterRequest, SEOFileNameUpdate
 from utils import (  
     extract_keywords,
     filter_keywords_by_searches,
@@ -454,3 +454,27 @@ async def seo_edit_page(seo_file_uuid: str, page_title_id: str, page_update: Pag
           
     raise HTTPException(status_code=404, detail="Page not found")
 
+
+
+@router.patch("/seofile_name/{seo_file_uuid}")
+async def seo_update_file_name(
+    seo_file_uuid: str,
+    payload: SEOFileNameUpdate,
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
+    user_id = int(id[1])
+    seo_file = db.query(SEOFile).filter_by(user_id=user_id, uuid=seo_file_uuid).first()
+    if not seo_file:
+        raise HTTPException(status_code=404, detail="SEO file not found")
+    
+    seo_file.file_name = payload.file_name
+    flag_modified(seo_file, "file_name")
+
+    try:
+        db.commit()
+        db.refresh(seo_file)
+        return {"message": "SEO file name updated"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save changes")
