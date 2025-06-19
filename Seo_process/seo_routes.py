@@ -119,7 +119,8 @@ def seo_keyword_suggestion(request: SuggestionKeywordRequest):
 @router.post("/seo_keyword_clustering")
 async def seo_keyword_clustering(request: KeywordClusterRequest,
                                 user= Depends(check_api_limit("seo_cluster")),
-                                db: Session = Depends(get_db)
+                                db: Session = Depends(get_db),
+                                id: str = Depends(verify_jwt_token)
                                 ):
     try:
         keywords = request.keywords
@@ -157,7 +158,13 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
         
 
         if cluster_data and total_token:
-         
+            unique_id = uuid.uuid4().hex
+            filename = request.file_name
+            user_id = int(id[1])  # Extract user_id from the JWT token
+
+            if result:
+                upload_seo_table(str(unique_id), user_id, filename, result)
+
             seo_cluster_record = db.query(SEOCluster).filter(SEOCluster.user_id == user.id).first()
 
             if seo_cluster_record:
@@ -167,7 +174,7 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
                     user_id=user.id,
                     total_tokens=total_token
                 )
-                db.add(seo_cluster_record)
+                db.add(seo_cluster_record)              
 
             db.commit()
 
@@ -478,3 +485,5 @@ async def seo_update_file_name(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Failed to save changes")
+
+
