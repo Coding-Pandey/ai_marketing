@@ -86,18 +86,25 @@ async def content_generation(
         if keywords:
             try:
                 keywords_data = json.loads(keywords)
-                # Extract keywords from the nested structure
-                if "Keywords" in keywords_data and isinstance(keywords_data["Keywords"], list):
+                
+                # Check if it's a simple list of keywords
+                if isinstance(keywords_data, list):
+                    processed_keywords = [keyword.strip() for keyword in keywords_data if isinstance(keyword, str)]
+                    # file_name remains as provided in form data
+                
+                # Check if it's the new structured format with Keywords array
+                elif isinstance(keywords_data, dict) and "Keywords" in keywords_data and isinstance(keywords_data["Keywords"], list):
                     processed_keywords = keywords_data
-                    file_name = keywords_data.get("Page_Title", "")
-                else:
-                    # Handle old format for backward compatibility
+                
+                # Handle old format for backward compatibility
+                elif isinstance(keywords_data, dict):
                     data = keywords_data.get("keywords", [])
-                    file_name = keywords_data.get("Page_Title", "")
                     if data:
                         processed_keywords = [keyword.strip() for keyword in data if isinstance(keyword, str)]
+                        
             except json.JSONDecodeError:
                 raise HTTPException(status_code=400, detail="Invalid JSON format for keywords")
+
             
         
 
