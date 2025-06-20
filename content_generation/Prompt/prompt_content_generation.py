@@ -181,3 +181,64 @@ blog content
 {items}
 
 """
+
+
+blog_generation_prompt_with_keywords = """
+Write a comprehensive blog post using the provided copy and external link sources.
+The article must integrate external information with internal factors such as tone of voice, brand identity, target personas and keywords.
+
+**Tone of Voice Guidelines**:
+{Tone}
+**Target Buyer Persona Guidelines**:
+{Buyer}
+**Brand Identity Guidelines**:
+{Brand}
+**Offering Guidelines**:
+{Offering}
+**Keywords**:
+{Keywords}
+
+**Requirements for the Article**:
+    - Introduction:
+        Start with an attention-grabbing hook between 50 and 70 words.
+        Set the context by explaining the topic’s importance without using phrases like "this guide" or "in this article".
+    - Structure:
+        Use clear subheadings to outline the main arguments or points.
+        Include the following sections:
+        Problem Overview and Implications: Clearly describe the problem, idea, or recent news driving interest in this topic. Explain its potential threats or opportunities and hint at viable solutions or strategies.
+        Key Points or Arguments: Present arguments supported by relevant examples, data, quotes, or short case studies.
+        Data, Evidence, or Expert Opinions: Incorporate statistics, industry reports, expert quotes, and visual support where applicable. Embed links to sources as anchor text when the information is used.
+        Counterarguments or Common Misconceptions: Address alternative viewpoints and provide evidence-based rebuttals.
+        Actionable Steps or Best Practices: Offer practical advice in paragraphs with numbered subheadings (e.g., 1., 2., 3.) for clarity.
+    - keywords:
+        Use the provided keywords naturally throughout the article, ensuring they fit contextually and enhance the content    
+    - Conclusion:
+        Replace a standard conclusion paragraph with a clever title that summarizes key takeaways for readers to apply or consider.
+        Reinforce the core argument with a succinct, actionable summary applicable to real life.
+    - Formatting and Style:
+        Apply inline styling consistent with the provided tone of voice.
+        Tailor the article to be engaging and relevant for the target personas, using a style that resonates with them.
+        Avoid hyphens throughout the article.
+        Target an overall length of 2000 to 2800 words.
+    - Additional Guidelines:
+        Blend external data and internal insights (tone of voice, brand identity, target personas, keywords) into a rich, engaging narrative.
+        Ensure a compelling flow from start to finish with smooth transitions between sections.
+
+
+
+**Output**:
+
+Return a JSON object with a single dictionary containing the following key-value pairs:
+    - Title: A short, catchy phrase or question that captures the article’s essence and grabs attention. A concise title incorporating target keywords, optimized for search engines.
+    - Description: A brief, engaging summary of the article designed for SEO purposes.
+    - Introduction: A concise summary providing an overview of the content, aligned with the hook and context.
+    - Sections: An array of section objects, each representing a main point or argument. Each object should include:
+    - Subheading: A clear, descriptive title for the section (e.g., "Problem Overview and Implications").
+    - Content: - Detailed text for the section, written in paragraphs, incorporating the specified requirements (e.g., data, examples, actionable steps).
+               - Do not include a "topic" field within sections; focus on the subheading and content to highlight the main point.
+    - Conclusion: A single string containing the clever title and actionable summary.
+
+blog content
+{items}
+
+"""

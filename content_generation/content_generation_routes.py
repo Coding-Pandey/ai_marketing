@@ -23,6 +23,8 @@ import shutil
 
 router = APIRouter()
 
+TEMP_FILE_DIR = "content_generation/tmp/uploads"  # Ensure this directory exists
+
 content_types = [
     {"id": 1, "content_type": "blog generation"},
     {"id": 2, "content_type": "information post"},
@@ -40,7 +42,6 @@ async def get_content_types():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch content types: {str(e)}")
 
-TEMP_FILE_DIR = "content_generation/tmp/uploads"  # Ensure this directory exists
 
 @router.post("/content_generation")
 async def content_generation(
@@ -50,6 +51,7 @@ async def content_generation(
     file_name: Optional[str] = Form(None),   
     objectives: Optional[str] = Form(None),
     audience: Optional[str] = Form(None),
+    keywords: Optional[str] = Form(None),
     user=Depends(check_api_limit("content_generation")),
     db: Session = Depends(get_db),
     user_id: str = Depends(verify_jwt_token)
@@ -78,6 +80,26 @@ async def content_generation(
         allowed_content_types = [1]  # Expand this if needed
         if content_type and content_type not in allowed_content_types:
             raise HTTPException(status_code=400, detail="Invalid content type")
+        
+        # Process keywords - handle both empty/None and actual keyword data
+        processed_keywords = None
+        if keywords:
+            try:
+                keywords_data = json.loads(keywords)
+                # Extract keywords from the nested structure
+                if "Keywords" in keywords_data and isinstance(keywords_data["Keywords"], list):
+                    processed_keywords = keywords_data
+                    file_name = keywords_data.get("Page_Title", "")
+                else:
+                    # Handle old format for backward compatibility
+                    data = keywords_data.get("keywords", [])
+                    file_name = keywords_data.get("Page_Title", "")
+                    if data:
+                        processed_keywords = [keyword.strip() for keyword in data if isinstance(keyword, str)]
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for keywords")
+            
+        
 
         # Handle file or text content
         if file:
@@ -88,8 +110,6 @@ async def content_generation(
             # remove the entire directory if it exists
             if os.path.isdir(TEMP_FILE_DIR):
                 shutil.rmtree(TEMP_FILE_DIR)
-
-
             
             os.makedirs(TEMP_FILE_DIR, exist_ok=True)
             temp_file_path = os.path.join(TEMP_FILE_DIR, f"{uuid.uuid4().hex}_{file.filename}")
@@ -141,7 +161,8 @@ async def content_generation(
             try:
                 json_data, total_tokens = blog_generation(
                     file=file_contents,
-                    json_data=summarized_text_json
+                    json_data=summarized_text_json,
+                    keywords=processed_keywords,
                 )
 
                 # Update user token usage
@@ -166,6 +187,10 @@ async def content_generation(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
+
+
+# @router.post("/content_generation_new")
+
 
 @router.get("/content_datalist")
 async def content_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):

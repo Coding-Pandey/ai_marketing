@@ -4,7 +4,7 @@ import json
 import asyncio
 from openai import OpenAI
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from Prompt.prompt_content_generation import blog_generation_prompt 
+from Prompt.prompt_content_generation import blog_generation_prompt,blog_generation_prompt_with_keywords 
 from content_generation.utils import json_to_text
 # from prompt.social_media_prompt import social_media_prompt
 # from utils import convert_doc_to_text
@@ -18,8 +18,8 @@ model_name = os.environ.get("OPENAI_MODEL")
 
 
 
-def url_agent(items, json_data):
- 
+def url_agent(items, json_data, keywords=None):
+
     try:
   
         query = "Generate blog" 
@@ -29,16 +29,42 @@ def url_agent(items, json_data):
         brand_identity_guidelines = json_data.get("Brand Identity Guidelines", [])
         services_and_offerings_guidelines = json_data.get("Services and Offerings Guidelines", [])
         target_buyer_persona_guidelines = json_data.get("Target Buyer Persona Guidelines", [])
-        
-       
-        formatted_prompt = blog_generation_prompt.format(
-            Tone=tone_of_voice_guidelines,
-            Buyer=target_buyer_persona_guidelines,
-            Brand=brand_identity_guidelines,    
-            Offering=services_and_offerings_guidelines,
-            items=items
-        )
-        
+
+        # Check if keywords exist and are not empty
+        if not keywords or (isinstance(keywords, list) and not keywords):
+            # Use normal prompt without keywords
+            formatted_prompt = blog_generation_prompt.format(
+                Tone=tone_of_voice_guidelines,
+                Buyer=target_buyer_persona_guidelines,
+                Brand=brand_identity_guidelines,    
+                Offering=services_and_offerings_guidelines,
+                items=items
+            )
+        else:
+            # Use prompt with keywords
+            # Handle both old format (list of strings) and new format (dict with Keywords array)
+            if isinstance(keywords, dict) and "Keywords" in keywords:
+                # New format: extract keyword strings from the structured data
+                keyword_list = [kw.get("Keyword", "") for kw in keywords["Keywords"] if kw.get("Keyword")]
+                print(f"Keyword list: {keyword_list}")
+                formatted_prompt = blog_generation_prompt_with_keywords.format(
+                    Tone=tone_of_voice_guidelines,
+                    Buyer=target_buyer_persona_guidelines,
+                    Brand=brand_identity_guidelines,
+                    Offering=services_and_offerings_guidelines,
+                    items=items,
+                    Keywords=keyword_list
+                )
+            else:
+                # Old format: list of keyword strings
+                formatted_prompt = blog_generation_prompt_with_keywords.format(
+                    Tone=tone_of_voice_guidelines,
+                    Buyer=target_buyer_persona_guidelines,
+                    Brand=brand_identity_guidelines,
+                    Offering=services_and_offerings_guidelines,
+                    items=items,
+                    Keywords=keywords
+                )
 
         messages = [
             {'role': 'system', 'content': formatted_prompt},
@@ -77,12 +103,14 @@ def url_agent(items, json_data):
         return None, "", "", ""
 
 
-def blog_generation(file,json_data):
+def blog_generation(file,json_data, keywords=None):
     text = file
+    # if keywords
     try:    
         output, token = url_agent(
-            text, 
-            json_data, 
+            text,
+            json_data,
+            keywords
         )
         # print(output)   
         return output, token
