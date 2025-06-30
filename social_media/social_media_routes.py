@@ -24,6 +24,11 @@ from utils import verify_jwt_token, check_api_limit
 from sqlalchemy.orm.attributes import flag_modified
 from auth.auth import get_db
 from auth.models import SocialMediaFile, SocialMedia, LinkedinPost, FacebookPost, TwitterPost, SourceFileContent
+from social_media.social_media_job.all_post_job_schaduler import SocialMediaScheduler
+social_media_scheduler = SocialMediaScheduler()
+# from social_media.social_media_job.new import scheduler
+# from social_media.new import update_database_records, execute_social_media_tasks, handle_error_cleanup, ValidationError
+
 # Soical media post
 @router.post("/social_media_post")
 async def social_media_post(
@@ -160,6 +165,90 @@ async def social_media_post(
             social_media_record.call_count = max(social_media_record.call_count - 1, 0)
             db.commit()
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+# @router.post("/social_media_post_new")
+# async def social_media_post(
+#     file: Optional[UploadFile] = File(None),
+#     fileName : Optional[str] = Form(None),
+#     text_data: Optional[str] = Form(None),
+#     json_data: Optional[str] = Form(None),
+#     linkedIn_post: Optional[bool] = Form(True),
+#     facebook_post: Optional[bool] = Form(True),
+#     twitter_post: Optional[bool] = Form(True),
+#     hash_tag: Optional[bool] = Form(False),
+#     emoji: Optional[bool] = Form(False),
+#     objectives: Optional[str] = Form(None),
+#     audience : Optional[str] = Form(None),
+#     user = Depends(check_api_limit("social_media")),
+#     db: Session = Depends(get_db),
+#     id: str = Depends(verify_jwt_token)
+# ):
+#     try:
+#         if not file and not text_data:
+#             raise HTTPException(status_code=400, detail="Either file or text_data must be provided")
+
+#         if file and not file.filename.endswith((".docx", ".doc")):
+#             raise HTTPException(status_code=400, detail="Invalid file format. Please upload a .docx or .doc file")
+#         user_id = int(id[1])  # Extract user_id from the JWT token
+
+#         if objectives:
+#             objectives = json.loads(objectives)
+
+#         if audience:
+#             audience = json.loads(audience)
+
+#         filecontent_obj = []
+#         filecontent = db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id).all()
+#         if filecontent is not None:
+#             for obj in objectives:
+#                 # print(obj)
+#                 for i in filecontent:
+#                     # print(i.uuid_id)
+#                     if i.uuid_id == obj:
+#                         fileData = i.file_data
+#                         # print(fileData)
+#                     # filecontent = i.extracted_text
+#                         filecontent_obj.append(fileData)
+
+#             for obj in audience:
+#                 for i in filecontent:
+#                     if i.uuid_id == obj:
+#                         audienceData = i.file_data
+#                     # filecontent = i.extracted_text
+#                         filecontent_obj.append(audienceData)
+#         if filecontent_obj:
+#             summarized_data, total_toke = Document_summerizer(filecontent_obj)
+#         else:
+#             summarized_data = {}
+        
+#         print(summarized_data)
+        
+#         file_contents = await file.read() if file else text_data.encode()
+#         text = convert_doc_to_text(file_contents, file.filename if file else "uploaded_text")
+
+#          # 5. Optimized parallel execution
+#         results, total_tokens = await execute_social_media_tasks(
+#             text, summarized_data, linkedIn_post, facebook_post, 
+#             twitter_post, hash_tag, emoji
+#         )
+        
+#         # 6. Batch database operations
+#         await update_database_records(
+#             db, user, user_id, user_id, fileName, 
+#             results, total_tokens
+#         )
+#         return {"uuid":user_id,
+#                 "fileName": fileName,
+#                 "data":results}
+    
+
+#     except ValidationError as e:
+#         await handle_error_cleanup(db, user)
+#         raise HTTPException(status_code=400, detail=str(e))
+#     except Exception as e:
+#         await handle_error_cleanup(db, user)
+#         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/socialmedia_uploaddata")  
 async def socialmedia_upload_data(json_data: dict = Body(...),
@@ -622,6 +711,7 @@ async def schedule_socialmedia_post(
             raise HTTPException(status_code=400, detail="Schedule time is required")
         unique_id = uuid.uuid4().hex
         scheduled_posts = []
+        created_post_ids = [] 
         
         if linkedin_id := content.get("linkedin_id"):
             linkedin_post = LinkedinPost(
@@ -633,6 +723,7 @@ async def schedule_socialmedia_post(
                 copy_uuid=unique_id
             )
             db.add(linkedin_post)
+            created_post_ids.append(('linkedin', linkedin_post.copy_uuid))
             scheduled_posts.append("LinkedIn")
         
         if facebook_id := content.get("facebook_id"):
@@ -645,6 +736,7 @@ async def schedule_socialmedia_post(
                 copy_uuid=unique_id
             )
             db.add(facebook_post)
+            created_post_ids.append(('facebook', facebook_post.copy_uuid))
             scheduled_posts.append("Facebook")
         
         if twitter_id := content.get("twitter_id"):
@@ -657,6 +749,7 @@ async def schedule_socialmedia_post(
                 copy_uuid=unique_id
             )
             db.add(twitter_post)
+            created_post_ids.append(('twitter', twitter_post.copy_uuid))
             scheduled_posts.append("Twitter")
         
         if not scheduled_posts:
@@ -698,6 +791,17 @@ async def schedule_socialmedia_post(
         # Commit all changes to the database
         db.commit()
         # db.refresh(file)
+        
+        # Schedule posts with APScheduler
+        scheduling_errors = []
+        for platform, copy_uuid in created_post_ids:
+            success = social_media_scheduler.schedule_post(platform, copy_uuid, post_data.schedule_time)
+            
+            if not success:
+                scheduling_errors.append(f"{platform} post {copy_uuid}")
+
+        if scheduling_errors:
+            print(f"Failed to schedule: {', '.join(scheduling_errors)}")
         
         return {
             "message": f"Post scheduled successfully for {', '.join(scheduled_posts)}",
@@ -753,19 +857,25 @@ async def delete_scheduled_post(posts: str, uuid: str, db: Session = Depends(get
         # Query the appropriate post based on platform
         if posts == "linkedin_posts":
             post = db.query(LinkedinPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
+            platform = 'linkedin'
         elif posts == "facebook_posts":
             post = db.query(FacebookPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
+            platform = 'facebook'
         elif posts == "twitter_posts":
             post = db.query(TwitterPost).filter_by(user_id=user_id, copy_uuid=uuid).first()
+            platform = 'twitter'
 
         # Check if post exists
         if not post:
             raise HTTPException(status_code=404, detail="Scheduled post not found")
+        
+         # Cancel the scheduled job
+        social_media_scheduler.cancel_scheduled_post(platform, post.copy_uuid)
 
         # Delete the post
         db.delete(post)
         db.commit()
-        return {"message": f"{posts} post deleted successfully", "post_id": post.id}
+        return {"message": f"{posts} post deleted successfully", "post_id": post.copy_uuid}
 
     except HTTPException:
         raise  # Re-raise HTTP exceptions as-is
@@ -816,6 +926,14 @@ async def update_scheduled_post(
         # print(f"Current content: {current_content}")
         if not current_content:
             raise HTTPException(status_code=404, detail=f"No content found in {posts.replace('_', ' ').title()}")
+        
+        platform_map = {
+            "linkedin_posts": ("linkedin", LinkedinPost),
+            "facebook_posts": ("facebook", FacebookPost),
+            "twitter_posts": ("twitter", TwitterPost)
+        }
+        
+        platform, model = platform_map[posts]
 
         # Update content if provided
         if content:
@@ -854,6 +972,7 @@ async def update_scheduled_post(
                 # Parse the reschedule time
                 # post.schedule_time = datetime.strptime(reschedule_time, "%Y-%m-%d %H:%M:%S")
                 post.schedule_time = reschedule_time
+                social_media_scheduler.reschedule_post(platform, post.copy_uuid, post.schedule_time)
                 print(f"Reschedule time updated: {post.schedule_time}")
             except ValueError:
                 raise HTTPException(status_code=400, detail="Invalid reschedule time format. Use 'YYYY-MM-DD HH:MM:SS'.")    
@@ -916,4 +1035,12 @@ async def database_file_name(
     return data
     
 
+#Initialize scheduler when app starts
+@router.on_event("startup")
+async def startup_event():
+    """Initialize scheduler with existing posts on startup"""
+    social_media_scheduler.initialize_existing_posts()
 
+# @router.on_event("startup")
+# def startup_event():
+#     scheduler.start()

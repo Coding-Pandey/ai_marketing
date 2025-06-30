@@ -5,7 +5,7 @@ import asyncio
 from openai import OpenAI
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from social_media.prompt.social_media_prompt import linkedIn_prompt
-from social_media.utils import convert_doc_to_text, clean_post_list
+from social_media.utils import clean_post_list
 from dotenv import load_dotenv
 load_dotenv()
 

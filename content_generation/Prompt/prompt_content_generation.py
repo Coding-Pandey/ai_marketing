@@ -195,7 +195,7 @@ The article must integrate external information with internal factors such as to
 {Brand}
 **Offering Guidelines**:
 {Offering}
-**Keywords**:
+**Keywords**(use these naturally throughout; don’t force them unnaturally):
 {Keywords}
 
 **Requirements for the Article**:
@@ -237,6 +237,8 @@ Return a JSON object with a single dictionary containing the following key-value
     - Content: - Detailed text for the section, written in paragraphs, incorporating the specified requirements (e.g., data, examples, actionable steps).
                - Do not include a "topic" field within sections; focus on the subheading and content to highlight the main point.
     - Conclusion: A single string containing the clever title and actionable summary.
+
+    Make sure each section’s content flows logically, maintains our brand voice, and integrates keywords and external sources naturally.
 
 blog content
 {items}

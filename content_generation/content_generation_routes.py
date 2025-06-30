@@ -2,11 +2,8 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Body, F
 from fastapi.responses import JSONResponse
 from typing import Optional
 from social_media.Agents.document_summared import Document_summerizer
-from S3_bucket.fetch_document import download_document
-from S3_bucket.fetch_document import download_document
 from content_generation.blog_agent.blog_generation import blog_generation
 from content_generation.blog_agent.blog_suggest import blog_suggest
-from content_generation.blog_agent.seo_blog import generation_blog_async
 from utils import verify_jwt_token, check_api_limit
 import json
 from auth.auth import get_db
@@ -19,7 +16,9 @@ import uuid
 import os
 from docx import Document
 import shutil
-
+import base64
+from docx import Document as DocxDocument
+import fitz  # PyMuPDF for PDFs
 
 router = APIRouter()
 
@@ -188,7 +187,8 @@ async def content_generation(
             "filename": file_name,
             "content_type": "blog generation",
             "data": json_data,
-            "temp_file_path": temp_file_path  # Send this if you want to reuse the file
+            "temp_file_path": temp_file_path,
+              "text_data": base64.b64encode(file_contents).decode("utf-8")
         })
     
 
@@ -196,7 +196,127 @@ async def content_generation(
         raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
 
 
-# @router.post("/content_generation_new")
+@router.post("/content_generation_new")
+async def content_generation(
+    file: Optional[UploadFile] = File(None),
+    text_data: Optional[str] = Form(None),
+    content_type: Optional[int] = Form(None), 
+    file_name: Optional[str] = Form(None),   
+    objectives: Optional[str] = Form(None),
+    audience: Optional[str] = Form(None),
+    keywords: Optional[str] = Form(None),
+    user=Depends(check_api_limit("content_generation")),
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_jwt_token)
+):
+    try:
+        user_id = int(user_id[1])
+
+        if not file_name:
+            raise HTTPException(status_code=400, detail="File name is required")
+
+        if not file and not text_data:
+            raise HTTPException(status_code=400, detail="Either file or text_data must be provided")
+
+        if file and not file.filename.lower().endswith((".docx", ".doc", ".pdf")):
+            raise HTTPException(status_code=400, detail="Invalid file format. Only .docx, .doc, or .pdf allowed")
+
+        if content_type != 1:
+            return JSONResponse(status_code=400, content={"message": "Only blog generation is supported"})
+
+        processed_keywords = None
+        if keywords:
+            try:
+                keywords_data = json.loads(keywords)
+                if isinstance(keywords_data, list):
+                    processed_keywords = [kw.strip() for kw in keywords_data if isinstance(kw, str)]
+                elif isinstance(keywords_data, dict) and "Keywords" in keywords_data:
+                    processed_keywords = keywords_data
+                elif isinstance(keywords_data, dict):
+                    processed_keywords = [kw.strip() for kw in keywords_data.get("keywords", []) if isinstance(kw, str)]
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for keywords")
+
+        # 📄 Extract file text (in memory)
+        extracted_text = None
+        if file:
+            file_bytes = await file.read()
+            if file.filename.endswith(".docx"):
+                doc = DocxDocument(file.file)
+                extracted_text = "\n".join([p.text for p in doc.paragraphs])
+                if text_data:
+                    extracted_text += "\n" + text_data
+            elif file.filename.endswith(".pdf"):
+                pdf_text = ""
+                with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+                    for page in doc:
+                        pdf_text += page.get_text()
+                extracted_text = pdf_text
+                if text_data:
+                    extracted_text += "\n" + text_data
+            elif file.filename.endswith(".doc"):
+                raise HTTPException(status_code=415, detail=".doc format not supported without external dependencies")
+        else:
+            extracted_text = text_data
+
+        if objectives:
+            objectives = json.loads(objectives)
+        if audience:
+            audience = json.loads(audience)
+
+        # 🔍 Summarize referenced documents
+        filecontent_obj = []
+        filecontent = db.query(SourceFileContent).filter(SourceFileContent.user_id == user_id).all()
+        if filecontent:
+            for obj in objectives or []:
+                for i in filecontent:
+                    if i.uuid_id == obj:
+                        filecontent_obj.append(i.file_data)
+            for obj in audience or []:
+                for i in filecontent:
+                    if i.uuid_id == obj:
+                        filecontent_obj.append(i.file_data)
+
+        if filecontent_obj:
+            summarized_text_json, total_tokens = Document_summerizer(filecontent_obj)
+        else:
+            summarized_text_json = {}
+            total_tokens = 0
+
+        # ✨ Blog generation
+        json_data = {}
+        if content_type == 1:
+            try:
+                json_data, total_tokens = blog_generation(
+                    file=extracted_text.encode("utf-8"),
+                    json_data=summarized_text_json,
+                    keywords=processed_keywords,
+                )
+
+                content_gen_record = db.query(Contentgeneration).filter(Contentgeneration.user_id == user_id).first()
+                if content_gen_record:
+                    if total_tokens > 0:
+                        content_gen_record.total_tokens += total_tokens
+                    if not json_data:
+                        content_gen_record.call_count = max(content_gen_record.call_count - 1, 0)
+                    db.commit()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Blog generation failed: {str(e)}")
+
+        return JSONResponse(content={
+            "filename": file_name,
+            "content_type": "blog generation",
+            "data": json_data,
+            "temp_file_path": None,
+            "text_data": extracted_text
+        })
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
+    
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
 
 
 @router.get("/content_datalist")

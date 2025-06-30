@@ -9,7 +9,7 @@ from settings.app_intergations.app_intergations_model import OAUTH_CONFIG, Provi
 # from app_intergations_model import OAUTH_CONFIG, ProviderEnum
 from auth.models import Integration
 
-from utils import verify_jwt_token, check_api_limit
+from utils import verify_jwt_token
 from auth.auth import get_db
 from typing import List
 
@@ -20,8 +20,7 @@ router = APIRouter()
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
-# print(f"GOOGLE_CLIENT_ID: {GOOGLE_CLIENT_ID}")
-# print(f"GOOGLE_CLIENT_SECRET: {GOOGLE_CLIENT_SECRET}")
+
 
 
 @router.get("/login/{provider_name}")
@@ -32,14 +31,17 @@ def login(provider_name: ProviderEnum,
         raise HTTPException(404, f"No OAuth config for {provider_name}")
 
     params = {
-        "client_id":     GOOGLE_CLIENT_ID,
+        "client_id":     cfg.client_id,
         "redirect_uri":  cfg.redirect_uri,
         "response_type": "code",
         "scope":         cfg.scopes,
-        "access_type":   "offline",  
-        "prompt":        "consent",
+        # "access_type":   "offline",  
+        # "prompt":        "consent",
         "state":         str(token[1])
     }
+    if cfg.extra_auth_params:
+        params.update(cfg.extra_auth_params)
+        
     query = "&".join(f"{k}={requests.utils.quote(v)}" for k, v in params.items())
     return {"url": f"{cfg.auth_url}?{query}"}
 
@@ -53,6 +55,11 @@ def auth_callback(
     db: Session = Depends(get_db),
     # user_id: int = Depends(verify_jwt_token),
 ):
+    try:
+        provider_enum = ProviderEnum(provider_name)
+    except ValueError:
+        raise HTTPException(400, f"Invalid provider: {provider_name}")
+    
     if not code:
         raise HTTPException(400, "No code provided")
     print(provider_name.value)
@@ -65,8 +72,8 @@ def auth_callback(
         cfg.token_url,
         data={
             "code": code,
-            "client_id": GOOGLE_CLIENT_ID,
-            "client_secret": GOOGLE_CLIENT_SECRET,
+            "client_id": cfg.client_id,
+            "client_secret": cfg.client_secret,
             "redirect_uri": cfg.redirect_uri,
             "grant_type": "authorization_code"
         }

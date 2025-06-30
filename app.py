@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
+load_dotenv(override=True)
 from Seo_process.seo_routes import router as seo_router
 from Seo_process.v2 import router as seo_v2_router
 from Ppc_process.ppc_routes import router as ppc_router
@@ -7,6 +9,7 @@ from content_generation.content_generation_routes import router as content_gener
 from S3_bucket.bucket_routes import router as bucket_router
 from settings.sourcefile_upload.fileupload_route import router as file_upload_router
 from settings.app_intergations.app_intergations_routes import router as app_intergations_router
+from screaming_frog.screming_frog import router as screaming_frog_router
 from auth.users import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -52,5 +55,7 @@ app.include_router(file_upload_router, tags=["Source File Upload"])
 app.include_router(app_intergations_router, tags=["Apps Integration"])
 # SEO v2 routes
 app.include_router(seo_v2_router, tags=["SEO v2"])
+
+app.include_router(screaming_frog_router, tags=["Screaming Frog"])
 
 
