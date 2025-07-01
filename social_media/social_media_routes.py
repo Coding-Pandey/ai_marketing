@@ -892,7 +892,7 @@ async def update_scheduled_post(
     uuid: str,
     id: Optional[str] = Form(None),
     content: Optional[str] = Form(None),
-    timezone : Optional[dict] = Form(None),
+    timezone : Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     reschedule_time: Optional[str] = Form(None),
     db: Session = Depends(get_db),
@@ -938,7 +938,7 @@ async def update_scheduled_post(
         }
         
         platform, model = platform_map[posts]
-        timezone = json.loads(timezone) if timezone and isinstance(timezone, str) else timezone
+        timezone = json.loads(timezone) if timezone else None
         post.time_zone = timezone if timezone else post.time_zone
 
         # Update content if provided
