@@ -121,21 +121,24 @@ class Cluster:
         try:
             n_samples = embeddings.shape[0]
 
+            # coerce config values to int
+            max_c = int(self.config.max_clusters)
+            min_c = int(self.config.min_clusters)
+
             # Adjust max_clusters based on sample size
-            max_clusters = min(self.config.max_clusters, n_samples - 1)
-            min_clusters = min(self.config.min_clusters, max_clusters - 1)
+            max_clusters = min(max_c, n_samples - 1)
+            # Ensure min_clusters < max_clusters
+            min_clusters = min(min_c, max_clusters - 1)
 
             if max_clusters <= min_clusters:
                 print(f"Sample size too small, using {min_clusters} clusters")
                 return min_clusters
 
             best_n_clusters = min_clusters
-            best_silhouette = -1
+            best_silhouette = -1.0
             silhouette_scores = []
 
-            cluster_range = range(min_clusters, max_clusters + 1)
-
-            for n_clusters in cluster_range:
+            for n_clusters in range(min_clusters, max_clusters + 1):
                 try:
                     kmeans = KMeans(
                         n_clusters=n_clusters,
@@ -143,37 +146,36 @@ class Cluster:
                         random_state=self.config.random_state,
                         n_init=10
                     )
-                    cluster_labels = kmeans.fit_predict(embeddings)
-                    
-                    # Silhouette score requires at least 2 clusters
-                    if len(np.unique(cluster_labels)) < 2:
+                    labels = kmeans.fit_predict(embeddings)
+
+                    # need at least 2 clusters for silhouette_score
+                    if len(np.unique(labels)) < 2:
                         print(f"Only one cluster formed with n_clusters={n_clusters}, skipping")
                         continue
-                        
-                    silhouette_avg = silhouette_score(embeddings, cluster_labels)
-                    silhouette_scores.append(silhouette_avg)
 
-                    if silhouette_avg > best_silhouette:
-                        best_silhouette = silhouette_avg
+                    score = silhouette_score(embeddings, labels)
+                    silhouette_scores.append(score)
+
+                    if score > best_silhouette:
+                        best_silhouette = score
                         best_n_clusters = n_clusters
-                        
+
                 except Exception as e:
-                    print(f"Error during clustering with {n_clusters} clusters: {str(e)}")
+                    print(f"Error during clustering with {n_clusters} clusters: {e}")
                     continue
 
-            # If we couldn't calculate any silhouette scores
             if not silhouette_scores:
                 print("Could not calculate silhouette scores, using minimum clusters")
                 return min_clusters
-                
+
             print(f"Silhouette scores: {silhouette_scores}")
             print(f"Best number of clusters: {best_n_clusters} with silhouette score: {best_silhouette}")
             return best_n_clusters
-            
+
         except Exception as e:
-            print(f"Error in find_optimal_clusters_silhouette: {str(e)}")
-            # Fallback to minimum clusters as default
-            return self.config.min_clusters
+            print(f"Error in find_optimal_clusters_silhouette: {e}")
+            # Fallback: at least 2 clusters or 1 if even that fails
+            return max(2, int(self.config.min_clusters))
 
     def process_clustering(self, data_path: str, metadata_column: str) -> dict:
         try:               
