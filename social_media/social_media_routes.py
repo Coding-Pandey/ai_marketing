@@ -5,6 +5,7 @@ import io
 import uuid
 from datetime import timedelta
 from sqlalchemy.orm import Session
+from settings.app_intergations.app_intergations_model import ProviderEnum
 from social_media.Agents.social_media import agent_call
 from social_media.Agents.document_summared import Document_summerizer
 from social_media.Agents.linkedin_post import linkedIn_agent_call
@@ -700,6 +701,9 @@ async def schedule_socialmedia_post(
         user_id = int(user_id[1])  # Extract user_id from the JWT token
 
         file = db.query(SocialMediaFile).filter_by(uuid=post_data.uuid, user_id=user_id).first()
+        access = db.query(Integration).filter_by(provider=ProviderEnum.LINKEDIN, user_id=user_id).first()
+        if not access:
+            raise HTTPException(status_code=403, detail="LinkedIn integration not found for this user")
         if not file:    
             raise HTTPException(status_code=404, detail="Social media file not found")
         
@@ -1083,8 +1087,8 @@ async def publish_social_media_post(
 
         # social_media_scheduler.publish_post(post_data, integration)
 
-        return {"message": "Post scheduled successfully", "result": result}
-    
+        return JSONResponse(content={"message": "Post scheduled successfully", "result": result})
+
     except HTTPException as e:
         raise  HTTPException(status_code=500, detail="publish post failed" + str(e))
 

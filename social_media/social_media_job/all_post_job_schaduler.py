@@ -47,6 +47,8 @@ def publish_linkedin_post_job(copy_uuid: str):
             print(f"LinkedIn post {copy_uuid} not found")
             return False
         
+    
+        
         # Check if already published (post_id contains the platform ID from your logic)
         # if post.copy_uuid:
         #     print(f"LinkedIn post {copy_uuid} already published")
