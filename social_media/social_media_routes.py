@@ -23,8 +23,9 @@ import traceback
 from utils import verify_jwt_token, check_api_limit
 from sqlalchemy.orm.attributes import flag_modified
 from auth.auth import get_db
-from auth.models import SocialMediaFile, SocialMedia, LinkedinPost, FacebookPost, TwitterPost, SourceFileContent
+from auth.models import SocialMediaFile, SocialMedia, LinkedinPost, FacebookPost, TwitterPost, SourceFileContent, Integration
 from social_media.social_media_job.all_post_job_schaduler import SocialMediaScheduler
+from social_media.social_media_job.linkedIn_job import main as publish_to_linkedin
 social_media_scheduler = SocialMediaScheduler()
 # from social_media.social_media_job.new import scheduler
 # from social_media.new import update_database_records, execute_social_media_tasks, handle_error_cleanup, ValidationError
@@ -1040,6 +1041,52 @@ async def database_file_name(
 
     return data
     
+
+@router.post("/publish_social_media_post")
+async def publish_social_media_post(
+    post_data: PostUpdate,
+    db: Session = Depends(get_db),
+    id: str = Depends(verify_jwt_token)
+):
+    try:
+        if not post_data.uuid:
+            raise HTTPException(status_code=400, detail="UUID is required")
+        
+        user_id = int(id[1])  # Extract user_id from the JWT token
+
+        # file = db.query(SocialMediaFile).filter_by(uuid=post_data.uuid, user_id=user_id).first()
+        # if not file:    
+        #     raise HTTPException(status_code=404, detail="Social media file not found")
+        
+        content = post_data.content[0]
+        if not content:
+            raise HTTPException(status_code=400, detail="Content is required for publishing")
+        
+        # Check if the post is already scheduled
+        # if content.get("isSchedule"):
+        #     raise HTTPException(status_code=400, detail="Post is already scheduled and cannot be published directly")
+        
+        # Publish the post using the social media scheduler
+        integration = db.query(Integration).filter(Integration.user_id == user_id).first()
+        if not integration:
+            raise HTTPException(status_code=404, detail="Integration not found")
+        
+        access_token = integration.access_token
+        if not access_token:    
+            raise HTTPException(status_code=400, detail="Access token is required for publishing posts")
+        
+        result = publish_to_linkedin(
+            access_token=access_token,
+            post_text=post_data.content[0].get("discription", ""),
+            image_url=post_data.content[0].get("image", None),
+        )
+
+        # social_media_scheduler.publish_post(post_data, integration)
+
+        return {"message": "Post scheduled successfully", "result": result}
+    
+    except HTTPException as e:
+        raise  HTTPException(status_code=500, detail="publish post failed" + str(e))
 
 #Initialize scheduler when app starts
 @router.on_event("startup")
