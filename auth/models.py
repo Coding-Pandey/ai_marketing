@@ -202,6 +202,8 @@ class LinkedinPost(Base):
     image_id = Column(String, nullable=True)
     post_id = Column(String) 
     copy_uuid = Column(String) 
+    time_zone = Column(JSONB, nullable=True)  
+    
 
     linkedinfile = relationship("SocialMediaFile", back_populates="linkedin_posts", passive_deletes=True)
     user = relationship("User", back_populates="linkedin_posts")
@@ -217,6 +219,7 @@ class FacebookPost(Base):
     image_id = Column(String, nullable=True)
     post_id = Column(String) 
     copy_uuid = Column(String) 
+    time_zone = Column(JSONB, nullable=True)
 
     facebookfile = relationship("SocialMediaFile", back_populates="facebook_posts", passive_deletes=True)
     user = relationship("User", back_populates="facebook_posts")
@@ -232,6 +235,7 @@ class TwitterPost(Base):
     image_id = Column(String, nullable=True)
     post_id = Column(String) 
     copy_uuid = Column(String) 
+    time_zone = Column(JSONB, nullable=True)
 
     twitterfile = relationship("SocialMediaFile", back_populates="twitter_posts", passive_deletes=True)
     user = relationship("User", back_populates="twitter_posts")

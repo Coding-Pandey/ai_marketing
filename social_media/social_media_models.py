@@ -19,3 +19,4 @@ class PostUpdate(BaseModel):
     uuid : str
     schedule_time: Optional[str] = None
     content: Optional[list] = None
+    timezone : Optional[dict] = None

@@ -135,7 +135,8 @@ OAUTH_CONFIG: Dict[ProviderEnum, OAuthConfig] = {
     auth_url      = "https://accounts.google.com/o/oauth2/v2/auth",
     token_url     = "https://oauth2.googleapis.com/token",
     scopes        = "https://www.googleapis.com/auth/spreadsheets",
-    redirect_uri  = "http://127.0.0.1:8000/auth/google_sheets",
+    # redirect_uri  = "http://127.0.0.1:8000/auth/google_sheets",
+    redirect_uri  = "https://api.optiminder.com/api/auth/google_sheets",
     extra_auth_params = {
         "access_type": "offline",
         "prompt":      "consent"

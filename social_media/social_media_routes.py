@@ -720,7 +720,8 @@ async def schedule_socialmedia_post(
                 schedule_time=post_data.schedule_time,
                 content=content,
                 post_id=linkedin_id,
-                copy_uuid=unique_id
+                copy_uuid=unique_id,
+                time_zone=post_data.timezone
             )
             db.add(linkedin_post)
             created_post_ids.append(('linkedin', linkedin_post.copy_uuid))
@@ -733,7 +734,8 @@ async def schedule_socialmedia_post(
                 schedule_time=post_data.schedule_time,
                 content=content,
                 post_id=facebook_id,
-                copy_uuid=unique_id
+                copy_uuid=unique_id,
+                time_zone=post_data.timezone
             )
             db.add(facebook_post)
             created_post_ids.append(('facebook', facebook_post.copy_uuid))
@@ -746,7 +748,8 @@ async def schedule_socialmedia_post(
                 schedule_time=post_data.schedule_time,
                 content=content,
                 post_id=twitter_id,
-                copy_uuid=unique_id
+                copy_uuid=unique_id,
+                time_zone=post_data.timezone
             )
             db.add(twitter_post)
             created_post_ids.append(('twitter', twitter_post.copy_uuid))
@@ -795,7 +798,7 @@ async def schedule_socialmedia_post(
         # Schedule posts with APScheduler
         scheduling_errors = []
         for platform, copy_uuid in created_post_ids:
-            success = social_media_scheduler.schedule_post(platform, copy_uuid, post_data.schedule_time)
+            success = social_media_scheduler.schedule_post(platform, copy_uuid, post_data.schedule_time, post_data.timezone)
             
             if not success:
                 scheduling_errors.append(f"{platform} post {copy_uuid}")
@@ -889,6 +892,7 @@ async def update_scheduled_post(
     uuid: str,
     id: Optional[str] = Form(None),
     content: Optional[str] = Form(None),
+    timezone : Optional[dict] = Form(None),
     image: Optional[UploadFile] = File(None),
     reschedule_time: Optional[str] = Form(None),
     db: Session = Depends(get_db),
@@ -934,6 +938,8 @@ async def update_scheduled_post(
         }
         
         platform, model = platform_map[posts]
+        timezone = json.loads(timezone) if timezone and isinstance(timezone, str) else None
+        post.time_zone = timezone if timezone else post.time_zone
 
         # Update content if provided
         if content:

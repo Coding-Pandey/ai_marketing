@@ -105,7 +105,7 @@ def publish_linkedin_post_job(copy_uuid: str):
         db.close()
 
 class SocialMediaScheduler:
-    def __init__(self):
+    def __init__(self, timezone='UTC'):
         # Configure job store to use your database
         jobstores = {
             'default': SQLAlchemyJobStore(engine=engine, tablename='apscheduler_jobs')
@@ -124,7 +124,7 @@ class SocialMediaScheduler:
             jobstores=jobstores,
             executors=executors,
             job_defaults=job_defaults,
-            timezone='UTC'
+            timezone=timezone
         )
         
         # Start scheduler
@@ -211,10 +211,12 @@ class SocialMediaScheduler:
     #     finally:
     #         db.close()
     
-    def schedule_post(self, platform: str, copy_uuid: str, schedule_time: datetime):
+    def schedule_post(self, platform: str, copy_uuid: str, schedule_time: datetime, time_zone: dict = None):
         """Schedule a post for publication"""
         try:
             job_id = f"{platform}_post_{copy_uuid}"
+            time_zone = json.loads(time_zone) if isinstance(time_zone, str) else time_zone
+            time_zone_name = time_zone.get('value') if time_zone else None
 
             # Remove existing job if exists
             try:
@@ -232,18 +234,19 @@ class SocialMediaScheduler:
             if platform not in platform_functions:
                 logger.error(f"Unknown platform: {platform}")
                 return False
-            run_date = parse_with_local(schedule_time)
-            print(f"Scheduling {platform} post {copy_uuid} at {run_date}")
+            # run_date = parse_with_local(schedule_time)
+            # print(f"Scheduling {platform} post {copy_uuid} at {run_date}")
             print(f"Schedule time: {schedule_time}")
             # Schedule the post
             self.scheduler.add_job(
                 func=platform_functions[platform],
                 args=[copy_uuid],
                 trigger='date',
-                run_date=run_date,
+                run_date=schedule_time,
                 id=job_id,
                 replace_existing=True,
-                misfire_grace_time=300  # 5 minutes grace period
+                misfire_grace_time=300,  # 5 minutes grace period
+                timezone=time_zone_name if time_zone_name else 'UTC'  # Use local timezone if provided
             )
             
 
