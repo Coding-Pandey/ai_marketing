@@ -938,7 +938,7 @@ async def update_scheduled_post(
         }
         
         platform, model = platform_map[posts]
-        timezone = json.loads(timezone) if timezone and isinstance(timezone, str) else None
+        timezone = json.loads(timezone) if timezone and isinstance(timezone, str) else timezone
         post.time_zone = timezone if timezone else post.time_zone
 
         # Update content if provided

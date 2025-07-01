@@ -73,7 +73,7 @@ def publish_linkedin_post_job(copy_uuid: str):
         
         # Build the post text from Subheadline + two line breaks + description
         subheadline = "\n".join(content.get("Subheadline", [])) if content.get("Subheadline") else None
-        description = "\n".join(content.get("description", [])) if content.get("description") else None
+        description = "\n".join(content.get("discription", [])) if content.get("discription") else None 
         post_text = f"{subheadline}\n\n{description}"
         print(post_text)
         
