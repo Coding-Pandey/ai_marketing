@@ -11,13 +11,25 @@ from datetime import datetime, timedelta
 
 from auth.models import Integration, ProviderEnum  
 
+import os
+import subprocess
+import tempfile
+from datetime import datetime
+from typing import List, Dict
+
+import pandas as pd
+from fastapi import HTTPException
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+
 class GoogleSheetsService:
     def __init__(self, integration: Integration):
         self.integration = integration
         self.credentials = self._create_credentials()
         self.service = build('sheets', 'v4', credentials=self.credentials)
-    
-    def _create_credentials(self):
+
+    def _create_credentials(self) -> Credentials:
         """Create Google credentials from integration data"""
         return Credentials(
             token=self.integration.access_token,
@@ -27,116 +39,116 @@ class GoogleSheetsService:
             client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
             scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
-    
-    def crawl_and_create_sheet(self, domain: str) -> dict:
+
+    def crawl_and_create_sheets(
+        self,
+        domain: str,
+        export_tabs: List[str]
+    ) -> List[Dict]:
         """
-        Crawl domain with Screaming Frog and create Google Sheet
+        Crawl domain once with Screaming Frog and export multiple tabs in a single run,
+        then create a separate Google Sheet for each CSV export.
+
+        :param domain: Domain to crawl
+        :param export_tabs: List of Screaming Frog tab names (e.g. ['Internal:All','External','Images'])
+        :return: List of results per sheet
         """
-        # Create temporary directory for this operation
+        if not export_tabs:
+            raise HTTPException(400, "At least one export tab must be specified.")
+
+        # Prepare comma-separated tabs for Screaming Frog
+        tabs_arg = ",".join(export_tabs)
+        results: List[Dict] = []
+
         with tempfile.TemporaryDirectory() as temp_dir:
-            csv_path = os.path.join(temp_dir, "internal_all.csv")
-            
             try:
-                # 1. Run Screaming Frog crawl
-                self._run_screaming_frog_crawl(domain, temp_dir)
-                
-                # 2. Check if CSV was created
-                if not os.path.exists(csv_path):
-                    raise HTTPException(500, "Screaming Frog crawl failed - CSV not found")
-                
-                # 3. Process CSV data
-                df = pd.read_csv(csv_path)
-                df = df.fillna("").astype(str)
-                
-                if df.empty:
-                    raise HTTPException(400, "No data found in crawl")
-                
-                # 4. Create Google Sheet
-                spreadsheet_result = self._create_google_sheet(domain, df)
-                
-                return spreadsheet_result
-                
+                # Single crawl for all tabs
+                self._run_screaming_frog_crawl(domain, temp_dir, tabs_arg)
+
+                # Process each CSV output
+                for tab in export_tabs:
+                    csv_name = tab.replace(':', '_') + '.csv'
+                    csv_path = os.path.join(temp_dir, csv_name)
+
+                    if not os.path.exists(csv_path):
+                        # Skip missing exports
+                        continue
+
+                    df = pd.read_csv(csv_path).fillna("").astype(str)
+                    if df.empty:
+                        continue
+
+                    sheet_info = self._create_google_sheet(domain, tab, df)
+                    results.append(sheet_info)
+
+                if not results:
+                    raise HTTPException(400, "No data found in any specified crawl tabs.")
+
+                return results
+
             except subprocess.CalledProcessError as e:
-                raise HTTPException(500, f"Screaming Frog crawl failed: {str(e)}")
+                raise HTTPException(500, f"Screaming Frog crawl failed: {e}")
             except Exception as e:
-                raise HTTPException(500, f"Error creating spreadsheet: {str(e)}")
-    
-    def _run_screaming_frog_crawl(self, domain: str, output_dir: str):
-        """Run Screaming Frog crawl"""
-        screaming_frog_path = r"C:\Program Files (x86)\Screaming Frog SEO Spider\screamingfrogseospider.exe"
-        
-        # Check if Screaming Frog exists
-        if not os.path.exists(screaming_frog_path):
+                raise HTTPException(500, f"Error during crawling and sheet creation: {e}")
+
+    def _run_screaming_frog_crawl(self, domain: str, output_dir: str, tabs_arg: str):
+        """Run a single Screaming Frog crawl exporting all specified tabs"""
+        sf_path = r"C:\Program Files (x86)\Screaming Frog SEO Spider\screamingfrogseospider.exe"
+        if not os.path.exists(sf_path):
             raise HTTPException(500, "Screaming Frog SEO Spider not found. Please install it.")
-        
-        # Run the crawl
+
         subprocess.run([
-            screaming_frog_path,
+            sf_path,
             "--crawl", domain,
             "--headless",
-            "--export-tabs", "Internal:All",
+            "--export-tabs", tabs_arg,
             "--output-folder", output_dir,
             "--overwrite"
-        ], check=True, timeout=300)  # 5 minute timeout
-    
-    def _create_google_sheet(self, domain: str, df: pd.DataFrame) -> dict:
-        """Create Google Sheet with crawl data"""
-        # Create spreadsheet
-        sheet_metadata = {
-            "properties": {
-                "title": f"SEO Crawl - {domain} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
-            }
-        }
-        
-        spreadsheet = self.service.spreadsheets().create(body=sheet_metadata).execute()
-        spreadsheet_id = spreadsheet['spreadsheetId']
-        
-        # Prepare data for Google Sheets
+        ], check=True, timeout=600)
+
+    def _create_google_sheet(
+        self,
+        domain: str,
+        tab_name: str,
+        df: pd.DataFrame
+    ) -> Dict:
+        """Create a Google Sheet containing the DataFrame"""
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+        title = f"SEO Crawl - {domain} - {tab_name} - {timestamp}"
+        spreadsheet = self.service.spreadsheets().create(
+            body={"properties": {"title": title}}
+        ).execute()
+        sid = spreadsheet['spreadsheetId']
+
         values = [df.columns.tolist()] + df.values.tolist()
-        
-        # Write data to sheet
-        body = {"values": values}
         self.service.spreadsheets().values().update(
-            spreadsheetId=spreadsheet_id,
+            spreadsheetId=sid,
             range="A1",
             valueInputOption="RAW",
-            body=body
+            body={"values": values}
         ).execute()
-        
-        # Format the header row
-        # self._format_header_row(spreadsheet_id)
-        
+
         return {
-            "spreadsheet_id": spreadsheet_id,
-            "spreadsheet_url": f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit",
+            "tab": tab_name,
+            "spreadsheet_id": sid,
+            "spreadsheet_url": f"https://docs.google.com/spreadsheets/d/{sid}/edit",
             "rows_count": len(df),
             "columns_count": len(df.columns)
         }
-    
+
     def _format_header_row(self, spreadsheet_id: str):
-        """Format the header row (make it bold)"""
+        """Optional: make the first row bold"""
         try:
             requests = [{
                 "repeatCell": {
-                    "range": {
-                        "sheetId": 0,
-                        "startRowIndex": 0,
-                        "endRowIndex": 1
-                    },
-                    "cell": {
-                        "userEnteredFormat": {
-                            "textFormat": {"bold": True},
-                            "backgroundColor": {"red": 0.9, "green": 0.9, "blue": 0.9}
-                        }
-                    },
-                    "fields": "userEnteredFormat(textFormat,backgroundColor)"
+                    "range": {"sheetId": 0, "startRowIndex": 0, "endRowIndex": 1},
+                    "cell": {"userEnteredFormat": {"textFormat": {"bold": True}}},
+                    "fields": "userEnteredFormat.textFormat"
                 }
             }]
-            
-            body = {"requests": requests}
             self.service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheet_id, 
-                body=body
+                spreadsheetId=spreadsheet_id,
+                body={"requests": requests}
             ).execute()
         except Exception as e:
             print(f"Warning: Could not format header row: {e}")

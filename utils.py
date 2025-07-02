@@ -378,6 +378,25 @@ def remove_branded_keywords(keywords_list, branded_keywords_list):
     
     return filtered_keywords
 
+def filter_by_branded(
+    keywords_list,
+    branded_keywords_list,
+    include: bool = False
+):
+    """
+    If include=True, returns only keywords that contain any branded term.
+    If include=False, returns only keywords that do NOT contain any branded term.
+    """
+    result = []
+    branded_lower = [b.lower() for b in branded_keywords_list]
+
+    for item in keywords_list:
+        has_brand = any(brand in item.Keyword.lower() for brand in branded_lower)
+        if (include and has_brand) or (not include and not has_brand):
+            result.append(item)
+
+    return result
+
 
 
 def extract_keywords(json_string):

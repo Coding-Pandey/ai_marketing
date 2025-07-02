@@ -15,6 +15,7 @@ from utils import (
     remove_branded_keywords,
     add_keywords_to_json,
     flatten_seo_data,
+    filter_by_branded,
     check_api_limit,
     map_seo_pages_with_search_volume
 )
@@ -131,15 +132,15 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
         print(keywords)
         
         if delete_word and delete_word.branded_words:
-            keywords = filter_non_branded_keywords(keywords)
-            print(f"filter_non_branded_keywords: {keywords}")
-            keywords = remove_keywords(keywords)
-            print(f"remove_keywords: {keywords}")
+            # keywords = filter_non_branded_keywords(keywords)
+            # keywords = remove_keywords(keywords)
+            # keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
+            keywords = filter_by_branded(keywords, delete_word.branded_words, include=False)
 
         if delete_word and delete_word.branded_keyword:
+            keywords = filter_by_branded(keywords, delete_word.branded_keyword, include=True)
             # print("hello",request.branded_keyword)
-            keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
-            # add_keywords_to_json(delete_word.branded_keyword)   
+            # add_keywords_to_json(delete_word.branded_keyword)  
         # Read file contents and convert to DataFrame
         print("hello")
         df = pd.DataFrame([k.dict() for k in keywords]) 

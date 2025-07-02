@@ -69,7 +69,7 @@ class UUIDRequest(BaseModel):
         
 
 class RemoveKeyword(BaseModel):
-    branded_words: Optional[bool] = False
+    branded_words: Optional[List[str]] = []
     branded_keyword: Optional[List[str]] = []
 
 class KeywordClusterRequest(BaseModel):

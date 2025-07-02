@@ -16,6 +16,7 @@ from utils import (
     remove_branded_keywords,
     flatten_ppc_data,
     check_api_limit,
+    filter_by_branded,
     remove_keywords,
     add_keywords_to_json
 )
@@ -107,12 +108,14 @@ async def ppc_keyword_clustering(request: KeywordClusterRequest
             return {"error": "No keywords provided"}
         
         if delete_word and delete_word.branded_words:
-            keywords = filter_non_branded_keywords(keywords)
-            keywords = remove_keywords(keywords)
+            # keywords = filter_non_branded_keywords(keywords)
+            # keywords = remove_keywords(keywords)
+            # keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
+            keywords = filter_by_branded(keywords, delete_word.branded_words, include=False)
 
         if delete_word and delete_word.branded_keyword:
+            keywords = filter_by_branded(keywords, delete_word.branded_keyword, include=True)
             # print("hello",request.branded_keyword)
-            keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
             # add_keywords_to_json(delete_word.branded_keyword)  
         
         # Convert keywords to DataFrame

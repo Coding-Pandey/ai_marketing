@@ -23,6 +23,7 @@ def crawl_domain_to_sheets(
     Crawl a domain and create a Google Sheet with the results
     """
     user_id = int(user_id[1]) 
+    export_tabs = ["Internal:All", "External", "Images"]
     # Get user's Google Sheets integration
     integration = db.query(Integration).filter_by(
         user_id=user_id,
@@ -42,8 +43,8 @@ def crawl_domain_to_sheets(
     
     # Create sheets service and run crawl
     sheets_service = GoogleSheetsService(integration)
-    result = sheets_service.crawl_and_create_sheet(domain)
-    
+    result = sheets_service.crawl_and_create_sheet(domain, export_tabs=export_tabs)
+
     return {
         "success": True,
         "message": f"Successfully crawled {domain} and created Google Sheet",
