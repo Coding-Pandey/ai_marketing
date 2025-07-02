@@ -56,8 +56,8 @@ class PageUpdate(BaseModel):
 
 
 class RemoveKeyword(BaseModel):
-    branded_words: Optional[bool] = False
-    branded_keyword: Optional[List[str]] = []
+    exclude: Optional[List[str]] = []
+    include: Optional[List[str]] = []
 
 class KeywordClusterRequest(BaseModel):
     keywords: List[KeywordItem]
