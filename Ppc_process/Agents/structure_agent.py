@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import asyncio
+from openai import AsyncOpenAI
 from openai import OpenAI
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from clustering_pipeline.k_mean import ClusteringConfig, Cluster
@@ -11,7 +12,8 @@ import pandas as pd
 from dotenv import load_dotenv
 load_dotenv()
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))  
+# client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))  
+client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 model_name = os.environ.get("OPENAI_MODEL_2")
 min_clusters = os.environ.get("MIN_CLUSTER")
 max_clusters = os.environ.get("MAX_CLUSTER")
@@ -31,12 +33,11 @@ async def url_agent(PROMPT=prompt, items=None, Ad_group=None, Ad_headline=None, 
             {'role': 'user', 'content': query}
         ]
 
-        response = client.chat.completions.create(
-            model=model_name, 
-            messages=messages, 
-            response_format={"type": "json_object"}
-        )
-
+        response = await client.chat.completions.create(
+                    model=model_name, 
+                    messages=messages, 
+                    response_format={"type": "json_object"}
+                )
     
         response_content = response.choices[0].message.content
         total_token = response.usage.total_tokens
@@ -93,34 +94,38 @@ async def agent_call(cluster_items):
     Ad_headline = []
     description = []
     total_token_count = 0
-    for i in range(0, len(cluster_items), 100): 
-        batch = cluster_items[i:i+100]  
-        print(f"Processing batch {i//100 + 1} with {len(batch)} items")
-        
-        # Pass previous page titles to url_agent
-        structured_data, Ad_group_detail, Ad_headline_detail, description_detail,batch_tokens = await url_agent(
+    batch_size = 100
+    batches = [cluster_items[i:i+batch_size] for i in range(0, len(cluster_items), batch_size)]
+    tasks = []
+
+    # Create tasks for all batches
+    for batch in batches:
+        print(f"Creating task for batch with {len(batch)} items")
+        task = asyncio.create_task(url_agent(
             PROMPT=prompt,
             items=batch,
             Ad_group=Ad_group,
-            Ad_headline=Ad_headline,    
+            Ad_headline=Ad_headline,
             description=description
-        )
+        ))
+        tasks.append(task)
 
+    # Run all tasks concurrently
+    results = await asyncio.gather(*tasks)
+
+    # Aggregate results
+    for structured_data, Ad_group_detail, Ad_headline_detail, description_detail, batch_tokens in results:
         if batch_tokens:
             total_token_count += batch_tokens
             print(f"Batch token count: {batch_tokens}, Running total: {total_token_count}")
-
         if structured_data:
             structured_results.extend([structured_data] if not isinstance(structured_data, list) else structured_data)
-
         if Ad_group_detail:
-            Ad_group.extend(Ad_group_detail)  
-
+            Ad_group.extend(Ad_group_detail)
         if Ad_headline_detail:
-            Ad_headline.extend(Ad_headline_detail) 
-
+            Ad_headline.extend(Ad_headline_detail)
         if description_detail:
-            description.extend(description_detail)         
+            description.extend(description_detail)      
 
     print(f"Processed {len(structured_results)} items, structured_results {structured_results}")       
 

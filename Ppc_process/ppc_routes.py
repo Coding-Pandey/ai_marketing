@@ -107,14 +107,14 @@ async def ppc_keyword_clustering(request: KeywordClusterRequest
         if not keywords:
             return {"error": "No keywords provided"}
         
-        if delete_word and delete_word.branded_words:
+        if delete_word and delete_word.exclude:
             # keywords = filter_non_branded_keywords(keywords)
             # keywords = remove_keywords(keywords)
             # keywords = remove_branded_keywords(keywords,delete_word.branded_keyword)
-            keywords = filter_by_branded(keywords, delete_word.branded_words, include=False)
+            keywords = filter_by_branded(keywords, delete_word.exclude, include=False)
 
-        if delete_word and delete_word.branded_keyword:
-            keywords = filter_by_branded(keywords, delete_word.branded_keyword, include=True)
+        if delete_word and delete_word.include:
+            keywords = filter_by_branded(keywords, delete_word.include, include=True)
             # print("hello",request.branded_keyword)
             # add_keywords_to_json(delete_word.branded_keyword)  
         
