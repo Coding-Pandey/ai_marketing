@@ -164,7 +164,9 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
             user_id = int(id[1])  # Extract user_id from the JWT token
 
             if result:
-                upload_seo_table(str(unique_id), user_id, filename, result)
+                location_data = [loc.dict() for loc in request.location_ids]
+                language_data = request.language_id.dict() if request.language_id else None
+                upload_seo_table(str(unique_id), user_id, filename, result, location_data, language_data)
                 
 
             seo_cluster_record = db.query(SEOCluster).filter(SEOCluster.user_id == user.id).first()

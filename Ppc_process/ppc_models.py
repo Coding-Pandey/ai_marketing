@@ -82,7 +82,9 @@ class RemoveKeyword(BaseModel):
 class KeywordClusterRequest(BaseModel):
     keywords: List[KeywordItem]
     delete_word: Optional[RemoveKeyword] = None    
-    file_name: Optional[str] = None        
+    file_name: Optional[str] = None    
+    location_ids: Optional[List[Location]] = []  
+    language_id: Optional[Language] = None          
 
 
 class PPCFileNameUpdate(BaseModel):

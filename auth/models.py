@@ -159,6 +159,8 @@ class SEOFile(Base):
     uuid = Column(String)  
     upload_time = Column(DateTime, default=datetime.utcnow)
     json_data = Column(JSONB)
+    location = Column(JSONB)
+    language = Column(JSONB)
 
     user = relationship("User", back_populates="seo_file_records")
 
@@ -171,6 +173,8 @@ class PPCFile(Base):
     uuid = Column(String)  
     upload_time = Column(DateTime, default=datetime.utcnow)
     json_data = Column(JSONB)
+    location = Column(JSONB)
+    language = Column(JSONB)
 
     user = relationship("User", back_populates="ppc_file_records")
 

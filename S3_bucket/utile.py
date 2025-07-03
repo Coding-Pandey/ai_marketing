@@ -43,7 +43,7 @@ def convert_into_csvdata(json_data):
 
 
 
-def upload_seo_table( uuid: str, user_id: int, file_name: str, json_data: Union[dict, list]):
+def upload_seo_table( uuid: str, user_id: int, file_name: str, json_data: Union[dict, list], location:Union[dict, list], language:Union[dict, list]):
     db = next(get_db()) 
     try:
         new_file = SEOFile(
@@ -51,7 +51,10 @@ def upload_seo_table( uuid: str, user_id: int, file_name: str, json_data: Union[
             file_name=file_name,
             uuid=uuid,
             json_data= json_data,
-            upload_time=datetime.utcnow()
+            upload_time=datetime.utcnow(),
+            location = location,
+            language = language
+            
         )
 
         
@@ -67,7 +70,7 @@ def upload_seo_table( uuid: str, user_id: int, file_name: str, json_data: Union[
     finally:
         db.close() 
     
-def upload_ppc_table( uuid: str, user_id: int, file_name: str, json_data: Union[dict, list]):
+def upload_ppc_table( uuid: str, user_id: int, file_name: str, json_data: Union[dict, list], location:Union[dict, list], language:Union[dict, list]):
     db = next(get_db()) 
     try:
         new_file = PPCFile(
@@ -75,7 +78,9 @@ def upload_ppc_table( uuid: str, user_id: int, file_name: str, json_data: Union[
             file_name=file_name,
             uuid=uuid,
             json_data= json_data,
-            upload_time=datetime.utcnow()
+            upload_time=datetime.utcnow(),
+            location = location,
+            language = language
         )
 
         
