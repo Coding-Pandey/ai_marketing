@@ -10,7 +10,7 @@ from auth.auth import get_db
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.orm import Session
 from auth.models import Contentgeneration, ContentgenerationFile, SourceFileContent
-from datetime import timedelta
+from datetime import timedelta, datetime
 from content_generation.content_generation_model import UUIDRequest,ContentGenerationFileSchema
 import uuid
 import os
@@ -322,36 +322,72 @@ async def content_generation(
 @router.get("/content_datalist")
 async def content_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
     try:
-        user_id = int(id[1])  
+        user_id = int(id[1])  # Extract user_id from the JWT token
+        
+        # Get current time
+        current_time = datetime.now()
+        
+        # Get all Content Generation files for the user
         content_files = db.query(ContentgenerationFile).filter(ContentgenerationFile.user_id == user_id).all()
-        if not content_files:
+        
+        # Check for expired files and remove them
+        expired_files = []
+        active_files = []
+        
+        for content_file in content_files:
+            if content_file.last_reset:
+                # Calculate expiry date (30 days from last_reset)
+                expiry_date = content_file.last_reset + timedelta(days=30)
+                
+                if current_time >= expiry_date:
+                    # File has expired, mark for deletion
+                    expired_files.append(content_file)
+                else:
+                    # File is still active
+                    active_files.append(content_file)
+            else:
+                # If no last_reset, keep the file (or handle as needed)
+                active_files.append(content_file)
+        
+        # Remove expired files from database
+        if expired_files:
+            for expired_file in expired_files:
+                db.delete(expired_file)
+            db.commit()
+            print(f"Removed {len(expired_files)} expired Content Generation files for user {user_id}")
+        
+        # If no active files remain, return empty list
+        if not active_files:
+            # Update Contentgeneration record to reflect zero files
+            content_record = db.query(Contentgeneration).filter(Contentgeneration.user_id == user_id).first()
+            if content_record:
+                content_record.file_count = 0
+                content_record.call_count = 0
+                db.commit()
             return []
-
-        file_count = len(content_files)
-
-
+        
+        # Update file_count and call_count with active files
+        file_count = len(active_files)
         content_record = db.query(Contentgeneration).filter(Contentgeneration.user_id == user_id).first()
-
         if content_record:
-
             content_record.file_count = file_count
             content_record.call_count = file_count
             db.commit()
-
-   
+        
+        # Return active files with last_reset information
         result = [
             {
                 "file_name": content_file.file_name,
                 "uuid": content_file.uuid,
                 "last_reset": content_file.last_reset + timedelta(days=30) if content_file.last_reset else None,
             }
-            for content_file in content_files
+            for content_file in active_files
         ]
-
+        
         return result
-
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))    
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/content_delete_data")
 async def content_delete_data(request: UUIDRequest, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):

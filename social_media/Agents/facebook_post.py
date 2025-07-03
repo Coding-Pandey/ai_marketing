@@ -2,14 +2,15 @@ import sys
 import os
 import json
 import asyncio
-from openai import OpenAI
+from openai import AsyncOpenAI, OpenAI
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from social_media.prompt.social_media_prompt import  facebook_prompt
 from social_media.utils import convert_doc_to_text, clean_post_list
 from dotenv import load_dotenv
 load_dotenv()
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY")) 
+# client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY")) 
+client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY")) 
 model_name = os.environ.get("OPENAI_MODEL_2")
 
 

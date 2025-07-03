@@ -38,7 +38,7 @@ from botocore.exceptions import ClientError
 import pandas as pd
 import uuid
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 
 
@@ -176,33 +176,69 @@ async def ppc_keyword_clustering(request: KeywordClusterRequest
 async def ppc_csv_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
     try:
         user_id = int(id[1])  # Extract user_id from the JWT token
+        
+        # Get current time
+        current_time = datetime.now()
+        
+        # Get all PPC files for the user
         ppc_files = db.query(PPCFile).filter(PPCFile.user_id == user_id).all()
-        if not ppc_files:
+        
+        # Check for expired files and remove them
+        expired_files = []
+        active_files = []
+        
+        for ppc_file in ppc_files:
+            if ppc_file.upload_time:
+                # Calculate expiry date (30 days from upload)
+                expiry_date = ppc_file.upload_time + timedelta(days=30)
+                
+                if current_time >= expiry_date:
+                    # File has expired, mark for deletion
+                    expired_files.append(ppc_file)
+                else:
+                    # File is still active
+                    active_files.append(ppc_file)
+            else:
+                # If no upload_time, keep the file (or handle as needed)
+                active_files.append(ppc_file)
+        
+        # Remove expired files from database
+        if expired_files:
+            for expired_file in expired_files:
+                db.delete(expired_file)
+            db.commit()
+            print(f"Removed {len(expired_files)} expired files for user {user_id}")
+        
+        # If no active files remain, return empty list
+        if not active_files:
+            # Update PPCCSV record to reflect zero files
+            ppc_csv_record = db.query(PPCCSV).filter(PPCCSV.user_id == user_id).first()
+            if ppc_csv_record:
+                ppc_csv_record.file_count = 0
+                ppc_csv_record.call_count = 0
+                db.commit()
             return []
         
-        file_count = len(ppc_files)
-
+        # Update file_count and call_count with active files
+        file_count = len(active_files)
         ppc_csv_record = db.query(PPCCSV).filter(PPCCSV.user_id == user_id).first()
-
-
         if ppc_csv_record:
-            # Update file_count and call_count
             ppc_csv_record.file_count = file_count
             ppc_csv_record.call_count = file_count
             db.commit()
-
-        # Include last_reset in each file entry
+        
+        # Return active files with last_reset information
         result = [
             {
                 "file_name": ppc_file.file_name,
                 "uuid": ppc_file.uuid,
                 "last_reset": ppc_file.upload_time + timedelta(days=30) if ppc_file.upload_time else None,
             }
-            for ppc_file in ppc_files
+            for ppc_file in active_files
         ]
-
+        
         return result
-
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

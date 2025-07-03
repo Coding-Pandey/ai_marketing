@@ -234,7 +234,7 @@ class SocialMediaScheduler:
             }
             
             if platform not in platform_functions:
-                logger.error(f"Unknown platform: {platform}")
+                print(f"Unknown platform: {platform}")
                 return False
             # run_date = parse_with_local(schedule_time)
             # print(f"Scheduling {platform} post {copy_uuid} at {run_date}")

@@ -3,7 +3,7 @@ from typing import Optional
 import pandas as pd
 import io
 import uuid
-from datetime import timedelta
+from datetime import timedelta,datetime
 from sqlalchemy.orm import Session
 from settings.app_intergations.app_intergations_model import ProviderEnum
 from social_media.Agents.social_media import agent_call
@@ -319,38 +319,73 @@ async def socialmedia_upload_data(json_data: dict = Body(...),
 
 @router.get("/socialmedia_datalist")
 async def socialmedia_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
-
     try:
-        user_id = int(id[1])  
+        user_id = int(id[1])  # Extract user_id from the JWT token
+        
+        # Get current time
+        current_time = datetime.now()
+        
+        # Get all Social Media files for the user
         socialmedia_files = db.query(SocialMediaFile).filter(SocialMediaFile.user_id == user_id).all()
-        if not socialmedia_files:
+        
+        # Check for expired files and remove them
+        expired_files = []
+        active_files = []
+        
+        for socialmedia_file in socialmedia_files:
+            if socialmedia_file.last_reset:
+                # Calculate expiry date (30 days from last_reset)
+                expiry_date = socialmedia_file.last_reset + timedelta(days=30)
+                
+                if current_time >= expiry_date:
+                    # File has expired, mark for deletion
+                    expired_files.append(socialmedia_file)
+                else:
+                    # File is still active
+                    active_files.append(socialmedia_file)
+            else:
+                # If no last_reset, keep the file (or handle as needed)
+                active_files.append(socialmedia_file)
+        
+        # Remove expired files from database
+        if expired_files:
+            for expired_file in expired_files:
+                db.delete(expired_file)
+            db.commit()
+            print(f"Removed {len(expired_files)} expired Social Media files for user {user_id}")
+        
+        # If no active files remain, return empty list
+        if not active_files:
+            # Update SocialMedia record to reflect zero files
+            socialmedia_record = db.query(SocialMedia).filter(SocialMedia.user_id == user_id).first()
+            if socialmedia_record:
+                socialmedia_record.file_count = 0
+                socialmedia_record.call_count = 0
+                db.commit()
             return []
         
-        file_count = len(socialmedia_files)
-
-
+        # Update file_count and call_count with active files
+        file_count = len(active_files)
         socialmedia_record = db.query(SocialMedia).filter(SocialMedia.user_id == user_id).first()
-
         if socialmedia_record:
-        
             socialmedia_record.file_count = file_count
             socialmedia_record.call_count = file_count
             db.commit()
-
-   
+        
+        # Return active files with last_reset information
         result = [
             {
                 "file_name": socialmedia_file.file_name,
                 "uuid": socialmedia_file.uuid,
                 "last_reset": socialmedia_file.last_reset + timedelta(days=30) if socialmedia_file.last_reset else None,
             }
-            for socialmedia_file in socialmedia_files
+            for socialmedia_file in active_files
         ]
-
+        
         return result
-
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))    
+        raise HTTPException(status_code=500, detail=str(e)) 
     
 @router.delete("/socialmedia_delete_document")
 async def socialmedia_delete_document(request: UUIDRequest, id: str = Depends(verify_jwt_token), db: Session = Depends(get_db)):

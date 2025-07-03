@@ -34,7 +34,7 @@ from auth.auth import get_db
 import uuid
 import io
 import json
-from datetime import timedelta
+from datetime import timedelta, datetime
 from botocore.exceptions import ClientError
 
 router = APIRouter()
@@ -201,34 +201,69 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
 async def seo_csv_documents(db: Session = Depends(get_db), id: str = Depends(verify_jwt_token)):
     try:
         user_id = int(id[1])  # Extract user_id from the JWT token
+        
+        # Get current time
+        current_time = datetime.now()
+        
+        # Get all SEO files for the user
         seo_files = db.query(SEOFile).filter(SEOFile.user_id == user_id).all()
-        if not seo_files:
+        
+        # Check for expired files and remove them
+        expired_files = []
+        active_files = []
+        
+        for seo_file in seo_files:
+            if seo_file.upload_time:
+                # Calculate expiry date (30 days from upload)
+                expiry_date = seo_file.upload_time + timedelta(days=30)
+                
+                if current_time >= expiry_date:
+                    # File has expired, mark for deletion
+                    expired_files.append(seo_file)
+                else:
+                    # File is still active
+                    active_files.append(seo_file)
+            else:
+                # If no upload_time, keep the file (or handle as needed)
+                active_files.append(seo_file)
+        
+        # Remove expired files from database
+        if expired_files:
+            for expired_file in expired_files:
+                db.delete(expired_file)
+            db.commit()
+            print(f"Removed {len(expired_files)} expired SEO files for user {user_id}")
+        
+        # If no active files remain, return empty list
+        if not active_files:
+            # Update SEOCSV record to reflect zero files
+            seo_csv_record = db.query(SEOCSV).filter(SEOCSV.user_id == user_id).first()
+            if seo_csv_record:
+                seo_csv_record.file_count = 0
+                seo_csv_record.call_count = 0
+                db.commit()
             return []
         
-        file_count = len(seo_files)
-
-
-        # Fetch the SEOCSV record for last_reset value
+        # Update file_count and call_count with active files
+        file_count = len(active_files)
         seo_csv_record = db.query(SEOCSV).filter(SEOCSV.user_id == user_id).first()
-
         if seo_csv_record:
-        
             seo_csv_record.file_count = file_count
             seo_csv_record.call_count = file_count
             db.commit()
-
-        # Include last_reset in each file entry
+        
+        # Return active files with last_reset information
         result = [
             {
                 "file_name": seo_file.file_name,
                 "uuid": seo_file.uuid,
                 "last_reset": seo_file.upload_time + timedelta(days=30) if seo_file.upload_time else None,
             }
-            for seo_file in seo_files
+            for seo_file in active_files
         ]
-
+        
         return result
-
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
