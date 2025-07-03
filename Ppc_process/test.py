@@ -87,7 +87,7 @@ def process_clusters(data):
 
 
 async def agent_call_sequential(cluster_items, batch_size=100):
-    """Process batches sequentially for large datasets"""
+    """Process batches sequentially for large batch sizes"""
     Ad_group = []
     structured_results = []
     Ad_headline = []
@@ -125,7 +125,7 @@ async def agent_call_sequential(cluster_items, batch_size=100):
 
 
 async def agent_call_concurrent(cluster_items, batch_size=100):
-    """Process batches concurrently for smaller datasets"""
+    """Process batches concurrently for smaller batch sizes"""
     Ad_group = []
     structured_results = []
     Ad_headline = []
@@ -169,14 +169,12 @@ async def agent_call_concurrent(cluster_items, batch_size=100):
 
 
 async def agent_call(cluster_items, batch_size=100):
-    """Main function to decide between sequential or concurrent processing based on number of items"""
-    num_items = len(cluster_items)
-    
-    if num_items > 100:
-        print(f"Cluster has {num_items} items (> 100), processing sequentially")
+    """Main function to decide between sequential or concurrent processing"""
+    if batch_size > 100:
+        print(f"Batch size {batch_size} > 100, processing sequentially")
         return await agent_call_sequential(cluster_items, batch_size)
     else:
-        print(f"Cluster has {num_items} items (<= 100), processing concurrently")
+        print(f"Batch size {batch_size} <= 100, processing concurrently")
         return await agent_call_concurrent(cluster_items, batch_size)
 
 
@@ -236,9 +234,9 @@ async def ppc_main(input_data, batch_size=100):
     Args:
         input_data: Input data for processing
         batch_size: Batch size for processing (default: 100)
-                   Logic: If cluster has > 100 items: batches run sequentially
-                         If cluster has <= 100 items: batches run concurrently
-                         Clusters always run concurrently regardless of size
+                   If > 100: batches within clusters run sequentially
+                   If <= 100: batches within clusters run concurrently
+                   Clusters always run concurrently regardless of batch size
     """
     results, total_token_count = await agent_recursion(input_data, batch_size)
     print(f"Total token count: {total_token_count}")
@@ -246,14 +244,14 @@ async def ppc_main(input_data, batch_size=100):
 
 
 # Example usage
-# if __name__ == "__main__":
-#     # Example with different batch sizes
-#     csv_file = r"c:\Users\nickc\OneDrive\Desktop\SEO\ppc_process\data\PPC-test-source.xlsx"  
-#     df = pd.read_excel(csv_file)
-#     df1 = df[["Keyword"]]
-#     # Convert DataFrame to JSON
-#     data = df1.to_dict(orient="records")
+if __name__ == "__main__":
+    # Example with different batch sizes
+    csv_file = r"c:\Users\nickc\OneDrive\Desktop\SEO\ppc_process\data\PPC-test-source.xlsx"  
+    df = pd.read_excel(csv_file)
+    df1 = df[["Keyword"]]
+    # Convert DataFrame to JSON
+    data = df1.to_dict(orient="records")
     
-#     # Run with batch size
-#     print("Running with batch size 100...")
-#     # asyncio.run(ppc_main(data, batch_size=100))
+    # Run with batch size > 100 (sequential batches within clusters, concurrent clusters)
+    print("Running with batch size 150 (sequential batches)...")
+    # asyncio.run(ppc_main(data, batch_size=150
