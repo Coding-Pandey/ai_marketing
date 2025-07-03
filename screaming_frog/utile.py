@@ -58,15 +58,18 @@ class GoogleSheetsService:
 
         # Prepare comma-separated tabs for Screaming Frog
         tabs_arg = ",".join(export_tabs)
+        print(tabs_arg)
         results: List[Dict] = []
 
         with tempfile.TemporaryDirectory() as temp_dir:
+            print(f"Using temporary directory: {temp_dir}")
             try:
                 # Single crawl for all tabs
                 self._run_screaming_frog_crawl(domain, temp_dir, tabs_arg)
 
                 # Process each CSV output
                 for tab in export_tabs:
+                    print(f"Processing tab: {tab}")
                     csv_name = tab.replace(':', '_') + '.csv'
                     csv_path = os.path.join(temp_dir, csv_name)
 
@@ -79,6 +82,7 @@ class GoogleSheetsService:
                         continue
 
                     sheet_info = self._create_google_sheet(domain, tab, df)
+                    print(sheet_info)
                     results.append(sheet_info)
 
                 if not results:
@@ -93,9 +97,11 @@ class GoogleSheetsService:
 
     def _run_screaming_frog_crawl(self, domain: str, output_dir: str, tabs_arg: str):
         """Run a single Screaming Frog crawl exporting all specified tabs"""
-        sf_path = r"C:\Program Files (x86)\Screaming Frog SEO Spider\screamingfrogseospider.exe"
+        sf_path = "C:\\Program Files (x86)\\Screaming Frog SEO Spider\\screamingfrogseospider.exe"
         if not os.path.exists(sf_path):
             raise HTTPException(500, "Screaming Frog SEO Spider not found. Please install it.")
+        
+        print("hello")
 
         subprocess.run([
             sf_path,
@@ -130,6 +136,7 @@ class GoogleSheetsService:
 
         return {
             "tab": tab_name,
+            "domain"
             "spreadsheet_id": sid,
             "spreadsheet_url": f"https://docs.google.com/spreadsheets/d/{sid}/edit",
             "rows_count": len(df),

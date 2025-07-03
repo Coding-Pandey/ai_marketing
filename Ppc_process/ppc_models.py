@@ -2,14 +2,21 @@ from pydantic import BaseModel
 from typing import Optional
 from typing import Optional, List, Dict
 
+class Location(BaseModel):
+    id: int
+    country: str
+
+class Language(BaseModel):
+    ID: int
+    Name: str
 
 class KeywordRequest(BaseModel):
     keywords: Optional[str] = None
     description: Optional[str] = None
     exclude_values: Optional[List[int]] = []
     branded_keyword: Optional[List[str]] = []
-    location_ids: Optional[List[int]] = None
-    language_id: Optional[int] = None
+    location_ids: Optional[List[Location]] = []  
+    language_id: Optional[Language] = None      
     branded_words: Optional[bool] = None
 
     def validate(self):

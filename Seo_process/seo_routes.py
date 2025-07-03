@@ -64,9 +64,9 @@ def seo_generate_keywords(request: KeywordRequest, user=Depends(check_api_limit(
 
         try:
             search_result = seo_keywords_main(
-                keywords=keyword, 
-                location_ids=request.location_ids, 
-                language_id=request.language_id
+                keywords = keyword, 
+                location_ids = [loc.id for loc in request.location_ids], 
+                language_id = request.language_id.ID if request.language_id else None 
             )
         except Exception as e:
             print(f"❌ Error in seo_keywords_main: {str(e)}")  
