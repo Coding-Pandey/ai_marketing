@@ -379,7 +379,9 @@ async def seo_fetch_document(uuid: str, id: str = Depends(verify_jwt_token), db:
         json_data = {
             "id": uuid,
             "fileName": seo_file.file_name,
-            "data": seo_file.json_data
+            "data": seo_file.json_data,
+            "language_id":seo_file.language,
+            "location_ids":seo_file.location
         }
         return json_data
 

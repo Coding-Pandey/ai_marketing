@@ -676,6 +676,8 @@ async def edit_content_generation(
     file_name: Optional[str] = Form(None),   
     objectives: Optional[str] = Form(None),
     audience: Optional[str] = Form(None),
+    language_id:Optional[str] = Form(None),
+    location_ids:Optional[str] = Form(None),
     user=Depends(check_api_limit("content_generation")),
     db: Session = Depends(get_db),
     user_id: str = Depends(verify_jwt_token)
