@@ -28,6 +28,7 @@ class GoogleSheetsService:
         self.integration = integration
         self.credentials = self._create_credentials()
         self.service = build('sheets', 'v4', credentials=self.credentials)
+        self.sheets_api = self.service.spreadsheets()
 
     def _create_credentials(self) -> Credentials:
         """Create Google credentials from integration data"""
@@ -79,6 +80,7 @@ class GoogleSheetsService:
 
                     df = pd.read_csv(csv_path).fillna("").astype(str)
                     if df.empty:
+                        print("{tab} empty")
                         continue
 
                     sheet_info = self._create_google_sheet(domain, tab, df)
@@ -159,3 +161,20 @@ class GoogleSheetsService:
             ).execute()
         except Exception as e:
             print(f"Warning: Could not format header row: {e}")
+            
+            
+    def list_tabs(self, spreadsheet_id: str) -> List[str]:
+        """Return all sheet/tab names in a spreadsheet."""
+        metadata = self.sheets_api.get(spreadsheetId=spreadsheet_id).execute()
+        sheets = metadata.get("sheets", [])
+        return [s["properties"]["title"] for s in sheets]
+
+    def get_sheet_values(self, spreadsheet_id: str, sheet_name: str) -> List[List[str]]:
+        """Fetch the raw cell values for a given sheet/tab."""
+        resp = (
+            self.sheets_api
+            .values()
+            .get(spreadsheetId=spreadsheet_id, range=sheet_name)
+            .execute()
+        )
+        return resp.get("values", [])

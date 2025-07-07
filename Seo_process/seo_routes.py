@@ -162,10 +162,13 @@ async def seo_keyword_clustering(request: KeywordClusterRequest,
             unique_id = uuid.uuid4().hex
             filename = request.file_name
             user_id = int(id[1])  # Extract user_id from the JWT token
+            
+            print(request.location_ids, request.language_id)
 
             if result:
                 location_data = [loc.dict() for loc in request.location_ids]
                 language_data = request.language_id.dict() if request.language_id else None
+                print(f"location:{location_data} and languge:{language_data}")
                 upload_seo_table(str(unique_id), user_id, filename, result, location_data, language_data)
                 
 

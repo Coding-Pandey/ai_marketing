@@ -38,7 +38,7 @@ class User(Base):
     # content_generation_dropdown = relationship("ContentgenerationDropdown", back_populates="user")
     source_file_records = relationship("SourceFileContent", back_populates="user")
     integrations_auth = relationship("Integration", back_populates="user", cascade="all, delete-orphan")
-    # spreadsheet_data_record = relationship("SpreadSheet", back_populates="user")
+    spreadsheet_data_record = relationship("SpreadSheet", back_populates="user")
     
 
 
@@ -328,14 +328,15 @@ class Integration(Base):
 
 #     user = relationship("User", back_populates="content_generation_file_records")    
 
-# class SpreadSheet(Base):
-#     __tablename__ = "spreadsheet_data"
+class SpreadSheet(Base):
+    __tablename__ = "spreadsheet_data"
     
-#     id = Column(Integer,primary_key=True, index=True)
-#     uuid = Column(String)
-#     user_id = Column(Integer, ForeignKey("users.id"))
-#     spreadsheet_id = Column(String, nullable=False)
-#     spreadsheet_name = Column(String)
-#     spreadsheet_url = Column(String)
+    id = Column(Integer,primary_key=True, index=True)
+    uuid = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    spreadsheet_id = Column(String, nullable=False)
+    spreadsheet_name = Column(String)
+    spreadsheet_url = Column(String)
+    crawl_url = Column(String)
     
-#     user = relationship("User", back_populates="spreadsheet_data_record")
+    user = relationship("User", back_populates="spreadsheet_data_record")

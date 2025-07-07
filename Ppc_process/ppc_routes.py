@@ -141,6 +141,7 @@ async def ppc_keyword_clustering(request: KeywordClusterRequest
             if ppc_data:
                 location_data = [loc.dict() for loc in request.location_ids]
                 language_data = request.language_id.dict() if request.language_id else None
+                print(f"location:{location_data} and languge:{language_data}")
                 upload_ppc_table(str(unique_id), user_id, filename, ppc_data, location_data, language_data)
          
             ppc_cluster_record = db.query(PPCCluster).filter(PPCCluster.user_id == user.id).first()
