@@ -91,8 +91,8 @@ class IndexabilityCalculator(BaseKPICalculator):
         
         self.kpis = {
             'indexability_kpis': {
-                'total_pages': total_pages,
-                'total_html_pages': total_html_pages,
+                # 'total_pages': total_pages,
+                # 'total_html_pages': total_html_pages,
                 'indexable': {
                     'count': indexable_count,
                     'percentage': round(indexable_percentage, 1)
