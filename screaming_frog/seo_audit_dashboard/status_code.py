@@ -24,48 +24,48 @@ class StatusCodeCalculator(BaseKPICalculator):
         total_pages = len(self.df)
         
         # Base filter: Content Type = 'text/html; charset=UTF-8'
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         html_pages = self.df[html_mask]
         total_html_pages = len(html_pages)
         
         # 1. 200 Response: Status Code = 200
-        response_200_mask = html_mask & (self.df['Status Code'] == "200")
+        response_200_mask = html_mask & (self.df['Status_Code'] == "200")
         response_200_count = int(response_200_mask.sum())
         response_200_percentage = (response_200_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 2. 3xx Response: Status Code starts with 3 OR Indexability Status = 'Redirected'
         response_3xx_mask = html_mask & (
-            (self.df['Status Code'].astype(str).str.startswith('3', na=False)) |
-            (self.df['Indexability Status'].str.contains('Redirected', case=False, na=False))
+            (self.df['Status_Code'].astype(str).str.startswith('3', na=False)) |
+            (self.df['Indexability_Status'].str.contains('Redirected', case=False, na=False))
         )
         response_3xx_count = int(response_3xx_mask.sum())
         response_3xx_percentage = (response_3xx_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 3. 4xx Response: Status Code starts with 4 OR Indexability Status = 'Client Error'
         response_4xx_mask = html_mask & (
-            (self.df['Status Code'].astype(str).str.startswith('4', na=False)) |
-            (self.df['Indexability Status'].str.contains('Client Error', case=False, na=False))
+            (self.df['Status_Code'].astype(str).str.startswith('4', na=False)) |
+            (self.df['Indexability_Status'].str.contains('Client Error', case=False, na=False))
         )
         response_4xx_count = int(response_4xx_mask.sum())
         response_4xx_percentage = (response_4xx_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 4. 5xx Response: Status Code starts with 5 OR Indexability Status = 'Server Error'
         response_5xx_mask = html_mask & (
-            (self.df['Status Code'].astype(str).str.startswith('5', na=False)) |
-            (self.df['Indexability Status'].str.contains('Server Error', case=False, na=False))
+            (self.df['Status_Code'].astype(str).str.startswith('5', na=False)) |
+            (self.df['Indexability_Status'].str.contains('Server Error', case=False, na=False))
         )
         response_5xx_count = int(response_5xx_mask.sum())
         response_5xx_percentage = (response_5xx_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # Additional analysis - Redirect Loop and Redirect Chain
         redirect_loop_mask = html_mask & (
-            self.df['Indexability Status'].str.contains('Redirect Loop', case=False, na=False)
+            self.df['Indexability_Status'].str.contains('Redirect Loop', case=False, na=False)
         )
         redirect_loop_count = int(redirect_loop_mask.sum())
         redirect_loop_percentage = (redirect_loop_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         redirect_chain_mask = html_mask & (
-            self.df['Indexability Status'].str.contains('Redirect Chain', case=False, na=False)
+            self.df['Indexability_Status'].str.contains('Redirect Chain', case=False, na=False)
         )
         redirect_chain_count = int(redirect_chain_mask.sum())
         redirect_chain_percentage = (redirect_chain_count / total_html_pages * 100) if total_html_pages > 0 else 0
@@ -105,76 +105,76 @@ class StatusCodeCalculator(BaseKPICalculator):
     
     def get_200_response_table(self) -> pd.DataFrame:
         """Get table for 200 response URLs."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
-        response_200_mask = html_mask & (self.df['Status Code'] == '200')
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
+        response_200_mask = html_mask & (self.df['Status_Code'] == '200')
         
         filtered_df = self.df[response_200_mask]
         
         # Return specific columns: Address, Status Code, Status, Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status','Indexability_Status', 'Title_1']].copy()
     
     def get_3xx_response_table(self) -> pd.DataFrame:
         """Get table for 3xx response URLs."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         response_3xx_mask = html_mask & (
-            (self.df['Status Code'].astype(str).str.startswith('3', na=False)) |
-            (self.df['Indexability Status'].str.contains('Redirected', case=False, na=False))
+            (self.df['Status_Code'].astype(str).str.startswith('3', na=False)) |
+            (self.df['Indexability_Status'].str.contains('Redirected', case=False, na=False))
         )
         
         filtered_df = self.df[response_3xx_mask]
         
         # Return specific columns: Address, Status Code, Status, Indexability Status, Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Indexability Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status', 'Indexability_Status', 'Title_1']].copy()
     
     def get_4xx_response_table(self) -> pd.DataFrame:
         """Get table for 4xx response URLs."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         response_4xx_mask = html_mask & (
-            (self.df['Status Code'].astype(str).str.startswith('4', na=False)) |
-            (self.df['Indexability Status'].str.contains('Client Error', case=False, na=False))
+            (self.df['Status_Code'].astype(str).str.startswith('4', na=False)) |
+            (self.df['Indexability_Status'].str.contains('Client Error', case=False, na=False))
         )
         
         filtered_df = self.df[response_4xx_mask]
         
         # Return specific columns: Address, Status Code, Status, Indexability Status, Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Indexability Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status', 'Indexability_Status', 'Title_1']].copy()
     
     def get_5xx_response_table(self) -> pd.DataFrame:
         """Get table for 5xx response URLs."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         response_5xx_mask = html_mask & (
-            (self.df['Status Code'].astype(str).str.startswith('5', na=False)) |
-            (self.df['Indexability Status'].str.contains('Server Error', case=False, na=False))
+            (self.df['Status_Code'].astype(str).str.startswith('5', na=False)) |
+            (self.df['Indexability_Status'].str.contains('Server Error', case=False, na=False))
         )
         
         filtered_df = self.df[response_5xx_mask]
         
         # Return specific columns: Address, Status Code, Status, Indexability Status, Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Indexability Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status', 'Indexability_Status', 'Title_1']].copy()
     
     def get_redirect_loop_table(self) -> pd.DataFrame:
         """Get table for redirect loop URLs."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         redirect_loop_mask = html_mask & (
-            self.df['Indexability Status'].str.contains('Redirect Loop', case=False, na=False)
+            self.df['Indexability_Status'].str.contains('Redirect Loop', case=False, na=False)
         )
         
         filtered_df = self.df[redirect_loop_mask]
         
         # Return specific columns: Address, Status Code, Status, Indexability Status, Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Indexability Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status', 'Indexability_Status', 'Title_1']].copy()
     
     def get_redirect_chain_table(self) -> pd.DataFrame:
         """Get table for redirect chain URLs."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         redirect_chain_mask = html_mask & (
-            self.df['Indexability Status'].str.contains('Redirect Chain', case=False, na=False)
+            self.df['Indexability_Status'].str.contains('Redirect Chain', case=False, na=False)
         )
         
         filtered_df = self.df[redirect_chain_mask]
         
         # Return specific columns: Address, Status Code, Status, Indexability Status, Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Indexability Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status', 'Indexability_Status', 'Title_1']].copy()
     
     def export_status_code_report(self, filename: str = 'status_code_report.json') -> Dict:
         """Export detailed status code report."""
@@ -199,8 +199,9 @@ class StatusCodeCalculator(BaseKPICalculator):
 class DataProcessor:
     """Process crawl data and initialize it for KPI calculations."""
     
-    def __init__(self, data: Union[str, dict, List[dict]]):
+    def __init__(self, data: Union[str, dict, List[dict]], transform_column_names: bool = True):
         self.raw_data = data
+        self.transform_column_names = transform_column_names
         self.df = self._process_data()
     
     def _process_data(self) -> pd.DataFrame:
@@ -240,7 +241,13 @@ class DataProcessor:
             print("Warning: No valid data found to process")
             return pd.DataFrame()
         
-        return pd.concat(all_data, ignore_index=True)
+        final_df = pd.concat(all_data, ignore_index=True)
+        
+        # Transform column names if requested
+        if self.transform_column_names:
+            final_df.columns = [col.replace(" ", "_") for col in final_df.columns]
+        
+        return final_df
     
     def _process_tab_data(self, tab_data: dict) -> pd.DataFrame:
         """Process individual tab data."""

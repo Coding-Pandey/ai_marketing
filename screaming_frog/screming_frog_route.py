@@ -174,8 +174,8 @@ def fetch_spreadsheet_data(
             raise HTTPException(400, "No 'Internal:All' tab found")
 
         dashboard = {
-            "indexability": indexability_kpis_and_table(sheet)
-            # "status_code": status_code_kpis_and_table(sheet),
+            "indexability": indexability_kpis_and_table(sheet),
+            "status_code": status_code_kpis_and_table(sheet)
             # "page_title":page_title_kpis_and_table(sheet),
             # "meta_description": meta_description_kpis_and_tables(sheet)
         }
