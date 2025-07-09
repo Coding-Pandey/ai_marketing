@@ -22,7 +22,7 @@ class PageTitleCalculator(BaseKPICalculator):
     def calculate_kpis(self) -> Dict:
         """Calculate all page title KPIs with specific filtering logic."""
         # Base filter: Content Type = 'text/html; charset=UTF-8'
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         html_pages = self.df[html_mask]
         total_html_pages = len(html_pages)
         
@@ -31,45 +31,45 @@ class PageTitleCalculator(BaseKPICalculator):
         
         # 2. Missing Titles: Title 1 is null, empty, or whitespace
         missing_title_mask = html_mask & (
-            self.df['Title 1'].isna() | 
-            (self.df['Title 1'] == '') |
-            (self.df['Title 1'].astype(str).str.strip() == '')
+            self.df['Title_1'].isna() | 
+            (self.df['Title_1'] == '') |
+            (self.df['Title_1'].astype(str).str.strip() == '')
         )
         missing_title_count = int(missing_title_mask.sum())
         missing_title_percentage = (missing_title_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 3. Duplicate Titles: Same Title 1 appears multiple times
-        non_empty_titles = html_pages[html_pages['Title 1'].notna() & 
-                                     (html_pages['Title 1'] != '') & 
-                                     (html_pages['Title 1'].astype(str).str.strip() != '')]
+        non_empty_titles = html_pages[html_pages['Title_1'].notna() & 
+                                     (html_pages['Title_1'] != '') & 
+                                     (html_pages['Title_1'].astype(str).str.strip() != '')]
         
-        duplicate_titles = non_empty_titles[non_empty_titles.duplicated(subset=['Title 1'], keep=False)]
+        duplicate_titles = non_empty_titles[non_empty_titles.duplicated(subset=['Title_1'], keep=False)]
         duplicate_title_count = len(duplicate_titles)
         duplicate_title_percentage = (duplicate_title_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 4. Over 60 Characters: Title 1 Length > 60
         over_60_char_mask = html_mask & (
-            self.df['Title 1 Length'].notna() & 
-            (pd.to_numeric(self.df['Title 1 Length'], errors='coerce') > 60)
+            self.df['Title_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Title_1_Length'], errors='coerce') > 60)
         )
         over_60_char_count = int(over_60_char_mask.sum())
         over_60_char_percentage = (over_60_char_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 5. Below 30 Characters: Title 1 Length < 30
         below_30_char_mask = html_mask & (
-            self.df['Title 1 Length'].notna() & 
-            (pd.to_numeric(self.df['Title 1 Length'], errors='coerce') < 30)
+            self.df['Title_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Title_1_Length'], errors='coerce') < 30)
         )
         below_30_char_count = int(below_30_char_mask.sum())
         below_30_char_percentage = (below_30_char_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 6. Same as H1: Title 1 matches H1-1
         same_as_h1_mask = html_mask & (
-            self.df['Title 1'].notna() & 
+            self.df['Title_1'].notna() & 
             self.df['H1-1'].notna() &
-            (self.df['Title 1'] != '') &
+            (self.df['Title_1'] != '') &
             (self.df['H1-1'] != '') &
-            (self.df['Title 1'].astype(str).str.strip() == self.df['H1-1'].astype(str).str.strip())
+            (self.df['Title_1'].astype(str).str.strip() == self.df['H1-1'].astype(str).str.strip())
         )
         same_as_h1_count = int(same_as_h1_mask.sum())
         same_as_h1_percentage = (same_as_h1_count / total_html_pages * 100) if total_html_pages > 0 else 0
@@ -116,78 +116,78 @@ class PageTitleCalculator(BaseKPICalculator):
     
     def get_missing_title_table(self) -> pd.DataFrame:
         """Get table for pages with missing titles."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         missing_title_mask = html_mask & (
-            self.df['Title 1'].isna() | 
-            (self.df['Title 1'] == '') |
-            (self.df['Title 1'].astype(str).str.strip() == '')
+            self.df['Title_1'].isna() | 
+            (self.df['Title_1'] == '') |
+            (self.df['Title_1'].astype(str).str.strip() == '')
         )
         
         filtered_df = self.df[missing_title_mask]
         
-        return filtered_df[['Address', 'Title 1', 'Title 1 Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
     
     def get_duplicate_title_table(self) -> pd.DataFrame:
         """Get table for pages with duplicate titles."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         html_pages = self.df[html_mask]
         
         # Filter out empty/null titles first
         non_empty_titles = html_pages[
-            html_pages['Title 1'].notna() & 
-            (html_pages['Title 1'] != '') & 
-            (html_pages['Title 1'].astype(str).str.strip() != '')
+            html_pages['Title_1'].notna() & 
+            (html_pages['Title_1'] != '') & 
+            (html_pages['Title_1'].astype(str).str.strip() != '')
         ]
         
         # Find duplicates
-        duplicate_titles = non_empty_titles[non_empty_titles.duplicated(subset=['Title 1'], keep=False)]
+        duplicate_titles = non_empty_titles[non_empty_titles.duplicated(subset=['Title_1'], keep=False)]
         
-        return duplicate_titles[['Address', 'Title 1', 'Title 1 Length', 'H1-1']].copy().sort_values('Title 1')
+        return duplicate_titles[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy().sort_values('Title_1')
     
     def get_over_60_characters_table(self) -> pd.DataFrame:
         """Get table for pages with titles over 60 characters."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         over_60_char_mask = html_mask & (
-            self.df['Title 1 Length'].notna() & 
-            (pd.to_numeric(self.df['Title 1 Length'], errors='coerce') > 60)
+            self.df['Title_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Title_1_Length'], errors='coerce') > 60)
         )
         
         filtered_df = self.df[over_60_char_mask]
         
-        return filtered_df[['Address', 'Title 1', 'Title 1 Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
     
     def get_below_30_characters_table(self) -> pd.DataFrame:
         """Get table for pages with titles below 30 characters."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         below_30_char_mask = html_mask & (
-            self.df['Title 1 Length'].notna() & 
-            (pd.to_numeric(self.df['Title 1 Length'], errors='coerce') < 30)
+            self.df['Title_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Title_1_Length'], errors='coerce') < 30)
         )
         
         filtered_df = self.df[below_30_char_mask]
         
-        return filtered_df[['Address', 'Title 1', 'Title 1 Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
     
     def get_same_as_h1_table(self) -> pd.DataFrame:
         """Get table for pages where title matches H1."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         same_as_h1_mask = html_mask & (
-            self.df['Title 1'].notna() & 
+            self.df['Title_1'].notna() & 
             self.df['H1-1'].notna() &
-            (self.df['Title 1'] != '') &
+            (self.df['Title_1'] != '') &
             (self.df['H1-1'] != '') &
-            (self.df['Title 1'].astype(str).str.strip() == self.df['H1-1'].astype(str).str.strip())
+            (self.df['Title_1'].astype(str).str.strip() == self.df['H1-1'].astype(str).str.strip())
         )
         
         filtered_df = self.df[same_as_h1_mask]
         
-        return filtered_df[['Address', 'Title 1', 'Title 1 Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
     
     def get_multiple_titles_table(self) -> pd.DataFrame:
         """Get table for pages with multiple title tags (placeholder for future implementation)."""
         # This would require additional data from the crawl
         # For now, return empty DataFrame with expected columns
-        return pd.DataFrame(columns=['Address', 'Title 1', 'Title 1 Length', 'H1-1'])
+        return pd.DataFrame(columns=['Address', 'Title_1', 'Title_1_Length', 'H1-1'])
     
     def export_page_title_report(self, filename: str = 'page_title_report.json') -> Dict:
         """Export detailed page title report."""
@@ -212,8 +212,9 @@ class PageTitleCalculator(BaseKPICalculator):
 class DataProcessor:
     """Process crawl data and initialize it for KPI calculations."""
     
-    def __init__(self, data: Union[str, dict, List[dict]]):
+    def __init__(self, data: Union[str, dict, List[dict]], transform_column_names: bool = True):
         self.raw_data = data
+        self.transform_column_names = transform_column_names
         self.df = self._process_data()
     
     def _process_data(self) -> pd.DataFrame:
@@ -253,7 +254,14 @@ class DataProcessor:
             print("Warning: No valid data found to process")
             return pd.DataFrame()
         
-        return pd.concat(all_data, ignore_index=True)
+        # return pd.concat(all_data, ignore_index=True)
+        final_df = pd.concat(all_data, ignore_index=True)
+        
+        # Transform column names if requested
+        if self.transform_column_names:
+            final_df.columns = [col.replace(" ", "_") for col in final_df.columns]
+        
+        return final_df
     
     def _process_tab_data(self, tab_data: dict) -> pd.DataFrame:
         """Process individual tab data."""
