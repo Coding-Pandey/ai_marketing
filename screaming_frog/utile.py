@@ -107,7 +107,7 @@ class GoogleSheetsService:
         print("hello")
 
         subprocess.run([
-            "xvfb-run", "-a",
+            # "xvfb-run", "-a",
             sf_path,
             "--crawl", domain,
             "--headless",
