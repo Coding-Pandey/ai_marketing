@@ -99,13 +99,15 @@ class GoogleSheetsService:
 
     def _run_screaming_frog_crawl(self, domain: str, output_dir: str, tabs_arg: str):
         """Run a single Screaming Frog crawl exporting all specified tabs"""
-        sf_path = "C:\\Program Files (x86)\\Screaming Frog SEO Spider\\screamingfrogseospider.exe"
+        # sf_path = "C:\\Program Files (x86)\\Screaming Frog SEO Spider\\screamingfrogseospider.exe"
+        sf_path = os.environ.get("SF_PATH")
         if not os.path.exists(sf_path):
             raise HTTPException(500, "Screaming Frog SEO Spider not found. Please install it.")
         
         print("hello")
 
         subprocess.run([
+            "xvfb-run", "-a",
             sf_path,
             "--crawl", domain,
             "--headless",
