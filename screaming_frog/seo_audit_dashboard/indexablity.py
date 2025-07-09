@@ -23,76 +23,74 @@ class IndexabilityCalculator(BaseKPICalculator):
         """Calculate all indexability KPIs with specific filtering logic."""
         total_pages = len(self.df)
         
-        # Base filter: Content Type = 'text/html; charset=UTF-8'
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        # Base filter: Content_Type = 'text/html; charset=UTF-8' (note underscore)
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         html_pages = self.df[html_mask]
         total_html_pages = len(html_pages)
         
-        # 1. Indexable URLs: Content Type = 'text/html; charset=UTF-8' AND Indexability = 'Indexable'
+        # 1. Indexable URLs: Content_Type = 'text/html; charset=UTF-8' AND Indexability = 'Indexable'
         indexable_mask = html_mask & (self.df['Indexability'] == 'Indexable')
         indexable_count = int(indexable_mask.sum())
         indexable_percentage = (indexable_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 2. Non-indexable URLs: Content Type = 'text/html; charset=UTF-8' AND Indexability = 'Non-Indexable'
+        # 2. Non-indexable URLs: Content_Type = 'text/html; charset=UTF-8' AND Indexability = 'Non-Indexable'
         non_indexable_mask = html_mask & (self.df['Indexability'] == 'Non-Indexable')
         non_indexable_count = int(non_indexable_mask.sum())
         non_indexable_percentage = (non_indexable_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 3. URLs with Meta Noindex: Content Type = 'text/html; charset=UTF-8' AND 
-        # (Meta Robots 1 contains 'noindex' OR X-Robots-Tag 1 contains 'noindex')
-        meta_robots_noindex = self.df['Meta Robots 1'].str.contains('noindex', case=False, na=False)
-        x_robots_noindex = self.df['X-Robots-Tag 1'].str.contains('noindex', case=False, na=False)
+        # 3. URLs with Meta Noindex: Content_Type = 'text/html; charset=UTF-8' AND 
+        # (Meta_Robots_1 contains 'noindex' OR X-Robots-Tag_1 contains 'noindex')
+        meta_robots_noindex = self.df['Meta_Robots_1'].str.contains('noindex', case=False, na=False)
+        x_robots_noindex = self.df['X-Robots-Tag_1'].str.contains('noindex', case=False, na=False)
         meta_noindex_mask = html_mask & (meta_robots_noindex | x_robots_noindex)
         meta_noindex_count = int(meta_noindex_mask.sum())
         meta_noindex_percentage = (meta_noindex_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 4. Blocked by robots.txt
-        blocked_by_robots_mask = html_mask & self.df['Indexability Status'].str.contains('Blocked by robots.txt', case=False, na=False)
+        blocked_by_robots_mask = html_mask & self.df['Indexability_Status'].str.contains('Blocked by robots.txt', case=False, na=False)
         blocked_by_robots_count = int(blocked_by_robots_mask.sum())
         blocked_by_robots_percentage = (blocked_by_robots_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # Canonical tag analysis
         # 1. Contains Canonical Tag: Has a value in the canonical column
         contains_canonical_mask = html_mask & (
-            self.df['Canonical Link Element 1'].notna() & 
-            (self.df['Canonical Link Element 1'] != '') &
-            (self.df['Canonical Link Element 1'].astype(str).str.strip() != '')
+            self.df['Canonical_Link_Element_1'].notna() & 
+            (self.df['Canonical_Link_Element_1'] != '') &
+            (self.df['Canonical_Link_Element_1'].astype(str).str.strip() != '')
         )
         contains_canonical_count = int(contains_canonical_mask.sum())
         contains_canonical_percentage = (contains_canonical_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 2. Missing Canonical Tag: Empty or null value in canonical column
         missing_canonical_mask = html_mask & (
-            self.df['Canonical Link Element 1'].isna() | 
-            (self.df['Canonical Link Element 1'] == '') |
-            (self.df['Canonical Link Element 1'].astype(str).str.strip() == '')
+            self.df['Canonical_Link_Element_1'].isna() | 
+            (self.df['Canonical_Link_Element_1'] == '') |
+            (self.df['Canonical_Link_Element_1'].astype(str).str.strip() == '')
         )
         missing_canonical_count = int(missing_canonical_mask.sum())
         missing_canonical_percentage = (missing_canonical_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 3. Self-Referencing Canonical: Canonical URL matches the Address
         self_referencing_mask = html_mask & (
-            self.df['Canonical Link Element 1'].notna() & 
-            (self.df['Canonical Link Element 1'] != '') &
-            (self.df['Canonical Link Element 1'] == self.df['Address'])
+            self.df['Canonical_Link_Element_1'].notna() & 
+            (self.df['Canonical_Link_Element_1'] != '') &
+            (self.df['Canonical_Link_Element_1'] == self.df['Address'])
         )
         self_referencing_count = int(self_referencing_mask.sum())
         self_referencing_percentage = (self_referencing_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 4. Canonicalized to Different URL: Canonical URL is different from Address
         canonicalized_different_mask = html_mask & (
-            self.df['Canonical Link Element 1'].notna() & 
-            (self.df['Canonical Link Element 1'] != '') &
-            (self.df['Canonical Link Element 1'].astype(str).str.strip() != '') &
-            (self.df['Canonical Link Element 1'] != self.df['Address'])
+            self.df['Canonical_Link_Element_1'].notna() & 
+            (self.df['Canonical_Link_Element_1'] != '') &
+            (self.df['Canonical_Link_Element_1'].astype(str).str.strip() != '') &
+            (self.df['Canonical_Link_Element_1'] != self.df['Address'])
         )
         canonicalized_different_count = int(canonicalized_different_mask.sum())
         canonicalized_different_percentage = (canonicalized_different_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         self.kpis = {
             'indexability_kpis': {
-                # 'total_pages': total_pages,
-                # 'total_html_pages': total_html_pages,
                 'indexable': {
                     'count': indexable_count,
                     'percentage': round(indexable_percentage, 1)
@@ -132,103 +130,92 @@ class IndexabilityCalculator(BaseKPICalculator):
     
     def get_indexable_urls_table(self) -> pd.DataFrame:
         """Get table for indexable URLs with specific columns."""
-        # Filter: Content Type = 'text/html; charset=UTF-8' AND Indexability = 'Indexable'
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        # Filter: Content_Type = 'text/html; charset=UTF-8' AND Indexability = 'Indexable'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         indexable_mask = html_mask & (self.df['Indexability'] == 'Indexable')
         
         filtered_df = self.df[indexable_mask]
-        
-        # Return specific columns: Address / Indexability / Indexability Status / Title 1
-        return filtered_df[['Address', 'Indexability', 'Indexability Status', 'Title 1']].copy()
+        # Select specific columns - now with underscores
+        return filtered_df[['Address', 'Indexability', 'Indexability_Status', 'Title_1']].copy()
     
     def get_non_indexable_urls_table(self) -> pd.DataFrame:
         """Get table for non-indexable URLs with specific columns."""
-        # Filter: Content Type = 'text/html; charset=UTF-8' AND Indexability = 'Non-Indexable'
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        # Filter: Content_Type = 'text/html; charset=UTF-8' AND Indexability = 'Non-Indexable'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         non_indexable_mask = html_mask & (self.df['Indexability'] == 'Non-Indexable')
         
         filtered_df = self.df[non_indexable_mask]
-        
-        # Return specific columns: Address / Indexability / Indexability Status / Title 1
-        return filtered_df[['Address', 'Indexability', 'Indexability Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Indexability', 'Indexability_Status', 'Title_1']].copy()
     
     def get_meta_noindex_urls_table(self) -> pd.DataFrame:
         """Get table for URLs with meta noindex."""
-        # Filter: Content Type = 'text/html; charset=UTF-8' AND 
-        # (Meta Robots 1 contains 'noindex' OR X-Robots-Tag 1 contains 'noindex')
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
-        meta_robots_noindex = self.df['Meta Robots 1'].str.contains('noindex', case=False, na=False)
-        x_robots_noindex = self.df['X-Robots-Tag 1'].str.contains('noindex', case=False, na=False)
+        # Filter: Content_Type = 'text/html; charset=UTF-8' AND 
+        # (Meta_Robots_1 contains 'noindex' OR X-Robots-Tag_1 contains 'noindex')
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
+        meta_robots_noindex = self.df['Meta_Robots_1'].str.contains('noindex', case=False, na=False)
+        x_robots_noindex = self.df['X-Robots-Tag_1'].str.contains('noindex', case=False, na=False)
         meta_noindex_mask = html_mask & (meta_robots_noindex | x_robots_noindex)
         
         filtered_df = self.df[meta_noindex_mask]
-        
-        # Return specific columns: Address / Status Code / Status / Meta Robots 1 / X-Robots-Tag 1 / Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Meta Robots 1', 'X-Robots-Tag 1', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status', 'Meta_Robots_1', 'X-Robots-Tag_1', 'Title_1']].copy()
     
     def get_blocked_by_robots_table(self) -> pd.DataFrame:
         """Get table for URLs blocked by robots.txt."""
-        # Filter: Content Type = 'text/html; charset=UTF-8' AND Indexability Status contains 'Blocked by robots.txt'
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
-        blocked_mask = html_mask & self.df['Indexability Status'].str.contains('Blocked by robots.txt', case=False, na=False)
+        # Filter: Content_Type = 'text/html; charset=UTF-8' AND Indexability_Status contains 'Blocked by robots.txt'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
+        blocked_mask = html_mask & self.df['Indexability_Status'].str.contains('Blocked by robots.txt', case=False, na=False)
         
         filtered_df = self.df[blocked_mask]
-        
-        # Return specific columns: Address / Status Code / Status / Indexability Status / Title 1
-        return filtered_df[['Address', 'Status Code', 'Status', 'Indexability Status', 'Title 1']].copy()
+        return filtered_df[['Address', 'Status_Code', 'Status', 'Indexability_Status', 'Title_1']].copy()
     
     def get_contains_canonical_table(self) -> pd.DataFrame:
         """Get table for URLs that contain canonical tags."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         contains_canonical_mask = html_mask & (
-            self.df['Canonical Link Element 1'].notna() & 
-            (self.df['Canonical Link Element 1'] != '') &
-            (self.df['Canonical Link Element 1'].astype(str).str.strip() != '')
+            self.df['Canonical_Link_Element_1'].notna() & 
+            (self.df['Canonical_Link_Element_1'] != '') &
+            (self.df['Canonical_Link_Element_1'].astype(str).str.strip() != '')
         )
         
         filtered_df = self.df[contains_canonical_mask]
-        
-        return filtered_df[['Address', 'Canonical Link Element 1', 'Title 1']].copy()
+        return filtered_df[['Address', 'Canonical_Link_Element_1', 'Title_1']].copy()
     
     def get_missing_canonical_table(self) -> pd.DataFrame:
         """Get table for URLs missing canonical tags."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         missing_canonical_mask = html_mask & (
-            self.df['Canonical Link Element 1'].isna() | 
-            (self.df['Canonical Link Element 1'] == '') |
-            (self.df['Canonical Link Element 1'].astype(str).str.strip() == '')
+            self.df['Canonical_Link_Element_1'].isna() | 
+            (self.df['Canonical_Link_Element_1'] == '') |
+            (self.df['Canonical_Link_Element_1'].astype(str).str.strip() == '')
         )
         
         filtered_df = self.df[missing_canonical_mask]
-        
-        return filtered_df[['Address', 'Canonical Link Element 1', 'Title 1']].copy()
+        return filtered_df[['Address', 'Canonical_Link_Element_1', 'Title_1']].copy()
     
     def get_self_referencing_table(self) -> pd.DataFrame:
         """Get table for URLs with self-referencing canonical tags."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         self_referencing_mask = html_mask & (
-            self.df['Canonical Link Element 1'].notna() & 
-            (self.df['Canonical Link Element 1'] != '') &
-            (self.df['Canonical Link Element 1'] == self.df['Address'])
+            self.df['Canonical_Link_Element_1'].notna() & 
+            (self.df['Canonical_Link_Element_1'] != '') &
+            (self.df['Canonical_Link_Element_1'] == self.df['Address'])
         )
         
         filtered_df = self.df[self_referencing_mask]
-        
-        return filtered_df[['Address', 'Canonical Link Element 1', 'Title 1']].copy()
+        return filtered_df[['Address', 'Canonical_Link_Element_1', 'Title_1']].copy()
     
     def get_canonicalized_different_table(self) -> pd.DataFrame:
         """Get table for URLs canonicalized to different URLs."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         canonicalized_different_mask = html_mask & (
-            self.df['Canonical Link Element 1'].notna() & 
-            (self.df['Canonical Link Element 1'] != '') &
-            (self.df['Canonical Link Element 1'].astype(str).str.strip() != '') &
-            (self.df['Canonical Link Element 1'] != self.df['Address'])
+            self.df['Canonical_Link_Element_1'].notna() & 
+            (self.df['Canonical_Link_Element_1'] != '') &
+            (self.df['Canonical_Link_Element_1'].astype(str).str.strip() != '') &
+            (self.df['Canonical_Link_Element_1'] != self.df['Address'])
         )
         
         filtered_df = self.df[canonicalized_different_mask]
-        
-        return filtered_df[['Address', 'Canonical Link Element 1', 'Title 1']].copy()
+        return filtered_df[['Address', 'Canonical_Link_Element_1', 'Title_1']].copy()
     
     def export_indexability_report(self, filename: str = 'indexability_report.json') -> Dict:
         """Export detailed indexability report."""
@@ -249,22 +236,15 @@ class IndexabilityCalculator(BaseKPICalculator):
             }
         }
         
-        # Optional: Save to file
-        # try:
-        #     with open(filename, 'w') as f:
-        #         json.dump(report, f, indent=2)
-        #     print(f"Report saved to {filename}")
-        # except Exception as e:
-        #     print(f"Could not save file: {e}")
-        
         return report
 
 
 class DataProcessor:
     """Process crawl data and initialize it for KPI calculations."""
     
-    def __init__(self, data: Union[str, dict, List[dict]]):
+    def __init__(self, data: Union[str, dict, List[dict]], transform_column_names: bool = True):
         self.raw_data = data
+        self.transform_column_names = transform_column_names
         self.df = self._process_data()
     
     def _process_data(self) -> pd.DataFrame:
@@ -304,7 +284,13 @@ class DataProcessor:
             print("Warning: No valid data found to process")
             return pd.DataFrame()
         
-        return pd.concat(all_data, ignore_index=True)
+        final_df = pd.concat(all_data, ignore_index=True)
+        
+        # Transform column names if requested
+        if self.transform_column_names:
+            final_df.columns = [col.replace(" ", "_") for col in final_df.columns]
+        
+        return final_df
     
     def _process_tab_data(self, tab_data: dict) -> pd.DataFrame:
         """Process individual tab data."""
@@ -327,7 +313,8 @@ class DataProcessor:
             'total_rows': int(len(self.df)),
             'columns': list(self.df.columns),
             'memory_usage': int(self.df.memory_usage(deep=True).sum()),
-            'tabs_processed': 1 if isinstance(self.raw_data, dict) else len(self.raw_data) if isinstance(self.raw_data, list) else 0
+            'tabs_processed': 1 if isinstance(self.raw_data, dict) else len(self.raw_data) if isinstance(self.raw_data, list) else 0,
+            'column_names_transformed': self.transform_column_names
         }
 
 
@@ -341,8 +328,8 @@ def indexability_kpis_and_table(data):
         else:
             data_process = data
         
-        # Process the data
-        processor = DataProcessor(data_process)
+        # Process the data with column transformation enabled by default
+        processor = DataProcessor(data_process, transform_column_names=True)
         df = processor.get_dataframe()
         
         if df.empty:
@@ -357,47 +344,13 @@ def indexability_kpis_and_table(data):
         indexability_calc = IndexabilityCalculator(df)
         indexability_kpis = indexability_calc.calculate_kpis()
         
-        # # Show indexability tables
-        # print("=== INDEXABILITY TABLES ===\n")
-        
-        # # 1. Indexable URLs Table
-        # indexable_table = indexability_calc.get_indexable_urls_table()
-        # print(f"1. INDEXABLE URLs ({len(indexable_table)} items):")
-        # print("   Columns: Address / Indexability / Indexability Status / Title 1")
-        # if not indexable_table.empty:
-        #     print(indexable_table.head(3).to_string(index=False))
-        # print()
-        
-        # # 2. Non-Indexable URLs Table
-        # non_indexable_table = indexability_calc.get_non_indexable_urls_table()
-        # print(f"2. NON-INDEXABLE URLs ({len(non_indexable_table)} items):")
-        # print("   Columns: Address / Indexability / Indexability Status / Title 1")
-        # if not non_indexable_table.empty:
-        #     print(non_indexable_table.head(3).to_string(index=False))
-        # print()
-        
-        # # 3. Meta Noindex URLs Table
-        # meta_noindex_table = indexability_calc.get_meta_noindex_urls_table()
-        # print(f"3. META NOINDEX URLs ({len(meta_noindex_table)} items):")
-        # print("   Columns: Address / Status Code / Status / Meta Robots 1 / X-Robots-Tag 1 / Title 1")
-        # if not meta_noindex_table.empty:
-        #     print(meta_noindex_table.head(3).to_string(index=False))
-        # print()
-        
-        # # 4. Blocked by Robots URLs Table
-        # blocked_table = indexability_calc.get_blocked_by_robots_table()
-        # print(f"4. BLOCKED BY ROBOTS URLs ({len(blocked_table)} items):")
-        # print("   Columns: Address / Status Code / Status / Indexability Status / Title 1")
-        # if not blocked_table.empty:
-        #     print(blocked_table.head(3).to_string(index=False))
-        # print("\n" + "="*50 + "\n")
-        
         # Export full report
         full_result = indexability_calc.export_indexability_report('indexability_analysis.json')
         
         return full_result
         
     except Exception as e:
+        
         print(f"Error processing data: {e}")
         return None
 
