@@ -125,7 +125,7 @@ class PageTitleCalculator(BaseKPICalculator):
         
         filtered_df = self.df[missing_title_mask]
         
-        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length','Title_1_Pixel_Width', 'H1-1']].copy()
     
     def get_duplicate_title_table(self) -> pd.DataFrame:
         """Get table for pages with duplicate titles."""
@@ -142,7 +142,7 @@ class PageTitleCalculator(BaseKPICalculator):
         # Find duplicates
         duplicate_titles = non_empty_titles[non_empty_titles.duplicated(subset=['Title_1'], keep=False)]
         
-        return duplicate_titles[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy().sort_values('Title_1')
+        return duplicate_titles[['Address', 'Title_1', 'Title_1_Length','Title_1_Pixel_Width', 'H1-1']].copy().sort_values('Title_1')
     
     def get_over_60_characters_table(self) -> pd.DataFrame:
         """Get table for pages with titles over 60 characters."""
@@ -154,7 +154,7 @@ class PageTitleCalculator(BaseKPICalculator):
         
         filtered_df = self.df[over_60_char_mask]
         
-        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length','Title_1_Pixel_Width', 'H1-1']].copy()
     
     def get_below_30_characters_table(self) -> pd.DataFrame:
         """Get table for pages with titles below 30 characters."""
@@ -166,7 +166,7 @@ class PageTitleCalculator(BaseKPICalculator):
         
         filtered_df = self.df[below_30_char_mask]
         
-        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length','Title_1_Pixel_Width', 'H1-1']].copy()
     
     def get_same_as_h1_table(self) -> pd.DataFrame:
         """Get table for pages where title matches H1."""
@@ -181,13 +181,13 @@ class PageTitleCalculator(BaseKPICalculator):
         
         filtered_df = self.df[same_as_h1_mask]
         
-        return filtered_df[['Address', 'Title_1', 'Title_1_Length', 'H1-1']].copy()
+        return filtered_df[['Address', 'Title_1', 'Title_1_Length','Title_1_Pixel_Width', 'H1-1']].copy()
     
     def get_multiple_titles_table(self) -> pd.DataFrame:
         """Get table for pages with multiple title tags (placeholder for future implementation)."""
         # This would require additional data from the crawl
         # For now, return empty DataFrame with expected columns
-        return pd.DataFrame(columns=['Address', 'Title_1', 'Title_1_Length', 'H1-1'])
+        return pd.DataFrame(columns=['Address', 'Title_1', 'Title_1_Length','Title_1_Pixel_Width', 'H1-1'])
     
     def export_page_title_report(self, filename: str = 'page_title_report.json') -> Dict:
         """Export detailed page title report."""
