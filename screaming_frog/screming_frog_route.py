@@ -15,6 +15,7 @@ from screaming_frog.seo_audit_dashboard.indexablity import indexability_kpis_and
 from screaming_frog.seo_audit_dashboard.status_code import status_code_kpis_and_table
 from screaming_frog.seo_audit_dashboard.page_title import page_title_kpis_and_table
 from screaming_frog.seo_audit_dashboard.meta_description import meta_description_kpis_and_tables
+from screaming_frog.seo_audit_dashboard.h_tags import h_tags_kpis_and_table
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 router = APIRouter()
@@ -177,7 +178,8 @@ def fetch_spreadsheet_data(
             "indexability": indexability_kpis_and_table(sheet),
             "status_code": status_code_kpis_and_table(sheet),
             "page_title":page_title_kpis_and_table(sheet),
-            "meta_description": meta_description_kpis_and_tables(sheet)
+            "meta_description": meta_description_kpis_and_tables(sheet),
+            "h_tags":h_tags_kpis_and_table(sheet)
         }
 
     except HTTPException:
