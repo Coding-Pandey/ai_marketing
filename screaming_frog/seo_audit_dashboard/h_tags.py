@@ -122,7 +122,6 @@ class HTagsCalculator(BaseKPICalculator):
         
         self.kpis = {
             'h_tags_kpis': {
-                'h1_analysis': {
                     'all_h1': {
                         'count': all_h1_count,
                         'percentage': round(all_h1_percentage, 1)
@@ -165,13 +164,9 @@ class HTagsCalculator(BaseKPICalculator):
                     #     'count': multiple_h2_count,
                     #     'percentage': round(multiple_h2_percentage, 1)
                     # }
-                },
-                'summary': {
-                    'total_html_pages': total_html_pages,
-                    'total_pages': total_pages
                 }
             }
-        }
+
         
         return self.kpis
     
