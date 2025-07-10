@@ -31,82 +31,82 @@ class HTagsCalculator(BaseKPICalculator):
         # H1 Tag Analysis
         # 1. All H1 tags: Content_Type = 'text/html; charset=UTF-8' AND H1-1 has value
         h1_mask = html_mask & (
-            self.df['H1-1'].notna() & 
-            (self.df['H1-1'] != '') &
-            (self.df['H1-1'].astype(str).str.strip() != '')
+            self.df['H1_1'].notna() & 
+            (self.df['H1_1'] != '') &
+            (self.df['H1_1'].astype(str).str.strip() != '')
         )
         all_h1_count = int(h1_mask.sum())
         all_h1_percentage = (all_h1_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 2. H1 Missing: Content_Type = 'text/html; charset=UTF-8' AND H1-1 is empty/null
+        # 2. H1 Missing: Content_Type = 'text/html; charset=UTF-8' AND H1_1 is empty/null
         h1_missing_mask = html_mask & (
-            self.df['H1-1'].isna() | 
-            (self.df['H1-1'] == '') |
-            (self.df['H1-1'].astype(str).str.strip() == '')
+            self.df['H1_1'].isna() | 
+            (self.df['H1_1'] == '') |
+            (self.df['H1_1'].astype(str).str.strip() == '')
         )
         h1_missing_count = int(h1_missing_mask.sum())
         h1_missing_percentage = (h1_missing_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 3. H1 Duplicate: Content_Type = 'text/html; charset=UTF-8' AND H1-1 values are duplicated
+        # 3. H1 Duplicate: Content_Type = 'text/html; charset=UTF-8' AND H1_1 values are duplicated
         h1_duplicate_mask = html_mask & (
-            self.df['H1-1'].notna() & 
-            (self.df['H1-1'] != '') &
-            (self.df['H1-1'].astype(str).str.strip() != '') &
-            self.df['H1-1'].duplicated(keep=False)
+            self.df['H1_1'].notna() & 
+            (self.df['H1_1'] != '') &
+            (self.df['H1_1'].astype(str).str.strip() != '') &
+            self.df['H1_1'].duplicated(keep=False)
         )
         h1_duplicate_count = int(h1_duplicate_mask.sum())
         h1_duplicate_percentage = (h1_duplicate_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 4. H1 Over 70 characters: Content_Type = 'text/html; charset=UTF-8' AND H1-1 Length > 70
+        # 4. H1 Over 70 characters: Content_Type = 'text/html; charset=UTF-8' AND H1_1 Length > 70
         h1_over_70_mask = html_mask & (
-            self.df['H1-1_Length'].notna() & 
-            (pd.to_numeric(self.df['H1-1_Length'], errors='coerce') > 70)
+            self.df['H1_1_Length'].notna() & 
+            (pd.to_numeric(self.df['H1_1_Length'], errors='coerce') > 70)
         )
         h1_over_70_count = int(h1_over_70_mask.sum())
         h1_over_70_percentage = (h1_over_70_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 5. Multiple H1: Content_Type = 'text/html; charset=UTF-8' AND H1-2 has value
+        # 5. Multiple H1: Content_Type = 'text/html; charset=UTF-8' AND H1_2 has value
         multiple_h1_mask = html_mask & (
-            self.df['H1-2'].notna() & 
-            (self.df['H1-2'] != '') &
-            (self.df['H1-2'].astype(str).str.strip() != '')
+            self.df['H1_2'].notna() & 
+            (self.df['H1_2'] != '') &
+            (self.df['H1_2'].astype(str).str.strip() != '')
         )
         multiple_h1_count = int(multiple_h1_mask.sum())
         multiple_h1_percentage = (multiple_h1_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # H2 Tag Analysis
-        # 1. All H2 tags: Content_Type = 'text/html; charset=UTF-8' AND H2-1 has value
+        # 1. All H2 tags: Content_Type = 'text/html; charset=UTF-8' AND H2_1 has value
         h2_mask = html_mask & (
-            self.df['H2-1'].notna() & 
-            (self.df['H2-1'] != '') &
-            (self.df['H2-1'].astype(str).str.strip() != '')
+            self.df['H2_1'].notna() & 
+            (self.df['H2_1'] != '') &
+            (self.df['H2_1'].astype(str).str.strip() != '')
         )
         all_h2_count = int(h2_mask.sum())
         all_h2_percentage = (all_h2_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 2. H2 Missing: Content_Type = 'text/html; charset=UTF-8' AND H2-1 is empty/null
+        # 2. H2 Missing: Content_Type = 'text/html; charset=UTF-8' AND H2_1 is empty/null
         h2_missing_mask = html_mask & (
-            self.df['H2-1'].isna() | 
-            (self.df['H2-1'] == '') |
-            (self.df['H2-1'].astype(str).str.strip() == '')
+            self.df['H2_1'].isna() | 
+            (self.df['H2_1'] == '') |
+            (self.df['H2_1'].astype(str).str.strip() == '')
         )
         h2_missing_count = int(h2_missing_mask.sum())
         h2_missing_percentage = (h2_missing_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 3. H2 Duplicate: Content_Type = 'text/html; charset=UTF-8' AND H2-1 values are duplicated
+        # 3. H2 Duplicate: Content_Type = 'text/html; charset=UTF-8' AND H2_1 values are duplicated
         h2_duplicate_mask = html_mask & (
-            self.df['H2-1'].notna() & 
-            (self.df['H2-1'] != '') &
-            (self.df['H2-1'].astype(str).str.strip() != '') &
-            self.df['H2-1'].duplicated(keep=False)
+            self.df['H2_1'].notna() & 
+            (self.df['H2_1'] != '') &
+            (self.df['H2_1'].astype(str).str.strip() != '') &
+            self.df['H2_1'].duplicated(keep=False)
         )
         h2_duplicate_count = int(h2_duplicate_mask.sum())
         h2_duplicate_percentage = (h2_duplicate_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
-        # 4. H2 Over 70 characters: Content_Type = 'text/html; charset=UTF-8' AND H2-1 Length > 70
+        # 4. H2 Over 70 characters: Content_Type = 'text/html; charset=UTF-8' AND H2_1 Length > 70
         # h2_over_70_mask = html_mask & (
-        #     self.df['H2-1_Length'].notna() & 
-        #     (self.df['H2-1_Length'] > 70)
+        #     self.df['H2_1_Length'].notna() & 
+        #     (self.df['H2_1_Length'] > 70)
         # )
         # h2_over_70_count = int(h2_over_70_mask.sum())
         # h2_over_70_percentage = (h2_over_70_count / total_html_pages * 100) if total_html_pages > 0 else 0
@@ -174,109 +174,109 @@ class HTagsCalculator(BaseKPICalculator):
         """Get table for all H1 tags."""
         html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         h1_mask = html_mask & (
-            self.df['H1-1'].notna() & 
-            (self.df['H1-1'] != '') &
-            (self.df['H1-1'].astype(str).str.strip() != '')
+            self.df['H1_1'].notna() & 
+            (self.df['H1_1'] != '') &
+            (self.df['H1_1'].astype(str).str.strip() != '')
         )
         
         filtered_df = self.df[h1_mask]
-        return filtered_df[['Address', 'H1-1', 'H1-1_Length', 'Status_Code', 'Title_1']].copy()
+        return filtered_df[['Address', 'H1_1', 'H1_1_Length', 'Status_Code', 'Title_1']].copy()
     
     def get_h1_missing_table(self) -> pd.DataFrame:
         """Get table for pages missing H1 tags."""
         html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         h1_missing_mask = html_mask & (
-            self.df['H1-1'].isna() | 
-            (self.df['H1-1'] == '') |
-            (self.df['H1-1'].astype(str).str.strip() == '')
+            self.df['H1_1'].isna() | 
+            (self.df['H1_1'] == '') |
+            (self.df['H1_1'].astype(str).str.strip() == '')
         )
         
         filtered_df = self.df[h1_missing_mask]
-        return filtered_df[['Address', 'H1-1', 'Status_Code', 'Title_1']].copy()
+        return filtered_df[['Address', 'H1_1', 'Status_Code', 'Title_1']].copy()
     
     def get_h1_duplicate_table(self) -> pd.DataFrame:
         """Get table for duplicate H1 tags."""
         html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         h1_duplicate_mask = html_mask & (
-            self.df['H1-1'].notna() & 
-            (self.df['H1-1'] != '') &
-            (self.df['H1-1'].astype(str).str.strip() != '') &
-            self.df['H1-1'].duplicated(keep=False)
+            self.df['H1_1'].notna() & 
+            (self.df['H1_1'] != '') &
+            (self.df['H1_1'].astype(str).str.strip() != '') &
+            self.df['H1_1'].duplicated(keep=False)
         )
         
         filtered_df = self.df[h1_duplicate_mask]
-        return filtered_df[['Address', 'H1-1', 'H1-1_Length', 'Status_Code', 'Title_1']].copy()
+        return filtered_df[['Address', 'H1_1', 'H1_1_Length', 'Status_Code', 'Title_1']].copy()
     
     def get_h1_over_70_table(self) -> pd.DataFrame:
         """Get table for H1 tags over 70 characters."""
         html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         h1_over_70_mask = html_mask & (
-            self.df['H1-1_Length'].notna() & 
-            (pd.to_numeric(self.df['H1-1_Length'], errors='coerce') > 70 )
+            self.df['H1_1_Length'].notna() & 
+            (pd.to_numeric(self.df['H1_1_Length'], errors='coerce') > 70 )
         )
         
         filtered_df = self.df[h1_over_70_mask]
-        return filtered_df[['Address', 'H1-1', 'H1-1_Length', 'Status_Code', 'Title_1']].copy()
+        return filtered_df[['Address', 'H1_1', 'H1_1_Length', 'Status_Code', 'Title_1']].copy()
     
     def get_multiple_h1_table(self) -> pd.DataFrame:
         """Get table for pages with multiple H1 tags."""
         html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         multiple_h1_mask = html_mask & (
-            self.df['H1-2'].notna() & 
-            (self.df['H1-2'] != '') &
-            (self.df['H1-2'].astype(str).str.strip() != '')
+            self.df['H1_2'].notna() & 
+            (self.df['H1_2'] != '') &
+            (self.df['H1_2'].astype(str).str.strip() != '')
         )
         
         filtered_df = self.df[multiple_h1_mask]
-        return filtered_df[['Address', 'H1-1', 'H1-2', 'H1-1_Length', 'H1-2_Length', 'Status_Code', 'Title_1']].copy()
+        return filtered_df[['Address', 'H1_1', 'H1_2', 'H1_1_Length', 'H1_2_Length', 'Status_Code', 'Title_1']].copy()
     
     # def get_all_h2_table(self) -> pd.DataFrame:
     #     """Get table for all H2 tags."""
     #     html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
     #     h2_mask = html_mask & (
-    #         self.df['H2-1'].notna() & 
-    #         (self.df['H2-1'] != '') &
-    #         (self.df['H2-1'].astype(str).str.strip() != '')
+    #         self.df['H2_1'].notna() & 
+    #         (self.df['H2_1'] != '') &
+    #         (self.df['H2_1'].astype(str).str.strip() != '')
     #     )
         
     #     filtered_df = self.df[h2_mask]
-    #     return filtered_df[['Address', 'H2-1', 'H2-1_Length', 'Status_Code', 'Title_1']].copy()
+    #     return filtered_df[['Address', 'H2_1', 'H2_1_Length', 'Status_Code', 'Title_1']].copy()
     
     def get_h2_missing_table(self) -> pd.DataFrame:
         """Get table for pages missing H2 tags."""
         html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         h2_missing_mask = html_mask & (
-            self.df['H2-1'].isna() | 
-            (self.df['H2-1'] == '') |
-            (self.df['H2-1'].astype(str).str.strip() == '')
+            self.df['H2_1'].isna() | 
+            (self.df['H2_1'] == '') |
+            (self.df['H2_1'].astype(str).str.strip() == '')
         )
         
         filtered_df = self.df[h2_missing_mask]
-        return filtered_df[['Address', 'H2-1', 'Status_Code', 'Title_1']].copy()
+        return filtered_df[['Address', 'H2_1', 'Status_Code', 'Title_1']].copy()
     
     def get_h2_duplicate_table(self) -> pd.DataFrame:
         """Get table for duplicate H2 tags."""
         html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         h2_duplicate_mask = html_mask & (
-            self.df['H2-1'].notna() & 
-            (self.df['H2-1'] != '') &
-            (self.df['H2-1'].astype(str).str.strip() != '') &
-            self.df['H2-1'].duplicated(keep=False)
+            self.df['H2_1'].notna() & 
+            (self.df['H2_1'] != '') &
+            (self.df['H2_1'].astype(str).str.strip() != '') &
+            self.df['H2_1'].duplicated(keep=False)
         )
         
         filtered_df = self.df[h2_duplicate_mask]
-        return filtered_df[['Address', 'H2-1', 'H2-1_Length', 'Status_Code', 'Title_1']].copy()
+        return filtered_df[['Address', 'H2_1', 'H2_1_Length', 'Status_Code', 'Title_1']].copy()
     
     # def get_h2_over_70_table(self) -> pd.DataFrame:
     #     """Get table for H2 tags over 70 characters."""
     #     html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
     #     h2_over_70_mask = html_mask & (
-    #         self.df['H2-1_Length'].notna() & 
-    #         (self.df['H2-1_Length'] > 70)
+    #         self.df['H2_1_Length'].notna() & 
+    #         (self.df['H2_1_Length'] > 70)
     #     )
         
     #     filtered_df = self.df[h2_over_70_mask]
-    #     return filtered_df[['Address', 'H2-1', 'H2-1_Length', 'Status_Code', 'Title_1']].copy()
+    #     return filtered_df[['Address', 'H2_1', 'H2_1_Length', 'Status_Code', 'Title_1']].copy()
     
     # def get_multiple_h2_table(self) -> pd.DataFrame:
     #     """Get table for pages with multiple H2 tags."""
@@ -288,7 +288,7 @@ class HTagsCalculator(BaseKPICalculator):
     #     )
         
     #     filtered_df = self.df[multiple_h2_mask]
-        # return filtered_df[['Address', 'H2-1', 'H2-2', 'H2-1_Length', 'H2-2_Length', 'Status_Code', 'Title_1']].copy()
+        # return filtered_df[['Address', 'H2_1', 'H2-2', 'H2_1_Length', 'H2-2_Length', 'Status_Code', 'Title_1']].copy()
     
     def export_h_tags_report(self, filename: str = 'h_tags_report.json') -> Dict:
         """Export detailed H tags report."""
@@ -363,7 +363,12 @@ class DataProcessor:
         
         # Transform column names if requested
         if self.transform_column_names:
-            final_df.columns = [col.replace(" ", "_") for col in final_df.columns]
+            if self.transform_column_names:
+                final_df.columns = [
+                    col.replace(" ", "_")
+                    .replace("-", "_")
+                    for col in final_df.columns
+                ]
         
         return final_df
     
@@ -434,7 +439,7 @@ def h_tags_kpis_and_table(data):
 #     # Test with sample data
 #     sample_data = {
 #         'values': [
-#             ['Address', 'Content Type', 'H1-1', 'H1-1 Length', 'H1-2', 'H1-2 Length', 'H2-1', 'H2-1 Length', 'H2-2', 'H2-2 Length', 'Status Code', 'Status', 'Title 1'],
+#             ['Address', 'Content Type', 'H1-1', 'H1-1 Length', 'H1_2', 'H1_2 Length', 'H2_1', 'H2_1 Length', 'H2-2', 'H2-2 Length', 'Status Code', 'Status', 'Title 1'],
 #             ['https://example.com', 'text/html; charset=UTF-8', 'Welcome to Example', 18, '', '', 'About Us', 8, 'Our Services', 12, '200', 'OK', 'Home Page'],
 #             ['https://example.com/page1', 'text/html; charset=UTF-8', '', '', '', '', '', '', '', '', '200', 'OK', 'Page 1'],
 #             ['https://example.com/page2', 'text/html; charset=UTF-8', 'Welcome to Example', 18, '', '', 'Our Products', 12, '', '', '200', 'OK', 'Page 2'],
