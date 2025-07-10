@@ -23,24 +23,24 @@ class MetaDescriptionCalculator(BaseKPICalculator):
     def calculate_kpis(self) -> Dict:
         """Calculate all meta description KPIs with specific filtering logic."""
         # Base filter: Content Type = 'text/html; charset=UTF-8'
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         html_pages = self.df[html_mask]
         total_html_pages = len(html_pages)
         
         # 1. All Meta Descriptions: Count all pages with any meta description content
         all_meta_desc_mask = html_mask & (
-            self.df['Meta Description 1'].notna() & 
-            (self.df['Meta Description 1'] != '') &
-            (self.df['Meta Description 1'].astype(str).str.strip() != '')
+            self.df['Meta_Description_1'].notna() & 
+            (self.df['Meta_Description_1'] != '') &
+            (self.df['Meta_Description_1'].astype(str).str.strip() != '')
         )
         all_meta_desc_count = int(all_meta_desc_mask.sum())
         all_meta_desc_percentage = (all_meta_desc_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 2. Missing Meta Descriptions: Null/empty values in Meta Description 1
         missing_meta_desc_mask = html_mask & (
-            self.df['Meta Description 1'].isna() | 
-            (self.df['Meta Description 1'] == '') |
-            (self.df['Meta Description 1'].astype(str).str.strip() == '')
+            self.df['Meta_Description_1'].isna() | 
+            (self.df['Meta_Description_1'] == '') |
+            (self.df['Meta_Description_1'].astype(str).str.strip() == '')
         )
         missing_meta_desc_count = int(missing_meta_desc_mask.sum())
         missing_meta_desc_percentage = (missing_meta_desc_count / total_html_pages * 100) if total_html_pages > 0 else 0
@@ -48,34 +48,34 @@ class MetaDescriptionCalculator(BaseKPICalculator):
         # 3. Duplicate Meta Descriptions: Same meta description text appears multiple times
         # First get non-empty meta descriptions
         non_empty_meta_desc = html_pages[
-            html_pages['Meta Description 1'].notna() & 
-            (html_pages['Meta Description 1'] != '') &
-            (html_pages['Meta Description 1'].astype(str).str.strip() != '')
+            html_pages['Meta_Description_1'].notna() & 
+            (html_pages['Meta_Description_1'] != '') &
+            (html_pages['Meta_Description_1'].astype(str).str.strip() != '')
         ]
         
         # Find duplicates
         duplicate_meta_desc_mask = html_mask & (
-            self.df['Meta Description 1'].notna() & 
-            (self.df['Meta Description 1'] != '') &
-            (self.df['Meta Description 1'].astype(str).str.strip() != '') &
-            self.df['Meta Description 1'].duplicated(keep=False)
+            self.df['Meta_Description_1'].notna() & 
+            (self.df['Meta_Description_1'] != '') &
+            (self.df['Meta_Description_1'].astype(str).str.strip() != '') &
+            self.df['Meta_Description_1'].duplicated(keep=False)
         )
         duplicate_meta_desc_count = int(duplicate_meta_desc_mask.sum())
         duplicate_meta_desc_percentage = (duplicate_meta_desc_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 4. Over 160 Characters: Use Meta Description 1 Length > 160
         over_160_mask = html_mask & (
-            self.df['Meta Description 1 Length'].notna() & 
-            (self.df['Meta Description 1 Length'] > "160")
+            self.df['Meta_Description_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Meta_Description_1_Length'], errors='coerce') > 160)
         )
         over_160_count = int(over_160_mask.sum())
         over_160_percentage = (over_160_count / total_html_pages * 100) if total_html_pages > 0 else 0
         
         # 5. Below 70 Characters: Use Meta Description 1 Length < 70
         below_70_mask = html_mask & (
-            self.df['Meta Description 1 Length'].notna() & 
-            (self.df['Meta Description 1 Length'] < '70') &
-            (self.df['Meta Description 1 Length'] > 0)  # Exclude empty descriptions
+            self.df['Meta_Description_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Meta_Description_1_Length'], errors='coerce') > 70) &
+            (pd.to_numeric(self.df['Meta_Description_1_Length'], errors='coerce') > 0) # Exclude empty descriptions
         )
         below_70_count = int(below_70_mask.sum())
         below_70_percentage = (below_70_count / total_html_pages * 100) if total_html_pages > 0 else 0
@@ -83,10 +83,10 @@ class MetaDescriptionCalculator(BaseKPICalculator):
         # 6. Multiple Meta Descriptions: Check if there are multiple meta description tags
         # This would require checking if Meta Description 2, 3, etc. exist and have values
         multiple_meta_desc_mask = html_mask & (
-            (self.df.get('Meta Description 2', pd.Series()).notna() & 
-             (self.df.get('Meta Description 2', pd.Series()) != '')) |
-            (self.df.get('Meta Description 3', pd.Series()).notna() & 
-             (self.df.get('Meta Description 3', pd.Series()) != ''))
+            (self.df.get('Meta_Description_2', pd.Series()).notna() & 
+             (self.df.get('Meta_Description_2', pd.Series()) != '')) |
+            (self.df.get('Meta_Description_3', pd.Series()).notna() & 
+             (self.df.get('Meta_Description_3', pd.Series()) != ''))
         )
         multiple_meta_desc_count = int(multiple_meta_desc_mask.sum())
         multiple_meta_desc_percentage = (multiple_meta_desc_count / total_html_pages * 100) if total_html_pages > 0 else 0
@@ -124,74 +124,74 @@ class MetaDescriptionCalculator(BaseKPICalculator):
     
     def get_missing_meta_descriptions_table(self) -> pd.DataFrame:
         """Get table for URLs missing meta descriptions."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         missing_meta_desc_mask = html_mask & (
-            self.df['Meta Description 1'].isna() | 
-            (self.df['Meta Description 1'] == '') |
-            (self.df['Meta Description 1'].astype(str).str.strip() == '')
+            self.df['Meta_Description_1'].isna() | 
+            (self.df['Meta_Description_1'] == '') |
+            (self.df['Meta_Description_1'].astype(str).str.strip() == '')
         )
         
         filtered_df = self.df[missing_meta_desc_mask]
         
-        return filtered_df[['Address', 'Meta Description 1', 'Title 1']].copy()
+        return filtered_df[['Address', 'Meta_Description_1', 'Title_1']].copy()
     
     def get_duplicate_meta_descriptions_table(self) -> pd.DataFrame:
         """Get table for URLs with duplicate meta descriptions."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         duplicate_meta_desc_mask = html_mask & (
-            self.df['Meta Description 1'].notna() & 
-            (self.df['Meta Description 1'] != '') &
-            (self.df['Meta Description 1'].astype(str).str.strip() != '') &
-            self.df['Meta Description 1'].duplicated(keep=False)
+            self.df['Meta_Description_1'].notna() & 
+            (self.df['Meta_Description_1'] != '') &
+            (self.df['Meta_Description_1'].astype(str).str.strip() != '') &
+            self.df['Meta_Description_1'].duplicated(keep=False)
         )
         
         filtered_df = self.df[duplicate_meta_desc_mask]
         
-        return filtered_df[['Address', 'Meta Description 1', 'Meta Description 1 Length', 'Title 1']].copy()
+        return filtered_df[['Address', 'Meta_Description_1', 'Meta_Description_1_Length', 'Title_1']].copy()
     
     def get_over_160_characters_table(self) -> pd.DataFrame:
         """Get table for URLs with meta descriptions over 160 characters."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         over_160_mask = html_mask & (
-            self.df['Meta Description 1 Length'].notna() & 
-            (self.df['Meta Description 1 Length'] > 160)
+            self.df['Meta_Description_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Meta_Description_1_Length'], errors='coerce') > 160)
         )
         
         filtered_df = self.df[over_160_mask]
         
-        return filtered_df[['Address', 'Meta Description 1', 'Meta Description 1 Length', 'Meta Description 1 Pixel Width', 'Title 1']].copy()
+        return filtered_df[['Address', 'Meta_Description_1', 'Meta_Description_1_Length', 'Meta_Description_1_Pixel_Width', 'Title_1']].copy()
     
     def get_below_70_characters_table(self) -> pd.DataFrame:
         """Get table for URLs with meta descriptions below 70 characters."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         below_70_mask = html_mask & (
-            self.df['Meta Description 1 Length'].notna() & 
-            (self.df['Meta Description 1 Length'] < 70) &
-            (self.df['Meta Description 1 Length'] > 0)  # Exclude empty descriptions
+            self.df['Meta_Description_1_Length'].notna() & 
+            (pd.to_numeric(self.df['Meta_Description_1_Length'], errors='coerce') > 70) &
+            (pd.to_numeric(self.df['Meta_Description_1_Length'], errors='coerce') > 0) # Exclude empty descriptions
         )
         
         filtered_df = self.df[below_70_mask]
         
-        return filtered_df[['Address', 'Meta Description 1', 'Meta Description 1 Length', 'Meta Description 1 Pixel Width', 'Title 1']].copy()
+        return filtered_df[['Address', 'Meta_Description_1', 'Meta_Description_1_Length', 'Meta_Description_1_Pixel_Width', 'Title_1']].copy()
     
     def get_multiple_meta_descriptions_table(self) -> pd.DataFrame:
         """Get table for URLs with multiple meta descriptions."""
-        html_mask = self.df['Content Type'] == 'text/html; charset=UTF-8'
+        html_mask = self.df['Content_Type'] == 'text/html; charset=UTF-8'
         multiple_meta_desc_mask = html_mask & (
-            (self.df.get('Meta Description 2', pd.Series()).notna() & 
-             (self.df.get('Meta Description 2', pd.Series()) != '')) |
-            (self.df.get('Meta Description 3', pd.Series()).notna() & 
-             (self.df.get('Meta Description 3', pd.Series()) != ''))
+            (self.df.get('Meta_Description_2', pd.Series()).notna() & 
+             (self.df.get('Meta_Description_2', pd.Series()) != '')) |
+            (self.df.get('Meta_Description_3', pd.Series()).notna() & 
+             (self.df.get('Meta_Description_3', pd.Series()) != ''))
         )
         
         filtered_df = self.df[multiple_meta_desc_mask]
         
         # Include available meta description columns
-        columns = ['Address', 'Meta Description 1', 'Title 1']
-        if 'Meta Description 2' in self.df.columns:
-            columns.insert(-1, 'Meta Description 2')
-        if 'Meta Description 3' in self.df.columns:
-            columns.insert(-1, 'Meta Description 3')
+        columns = ['Address', 'Meta_Description_1', 'Title_1']
+        if 'Meta_Description_2' in self.df.columns:
+            columns.insert(-1, 'Meta_Description_2')
+        if 'Meta_Description_3' in self.df.columns:
+            columns.insert(-1, 'Meta_Description_3')
         
         return filtered_df[columns].copy()
     
@@ -225,8 +225,9 @@ class MetaDescriptionCalculator(BaseKPICalculator):
 class DataProcessor:
     """Process crawl data and initialize it for KPI calculations."""
     
-    def __init__(self, data: Union[str, dict, List[dict]]):
+    def __init__(self, data: Union[str, dict, List[dict]], transform_column_names: bool = True):
         self.raw_data = data
+        self.transform_column_names = transform_column_names
         self.df = self._process_data()
     
     def _process_data(self) -> pd.DataFrame:
@@ -266,7 +267,14 @@ class DataProcessor:
             print("Warning: No valid data found to process")
             return pd.DataFrame()
         
-        return pd.concat(all_data, ignore_index=True)
+        # return pd.concat(all_data, ignore_index=True)
+        final_df = pd.concat(all_data, ignore_index=True)
+        
+        # Transform column names if requested
+        if self.transform_column_names:
+            final_df.columns = [col.replace(" ", "_") for col in final_df.columns]
+        
+        return final_df
     
     def _process_tab_data(self, tab_data: dict) -> pd.DataFrame:
         """Process individual tab data."""
