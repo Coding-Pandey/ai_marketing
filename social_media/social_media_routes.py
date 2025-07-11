@@ -1113,10 +1113,19 @@ async def publish_social_media_post(
         access_token = integration.access_token
         if not access_token:    
             raise HTTPException(status_code=400, detail="Access token is required for publishing posts")
-        
+        # post_text = post_data.content[0].get("discription", "")
+        # if post_text:
+        #     post_text = post_text[0]
+            
+        discription_list = post_data.content[0].get("discription", [])
+
+        if isinstance(discription_list, list) and discription_list:
+            post_text = discription_list[0]
+        else:
+            post_text = None    
         result = publish_to_linkedin(
             access_token=access_token,
-            post_text=post_data.content[0].get("discription", ""),
+            post_text=post_text[0],
             image_url=post_data.content[0].get("image", None),
         )
 

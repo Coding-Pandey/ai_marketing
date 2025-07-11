@@ -33,7 +33,7 @@ def crawl_domain_to_sheets(
     Crawl a domain and create a Google Sheet with the results
     """
     user_id = int(user_id[1]) 
-    export_tabs = ["Internal:All", "External:All", "Images:All"]
+    export_tabs = ["Internal:All"]
     # Get user's Google Sheets integration
     integration = db.query(Integration).filter_by(
         user_id=user_id,

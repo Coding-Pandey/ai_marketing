@@ -282,9 +282,7 @@ def main(access_token: str,
             
         print(f"Using Author URN: {author_urn}")
         
-        # Post with image
-        post_text = post_text
-        image_url = image_url
+   
         
         # Upload the image first and get the asset URN
         print("Uploading image to LinkedIn...")
