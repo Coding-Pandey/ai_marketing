@@ -91,9 +91,7 @@ def crawled_id_fetch(
     
     return JSONResponse(
         status_code=200,
-        content={
-            "crawl_history": crawl_history
-        }
+        content= crawl_history
     )
     
 
