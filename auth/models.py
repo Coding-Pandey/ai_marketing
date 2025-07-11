@@ -39,6 +39,7 @@ class User(Base):
     source_file_records = relationship("SourceFileContent", back_populates="user")
     integrations_auth = relationship("Integration", back_populates="user", cascade="all, delete-orphan")
     spreadsheet_data_record = relationship("SpreadSheet", back_populates="user")
+    sf_crawl_data_record = relationship("Sf_crawl_data", back_populates="user")
     
 
 
@@ -340,3 +341,20 @@ class SpreadSheet(Base):
     crawl_url = Column(String)
     
     user = relationship("User", back_populates="spreadsheet_data_record")
+    
+class Sf_crawl_data(Base):
+    __tablename__ = "sf_crawl_data"
+    
+    id = Column(Integer,primary_key=True, index=True)
+    uuid = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    datatime = Column(DateTime, default=datetime.utcnow)
+    crawl_count = Column(Integer, default=1) 
+    max_crawl = Column(Integer,default=4)
+    crawl_json_data = Column(JSONB)
+    crawl_url = Column(String)
+    is_seleted = Column(String,nullable=False)
+    
+    user = relationship("User", back_populates="sf_crawl_data_record")
+    
+        

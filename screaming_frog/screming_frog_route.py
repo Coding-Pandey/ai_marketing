@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from auth.models import Integration, ProviderEnum, SpreadSheet
+from auth.models import Integration, ProviderEnum, SpreadSheet, Sf_crawl_data
 from screaming_frog.utile import GoogleSheetsService
 from googleapiclient.discovery import build
 import uuid
@@ -18,6 +18,7 @@ from screaming_frog.seo_audit_dashboard.meta_description import meta_description
 from screaming_frog.seo_audit_dashboard.h_tags import h_tags_kpis_and_table
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
+from screaming_frog.sf_crawl import ScreamingFrogCrawlService
 router = APIRouter()
 
 class CrawlRequest(BaseModel):
@@ -30,165 +31,99 @@ def crawl_domain_to_sheets(
     db: Session = Depends(get_db)
 ):
     """
-    Crawl a domain and create a Google Sheet with the results
+    Crawl a domain and save results directly to database
     """
-    user_id = int(user_id[1]) 
-    export_tabs = ["Internal:All"]
-    # Get user's Google Sheets integration
-    integration = db.query(Integration).filter_by(
-        user_id=user_id,
-        provider=ProviderEnum.GOOGLE_SHEETS
-    ).first()
-    
-    if not integration:
-        raise HTTPException(404, "Google Sheets integration not found. Please connect your Google account first.")
-    
-    # Check if token needs refresh
-    # integration = ensure_valid_token(integration, db)
+    user_id = int(user_id[1])
     
     # Validate domain
     domain = request.domain.strip()
     if not domain.startswith(('http://', 'https://')):
         domain = f"https://{domain}"
     
-    # Create sheets service and run crawl
-    sheets_service = GoogleSheetsService(integration)
-    batch_uuid = uuid.uuid4().hex
-    sheets_info = sheets_service.crawl_and_create_sheets(
-        domain,
-        export_tabs=export_tabs
-    )
+    # Create crawl service and run crawl
+    crawl_service = ScreamingFrogCrawlService(db)
     
-    for info in sheets_info:
-        record = SpreadSheet(
-            uuid=batch_uuid,
+    try:
+        result = crawl_service.crawl_and_save_to_db(
+            domain=domain,
             user_id=user_id,
-            spreadsheet_id=info["domainspreadsheet_id"],
-            spreadsheet_name=info["tab"],
-            spreadsheet_url=info["spreadsheet_url"],
-            crawl_url = domain
+            export_tabs=["Internal:All"]
         )
-        db.add(record)
-    db.commit()
-    
-
-    return {
-        "success": True,
-        "message": f"Successfully crawled {domain} and created {len(sheets_info)} sheets",
-        "batch_uuid": batch_uuid,
-        "sheets": sheets_info
-    }
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                # "success": True,
+                # "message": result["message"],
+                "crawl_url":domain,
+                "uuid": result["uuid"]
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(500, f"Crawl failed: {str(e)}")    
 
 @router.get("/crawl_data_info")
 def crawled_id_fetch(
     user_id: int = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
 ):
+
     """
-    Return all distinct crawl batches (uuid + crawl_url) for this user.
+    Get user's crawl history
     """
     user_id = int(user_id[1])
-
-    # Query for distinct (uuid, crawl_url) pairs
-    rows = (
-        db
-        .query(SpreadSheet.uuid, SpreadSheet.crawl_url)
-        .filter(SpreadSheet.user_id == user_id)
-        .distinct()
+    
+    records = (
+        db.query(Sf_crawl_data)
+        .filter_by(user_id=user_id)
+        .order_by(Sf_crawl_data.datatime.desc())
         .all()
     )
-
-    if not rows:
-        return []
-
-    # Build a list of dicts
-    result = [
-        {"uuid": uuid, "crawl_url": crawl_url}
-        for uuid, crawl_url in rows
-    ]
-
-    return result
     
+    crawl_history = []
+    for record in records:
+        crawl_history.append({
+            "uuid": record.uuid,
+            "crawl_url": record.crawl_url,
+            "selected_site": record.is_seleted
+        })
+    
+    return JSONResponse(
+        status_code=200,
+        content={
+            "crawl_history": crawl_history
+        }
+    )
     
 
 @router.get("/crawl_data/{uuid}")
-def fetch_spreadsheet_data(
+def fetch_crawl_data(
     uuid: str,
     user_id: int = Depends(verify_jwt_token),
     db: Session = Depends(get_db)
 ):
     """
-    Fetch the single-tab data ("Sheet1") for all spreadsheets 
-    saved under the same crawl-batch UUID.
+    Fetch crawl data from database by UUID
     """
     user_id = int(user_id[1])
-
-    # Ensure user has Google Sheets connected
-    integration = (
-        db.query(Integration)
-          .filter_by(user_id=user_id, provider=ProviderEnum.GOOGLE_SHEETS)
-          .first()
+    
+    # Get crawl data from database
+    record = (
+        db.query(Sf_crawl_data)
+        .filter_by(uuid=uuid, user_id=user_id)
+        .first()
     )
-    if not integration:
-        raise HTTPException(404, "Google Sheets integration not found.")
-
-    # Lookup all spreadsheets for this batch
-    records = (
-        db.query(SpreadSheet)
-          .filter_by(uuid=uuid, user_id=user_id)
-          .all()
+    
+    if not record:
+        raise HTTPException(404, f"No crawl data found for UUID {uuid}")
+    
+    # Return the stored dashboard data
+    return JSONResponse(
+        status_code=200,
+        content=record.crawl_json_data
     )
-    if not records:
-        raise HTTPException(404, f"No spreadsheets found for UUID {uuid}")
 
-    sheets_svc = GoogleSheetsService(integration)
-    sheets_data = []  # will hold plain dicts: {"tab": ..., "values": [ {col: cell, ...}, ... ]}
-
-    for record in records:
-        try:
-            raw: List[List[Optional[str]]] = sheets_svc.get_sheet_values(
-                record.spreadsheet_id, "Sheet1"
-            )
-        except Exception as e:
-            raise HTTPException(400, f"Error reading Sheet1 from {record.spreadsheet_id}: {e}")
-
-        if not raw or len(raw) < 2:
-            continue
-
-        header, *rows = raw
-        # convert each row into a dict keyed by header
-        dict_rows = [
-            { header[i]: cell for i, cell in enumerate(row) }
-            for row in rows
-        ]
-
-        sheets_data.append({
-            "tab": record.spreadsheet_name,
-            "values": dict_rows
-        })
-
-    # now find the tab we care about and compute KPIs
-    try:
-        # find first sheet with tab == "Internal:All"
-        sheet = next((s for s in sheets_data if s["tab"] == "Internal:All"), None)
-        if not sheet:
-            raise HTTPException(400, "No 'Internal:All' tab found")
-
-        dashboard = {
-            "indexability": indexability_kpis_and_table(sheet),
-            "status_code": status_code_kpis_and_table(sheet),
-            "page_title":page_title_kpis_and_table(sheet),
-            "meta_description": meta_description_kpis_and_tables(sheet),
-            "h_tags":h_tags_kpis_and_table(sheet)
-        }
-
-    except HTTPException:
-        # re‑raise FastAPI HTTPExceptions untouched
-        raise
-    except Exception as e:
-        raise HTTPException(400, f"error in KPI calculation: {e}")
-
-    return JSONResponse(status_code=200, content=dashboard)
 
 
 @router.get("/sheets/test-connection")
@@ -227,4 +162,6 @@ def test_sheets_connection(
         raise HTTPException(400, f"Google Sheets connection failed: {str(e)}")
     
     
+
     
+
